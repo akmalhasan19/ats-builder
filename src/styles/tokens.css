@@ -1,0 +1,243 @@
+/* ==========================================================================
+   Token desain — IMPLEMENTATION_PLAN.md §2.2 (warna) & §2.3 (tipografi).
+   Satu-satunya tempat nilai mentah warna/tipografi chrome boleh ditulis.
+   Komponen wajib memakai utility Tailwind atau var() dari file ini.
+   ========================================================================== */
+
+@theme {
+  /* Surface — sistem kedalaman 4 level; kertas selalu paling terang (P3) */
+  --color-workbench: #dfe4ea;
+  --color-sunken: #edf0f4;
+  --color-surface: #f7f8fa;
+  --color-raised: #ffffff;
+
+  /* Tinta */
+  --color-ink: #10161f;
+  --color-ink-secondary: #46505e;
+  --color-ink-tertiary: #78838f;
+  --color-rule: #d3d9e0;
+  --color-rule-strong: #b4bcc6;
+
+  /* Aksen */
+  --color-cyanotype: #0f5a78;
+  --color-cyanotype-active: #1279a3;
+  --color-cyanotype-wash: #e4eef3;
+
+  /* Stabilo — hanya untuk teks di atas kertas & Parse Tape (§2.2 aturan 1) */
+  --color-highlighter: #f2d600;
+
+  /* Sinyal semantik */
+  --color-signal-ok: #2e7a50;
+  --color-signal-warn: #a9761a;
+  --color-signal-bad: #b03a2b;
+
+  /* Satu-satunya surface gelap: readout mesin / Parse Tape (§2.2 aturan 2) */
+  --color-machine: #10161f;
+  --color-machine-text: #e8edf4;
+  --color-machine-dim: #7c8b9c;
+
+  /* Keluarga font (§2.3) */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, sfmono-regular, monospace;
+  --font-display: 'Archivo', 'IBM Plex Sans', ui-sans-serif, sans-serif;
+  --font-expanded: 'Archivo Expanded', 'Archivo', ui-sans-serif, sans-serif;
+
+  /* Lembar A4 (§2.4): kertas tidak membulat, dan jadi objek paling terang (P3) */
+  --radius-paper: 1px;
+  --shadow-paper: 0 1px 2px rgba(16, 22, 31, 0.08), 0 12px 32px -8px rgba(16, 22, 31, 0.18);
+
+  /* Well di belakang lembar A4 (§2.4) */
+  --shadow-well: inset 0 1px 3px rgba(16, 22, 31, 0.06);
+}
+
+/* Nama token persis seperti tertulis di §2.2, supaya spesifikasi UI (§5) bisa
+   dibaca 1:1 terhadap kode. Nilainya menumpang pada @theme di atas. */
+:root {
+  --surface-workbench: var(--color-workbench);
+  --surface-sunken: var(--color-sunken);
+  --surface: var(--color-surface);
+  --surface-raised: var(--color-raised);
+
+  --ink: var(--color-ink);
+  --ink-secondary: var(--color-ink-secondary);
+  --ink-tertiary: var(--color-ink-tertiary);
+  --rule: var(--color-rule);
+  --rule-strong: var(--color-rule-strong);
+
+  --cyanotype: var(--color-cyanotype);
+  --cyanotype-active: var(--color-cyanotype-active);
+  --cyanotype-wash: var(--color-cyanotype-wash);
+
+  --highlighter: var(--color-highlighter);
+
+  --signal-ok: var(--color-signal-ok);
+  --signal-warn: var(--color-signal-warn);
+  --signal-bad: var(--color-signal-bad);
+
+  --machine: var(--color-machine);
+  --machine-text: var(--color-machine-text);
+  --machine-dim: var(--color-machine-dim);
+
+  /* Dipakai langsung oleh primitif shadcn (sonner) lewat var() mentah. */
+  --popover: var(--color-raised);
+  --popover-foreground: var(--color-ink);
+  --border: var(--color-rule);
+  --radius: 6px;
+}
+
+/* Jembatan ke primitif shadcn/ui. Fase 2 (T2.1) menyetel ulang primitif ini
+   agar persis §5; di sini cukup pemetaan semantik agar tidak ada warna liar. */
+@theme inline {
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-raised);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-raised);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-cyanotype);
+  --color-primary-foreground: var(--color-raised);
+  --color-secondary: var(--color-sunken);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-sunken);
+  --color-muted-foreground: var(--color-ink-tertiary);
+  --color-accent: var(--color-cyanotype-wash);
+  --color-accent-foreground: var(--color-cyanotype);
+  --color-destructive: var(--color-signal-bad);
+  --color-destructive-foreground: var(--color-raised);
+  --color-border: var(--color-rule);
+  --color-ring: var(--color-cyanotype);
+}
+
+/* ---- Skala tipe: chrome aplikasi (§2.3) ---------------------------------- */
+
+@utility text-brand {
+  font-family: var(--font-expanded);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+@utility text-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-tertiary);
+}
+
+@utility text-panel-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+@utility text-label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-ink-secondary);
+}
+
+@utility text-input {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--color-ink);
+}
+
+@utility text-body {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--color-ink-secondary);
+}
+
+@utility text-button-primary {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-raised);
+}
+
+@utility text-data {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+@utility text-tape {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  font-weight: 400;
+  color: var(--color-machine-text);
+}
+
+/* ---- Skala tipe: homepage (§2.3) ----------------------------------------- */
+
+@utility display-xl {
+  font-family: var(--font-expanded);
+  font-size: clamp(32px, 5vw, 54px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
+}
+
+@utility display-md {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-ink);
+}
+
+@utility body-lg {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.65;
+  font-weight: 400;
+  color: var(--color-ink-secondary);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-rule);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv05', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cyanotype);
+    outline-offset: 2px;
+  }
+}
+
+/* §2.6 — wajib global, bukan tambalan per komponen */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

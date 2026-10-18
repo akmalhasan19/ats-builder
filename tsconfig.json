@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    // esbuild (dipakai `pnpm pdf:verify`) hanya membaca tsconfig root ini, bukan
+    // project references, jadi alias + jsx harus ada di sini juga.
+    "jsx": "react-jsx"
+  },
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+}
