@@ -75,13 +75,14 @@ export const id = {
   'pdf.state.idle': 'Belum ada PDF yang dibuat.',
   'pdf.readout.duration': 'DURASI RENDER',
   'pdf.readout.size': 'UKURAN FILE',
+  'pdf.readout.pages': 'HALAMAN',
   'pdf.readout.header': 'HEADER BERULANG',
   'pdf.unit.ms': 'ms',
   'pdf.unit.kb': 'KB',
   'pdf.value.yes': 'ya',
   'pdf.value.no': 'tidak',
   'pdf.note.lazy':
-    'Renderer PDF dimuat lewat dynamic import. Di Network tab, chunk berisi @react-pdf baru diminta saat tombol diklik — tidak ikut bundle awal.',
+    'Renderer PDF dimuat lewat dynamic import. Di Network tab, chunk berisi pdf-lib baru diminta saat tombol diklik — tidak ikut bundle awal.',
   'pdf.note.selectable': 'Teks di dalam PDF di bawah bisa diseleksi dan disalin, bukan gambar.',
   'pdf.note.long':
     'Varian 60 bullet menguji wrap, page-break otomatis, dan prop fixed untuk header berulang.',
@@ -113,7 +114,7 @@ export const id = {
   'preview.note.pagination':
     'Pagination layar dikerjakan di Fase 4; lembar ini memotong konten yang melewati batas halaman.',
   'preview.label.screen': 'LAYAR (HTML/CSS)',
-  'preview.label.pdf': 'PDF (@react-pdf)',
+  'preview.label.pdf': 'PDF (pdf-lib)',
   'preview.error.pdf': 'PDF pembanding gagal dibuat.',
 } as const
 

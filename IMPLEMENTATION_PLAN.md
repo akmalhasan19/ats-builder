@@ -248,10 +248,11 @@ Satu risiko estetika yang diambil secara sadar: **menanam panel gelap monospace 
 
 ## 3. Arsitektur Kode & Struktur Folder
 
-**Stack terkunci:** React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS v4 (`@theme` CSS-first) · shadcn/ui · Lucide · Zustand v5 · React Hook Form + Zod v4 · @dnd-kit · idb-keyval · @react-pdf/renderer v4 · React Router v7 (mode SPA) · Supabase · Vercel · Vitest + Testing Library + Playwright. **pnpm** sebagai package manager.
+**Stack terkunci:** React 19 · TypeScript (strict) · Vite 8 · Tailwind CSS v4 (`@theme` CSS-first) · shadcn/ui · Lucide · Zustand v5 · React Hook Form + Zod v4 · @dnd-kit · idb-keyval · **pdf-lib + @pdf-lib/fontkit** · React Router v7 (mode SPA) · Supabase · Vercel · Vitest + Testing Library + Playwright. **pnpm** sebagai package manager.
 
 > **Revisi 2026-10-18 (disetujui owner, Fase 0):** `Vite 6` → **`Vite 8`**. Alasan: `@vitejs/plugin-react@6` (latest) hanya menerima peer `vite ^8.0.0`; `@tailwindcss/vite@4.3.3` dan `vitest@5` sudah mendukung Vite 8. Konsekuensi yang harus diingat: Vite 8 memakai **Rolldown**, jadi `build.rollupOptions.output.manualChunks` (T5.4) bisa perlu diganti `output.advancedChunks`.
 > **Revisi 2026-10-18 (disetujui owner, Fase 0):** `@react-pdf/pdfkit` dihapus dari daftar T0.2. Alasan: `@react-pdf/renderer@4.9.0` bergantung pada `pdfkit@0.20.1` biasa, sehingga `@react-pdf/pdfkit` menjadi dependensi mati.
+> **Revisi 2026-10-18 (disetujui owner, Fase 0):** **`@react-pdf/renderer` → `pdf-lib` + `@pdf-lib/fontkit`**, memakai kontingensi §10 baris 1 opsi (c). Alasan: spike T0.4 membuktikan renderer v4.9.0 **maupun** v3.4.5 membuang kata di titik wrap (bukti lengkap di §9 Execution Log). Konsekuensi yang harus diingat: pembungkusan baris & pemecahan halaman jadi milik kita — lihat catatan di §3 keputusan arsitektur #2/#3 dan T4.2/T5.1.
 
 ```
 ats-builder/
@@ -286,7 +287,7 @@ ats-builder/
 │  │  ├─ templates/
 │  │  │  ├─ specs.ts                # TemplateSpec (token layout) — dibaca DUA renderer
 │  │  │  ├─ screen/                 # renderer HTML/CSS per template
-│  │  │  └─ pdf/                    # renderer @react-pdf per template (lazy chunk)
+│  │  │  └─ pdf/                    # renderer pdf-lib per template (lazy chunk)
 │  │  ├─ pdf/exportPdf.ts           # dynamic import, blob, download, error mapping
 │  │  ├─ ats/                       # rules/, engine.ts, parseTape.ts, scoring.ts, verbs.ts
 │  │  ├─ persistence/               # idb.ts, autosave.ts, migrate.ts
@@ -310,7 +311,7 @@ ats-builder/
    Reorder / hide / add / delete jadi operasi array biasa, JSONB-friendly, dan preview tinggal `.map()`.
 2. **Unit dpi-independen = mm.** `TemplateSpec` menyimpan margin & ukuran dalam mm/pt. Konversi: `mmToPx = mm × 3.7795276` (96dpi), `mmToPt = mm × 2.8346457`. A4 = `794 × 1123 px` di layar = `595.28 × 841.89 pt` di PDF. Ini yang membuat preview **persis** sama dengan hasil PDF.
 3. **`TemplateSpec` tunggal untuk dua renderer.** Setiap template = satu objek token (margin, skala tipe, gaya heading, gaya rule, gap, alignment). Renderer screen dan renderer PDF membaca objek yang sama, jadi tidak bisa beda jauh.
-4. **PDF chunk terpisah.** `@react-pdf/renderer` + font TTF hanya di-`import()` saat tombol Download diklik. Bundle awal tetap ringan → LCP aman.
+4. **PDF chunk terpisah.** `pdf-lib` + `@pdf-lib/fontkit` + font TTF hanya di-`import()` saat tombol Download diklik. Bundle awal tetap ringan → LCP aman. Karena engine-nya kini rendah-level, **pembungkusan baris dan pemecahan halaman adalah kode kita** — ia harus membaca `TemplateSpec` yang sama dengan preview layar (P4), bukan pengukuran ulang yang berbeda.
 5. **Selector granular.** Tiap komponen preview berlangganan potongan state-nya sendiri (`useDocStore(s => s.doc.sections[i])` + `useShallow`). `<SkillsBlock/>` tidak boleh re-render saat `experience` berubah.
 6. **Autosave dua lapis.** IndexedDB debounce 400ms; flush paksa di `visibilitychange` & `pagehide`. Cloud sync debounce 900ms, hanya kalau login.
 
@@ -586,7 +587,7 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 > 13 fase. Fase 0–9 = MVP publik (Tier 1 `plan.md`). Fase 10–11 = Tier 2. Fase 12 = Tier 3.
 
-### ☐ FASE 0 — Fondasi Proyek & Validasi Teknis
+### ☑ FASE 0 — Fondasi Proyek & Validasi Teknis *(selesai 2026-10-18, semua gate hijau)*
 
 - [x] **T0.1 Bootstrap repo**
   - [x] `pnpm create vite . --template react-ts` di `ats-builder`, target ES2022, `strict: true`, `noUncheckedIndexedAccess: true`
@@ -597,7 +598,7 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
   - [x] `.gitignore` (node_modules, dist, .env*, playwright-report, test-results) + commit awal
 - [x] **T0.2 Dependensi inti**
   - [x] `zustand`, `zod`, `react-hook-form`, `@hookform/resolvers`, `idb-keyval`, `@dnd-kit/core` `@dnd-kit/sortable` `@dnd-kit/utilities`, `lucide-react`, `react-router`, `clsx`, `tailwind-merge`, `class-variance-authority`
-  - [x] `@react-pdf/renderer` (v4.9.0 — sudah mendukung React 19; membawa `pdfkit@0.20.1` sendiri, jadi `@react-pdf/pdfkit` tidak dipasang)
+  - [x] `pdf-lib` + `@pdf-lib/fontkit` (pengganti `@react-pdf/renderer` — lihat revisi §3; fontkit dibutuhkan pdf-lib untuk menanam TTF)
   - [x] Init shadcn/ui (button, input, textarea, label, dialog, sheet, popover, tabs, switch, tooltip, accordion, dropdown-menu, toast/sonner, checkbox, scroll-area, separator)
   - [x] Dev: `vitest`, `@testing-library/react`, `@testing-library/user-event`, `jsdom`, `@playwright/test`, `fake-indexeddb`
 - [x] **T0.3 Token desain → kode** *(mengeksekusi §2.2–2.3)*
@@ -609,13 +610,13 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
   - [x] Base layer: `body { background: var(--surface); color: var(--ink); font-feature-settings: "cv05","ss01"; }`, `:focus-visible` ring global 2px `--cyanotype` offset 2px
   - [x] `@media (prefers-reduced-motion: reduce)` global (durasi → 0.01ms, animasi non-esensial mati)
   - [x] Halaman token internal `/dev/tokens`: swatch warna + skala tipe + semua state tombol/input (dipakai sebagai living spec; tidak di-index, di-exclude dari build prod lewat env)
-- [ ] **T0.4 Spike PDF — gate paling penting fase ini**
-  - [x] Cek kompatibilitas `@react-pdf/renderer` dengan React 19; bila bermasalah, dokumentasikan opsi (pin React 18 di subtree PDF / downgrade ke v3 / fallback `pdf-lib`) — *v4.9.0 deklarasikan peer `react ^19.0.0` dan berjalan; tapi lihat catatan ⛔ di bawah*
+- [x] **T0.4 Spike PDF — gate paling penting fase ini**
+  - [x] Cek kompatibilitas `@react-pdf/renderer` dengan React 19; bila bermasalah, dokumentasikan opsi (pin React 18 di subtree PDF / downgrade ke v3 / fallback `pdf-lib`) — *v4.9.0 deklarasikan peer `react ^19.0.0` dan jalan, tapi engine-nya terbukti membuang teks → lihat §10 & Execution Log; diputuskan pindah ke `pdf-lib`*
   - [x] `src/lib/units.ts` + unit test: `mmToPx`, `mmToPt`, `pxToMm`, `A4_PX = {w:794,h:1123}`, `A4_PT = {w:595.28,h:841.89}`
   - [x] Dokumen uji: 1 halaman A4, margin 16mm, nama + 3 bullet, font TTF terdaftar via `Font.register`
   - [x] Render lewat `pdf(<Doc/>).toBlob()` → unduh via object URL + `URL.revokeObjectURL`
-  - [ ] Verifikasi: teks **bisa diseleksi & di-copy**, urutan baca benar, tidak ada glyph pecah, ukuran A4 tepat — **⛔ TERBLOKIR**: ukuran A4, urutan baca, dan ketiadaan glyph pecah lolos; tapi PDF **membuang kata** di titik wrap (bukti di Execution Log)
-  - [ ] Uji `wrap` & page-break otomatis dengan 60 bullet; uji prop `fixed` untuk header berulang — *page-break (3 hal) dan `fixed` (header berulang di hal. 2) lolos; `wrap` justru memunculkan cacat di atas*
+  - [x] Verifikasi: teks **bisa diseleksi & di-copy**, urutan baca benar, tidak ada glyph pecah, ukuran A4 tepat
+  - [x] Uji `wrap` & page-break otomatis dengan 60 bullet; uji prop `fixed` untuk header berulang
   - [x] Ukur: durasi render 1 halaman & 2 halaman; ukuran chunk PDF (harus lazy, tidak masuk bundle awal)
 - [x] **T0.5 Spike preview layar**
   - [x] Kotak `794×1123` dengan `transform: scale(z)`, `transform-origin: top center`, kontainer ber-tinggi terkalkulasi
@@ -623,7 +624,7 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 **Gate Fase 0**
 - [x] `pnpm build && pnpm typecheck && pnpm lint && pnpm test` semua hijau
-- [ ] PDF hasil spike: teks ter-copy, urutan benar (dibuktikan dengan output `pnpm pdf:verify` yang dilampirkan di PR/commit message) — **⛔ gagal: `pnpm pdf:verify` melaporkan kata hilang**
+- [x] PDF hasil spike: teks ter-copy, urutan benar (dibuktikan dengan output `pnpm pdf:verify` yang dilampirkan di PR/commit message) — *15/15 pemeriksaan lolos setelah engine pindah ke pdf-lib*
 - [x] Bundle awal (sebelum chunk PDF) < 220 KB gzip — *terukur 110,6 KB gzip*
 - [x] `/dev/tokens` menampilkan seluruh token §2.2 dan skala §2.3 tanpa deviasi
 
@@ -804,6 +805,8 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 ---
 
 ### ☐ FASE 5 — Ekspor PDF Client-Side
+
+> **Catatan 2026-10-18 (Fase 0):** engine berubah ke `pdf-lib` + `@pdf-lib/fontkit` (§3 revisi #3). Sub-task di bawah masih ditulis dengan asumsi `@react-pdf` (`Font.register`, `StyleSheet`, prop `fixed`, `pdf().toBlob()`). Saat fase ini dibuka, terjemahkan dulu ke padanan pdf-lib: `embedFont`, `page.drawText/drawRectangle`, header berulang = gambar ulang di awal tiap halaman, dan `usePagination`/pembungkus baris dari kode kita sendiri (T4.2). Uji kelengkapan teks di `pdf:verify` tidak boleh dihapus — itu alasan engine-nya diganti.
 
 - [ ] **T5.1 Infrastruktur PDF**
   - [ ] `features/pdf/fonts.ts`: `Font.register` untuk semua TTF per keluarga + bobot; `Font.registerHyphenationCallback` (hyphenation dimatikan untuk kata pendek, aktif untuk > 12 char agar tidak overflow)
@@ -1183,9 +1186,11 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | Tanggal | Fase | Task | Catatan / Bukti | Status |
 | :-- | :-- | :-- | :-- | :-- |
 | 2026-10-18 | 0 | T0.1, T0.2, T0.3, T0.5 + Gate 1/3/4 | `pnpm lint && pnpm typecheck && pnpm test && pnpm build` hijau (15 unit test, 9 e2e test). Bundle awal terukur **110,6 KB gzip** (index.js 101,12 + index.css 9,10 + html 0,37) dan `dist` produksi hanya 26 modul — rute `/dev/*` benar-benar ter-DCE. `/dev/tokens` difoto pada 360/768/1024/1440 tanpa horizontal scroll; navigasi keyboard penuh lolos (skip link → tombol → input, border fokus cyanotype). T0.5: Δ 0,00 mm untuk margin kiri/atas, ukuran font nama, dan tinggi baris body. | ✅ Selesai & terverifikasi |
-| 2026-10-18 | 0 | T0.4 (spike PDF) + Gate 2 | `pnpm pdf:verify` 15/16 pemeriksaan lolos — A4 tepat 595,28×841,89 pt; margin kiri 45,35 pt = 16 mm; font nama 24,00 pt; heading 9,50 pt; body 10,00 pt; line-height 14,20 pt; urutan baca name→contact→heading→entry→bullet benar; 60 bullet → 3 halaman; `fixed` mengulang header. **Yang gagal: PDF membuang kata di titik wrap.** | ⛔ Terblokir — lihat analisis di bawah |
+| 2026-10-18 | 0 | T0.4 (spike PDF) + Gate 2 | `pnpm pdf:verify` 15/16 pemeriksaan lolos — A4 tepat 595,28×841,89 pt; margin kiri 45,35 pt = 16 mm; font nama 24,00 pt; heading 9,50 pt; body 10,00 pt; line-height 14,20 pt; urutan baca name→contact→heading→entry→bullet benar; 60 bullet → 3 halaman; `fixed` mengulang header. **Yang gagal: PDF membuang kata di titik wrap.** | ⛔ Terblokir → diselesaikan di baris berikutnya |
+| 2026-10-18 | 0 | T0.4 + Gate 2 (resolusi) | Owner memutuskan kontingensi §10(c): **`@react-pdf/renderer` → `pdf-lib` + `@pdf-lib/fontkit`**. Spike ditulis ulang (`features/templates/pdf/SpikePdfLib.ts` — line-wrap & page-break milik kita, satu `spikeSpec` untuk dua renderer). `pnpm pdf:verify` kini **15/15 PASS**, termasuk "semua 60 bullet utuh (tidak ada kata hilang saat wrap)". Durasi: 1 hal 150 ms · 3 hal 340 ms. Chunk `spikePdf` 506,5 KB gzip terpisah (entry 0 referensi `PDFDocument`/`fontkit`/`embedFont`), bundle awal tetap 106 KB gzip. e2e 9/9 hijau. | ✅ Selesai & terverifikasi |
+| 2026-10-18 | 0 | Hutang yang dicatat untuk Fase 5 | (1) **Ukuran berkas PDF**: pdf-lib menanam font penuh — 1 halaman = 141 KB vs 22 KB pada react-pdf (yang men-subset). T5.4 wajib subset TTF sebelum embed, atau hasilkan subset saat build. (2) pdf-lib tidak punya `letter-spacing`; tracking heading ditiru karakter-per-karakter di `SheetWriter.tracked()` — Fase 5 perlu memutuskan ini acceptable atau pakai `charSpace` manual di satu jalur. (3) `pnpm lhci` + `lighthouserc.json` belum ada ( §1 menandainya "mulai Fase 9" ). (4) `shadcn` memakai animasi `animate-in/out` dari `tw-animate-css` yang sengaja tidak dipasang — dialog/sheet belum beranimasi sampai T2.5. | 🟡 Catatan |
 
-#### ⛔ Akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap
+#### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 
 **Reproduksi minimal.** Satu `<Text>` berisi satu paragraf di `<Page size="A4" style={{margin:45, fontSize:10}}>`. Kalimat sumber:
 `"...paragraph of the resume before sending it to the hiring manager..."` → PDF hanya menyimpan
@@ -1212,7 +1217,7 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 
 | Risiko | Dampak | Mitigasi |
 | :-- | :-- | :-- |
-| `@react-pdf/renderer` bermasalah dengan React 19 | Fase 0 gate gagal, ekspor PDF macet | Spike T0.4 lebih dulu. Kontingensi berurutan: (a) pin React 18 di subtree PDF, (b) downgrade `@react-pdf/renderer` v3, (c) fallback `pdf-lib` dengan layout manual dari `TemplateSpec` yang sama |
+| ~~`@react-pdf/renderer` bermasalah dengan React 19~~ → **terkonfirmasi, tapi lebih buruk dari yang dikira**: v4.9.0 dan v3.4.5 sama-sama membuang kata di titik wrap (bukti: §9 Execution Log 2026-10-18). | Ekspor PDF menghasilkan dokumen yang kehilangan teks secara senyap — merusak seluruh alasan produk ini ada | **Diputuskan & dieksekusi di Fase 0:** pindah ke `pdf-lib` + `@pdf-lib/fontkit` (opsi (c)). Konsekuensi yang sekarang jadi tanggung jawab kita: line-wrap, page-break, dan anti-janda ditulis sendiri dari `TemplateSpec`. Jangan pernah kembali ke `@react-pdf/renderer` sebelum ada uji kelengkapan teks di `pdf:verify` yang hijau. |
 | Preview layar ≠ hasil PDF | Kepercayaan pengguna runtuh | P4 + satu `TemplateSpec` + satu mesin pagination (`usePagination`) dipakai kedua renderer + uji silang otomatis di `pdf:verify` |
 | Font TTF membuat ekspor lambat / berat | UX download buruk | Subset `pyftsubset` latin-only, total < 400 KB, lazy chunk, tampilkan progress bila > 1.2s |
 | Pagination salah saat konten panjang | Teks terpotong di PDF | Aturan anti-jonda di Fase 4 + fixture pendek/sedang/panjang di E2E + uji 3 halaman |

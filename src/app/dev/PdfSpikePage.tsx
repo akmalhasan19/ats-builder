@@ -13,6 +13,7 @@ type SpikeResult = {
   url: string
   bytes: number
   durationMs: number
+  pageCount: number
   repeatHeader: boolean
 }
 
@@ -46,13 +47,19 @@ export default function PdfSpikePage() {
     try {
       const { renderSpikePdfToBlob } = await import('@/features/pdf/spikePdf')
       const content = bulletCount ? makeLongSpikeContent(bulletCount) : spikeContent
-      const { blob, bytes, durationMs } = await renderSpikePdfToBlob(content, options)
+      const { blob, bytes, durationMs, pageCount } = await renderSpikePdfToBlob(content, options)
 
       const url = URL.createObjectURL(blob)
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
       objectUrlRef.current = url
 
-      setResult({ url, bytes, durationMs, repeatHeader: options.repeatHeader })
+      setResult({
+        url,
+        bytes,
+        durationMs,
+        pageCount,
+        repeatHeader: options.repeatHeader,
+      })
       downloadObjectUrl(url, filename)
     } catch {
       setFailed(true)
@@ -82,13 +89,14 @@ export default function PdfSpikePage() {
           </Button>
         </div>
 
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Readout labelKey="pdf.readout.duration">
             {result ? `${result.durationMs} ${t('pdf.unit.ms')}` : '—'}
           </Readout>
           <Readout labelKey="pdf.readout.size">
             {result ? `${Math.round(result.bytes / 1024)} ${t('pdf.unit.kb')}` : '—'}
           </Readout>
+          <Readout labelKey="pdf.readout.pages">{result ? result.pageCount : '—'}</Readout>
           <Readout labelKey="pdf.readout.header">
             {result ? (result.repeatHeader ? t('pdf.value.yes') : t('pdf.value.no')) : '—'}
           </Readout>

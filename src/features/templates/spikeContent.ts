@@ -19,7 +19,7 @@ export type SpikeContent = {
 }
 
 export type SpikeRenderOptions = {
-  /** Menguji prop `fixed` @react-pdf: header berulang di tiap halaman. */
+  /** Header berulang digambar lagi di tiap halaman setelah page-break. */
   repeatHeader: boolean
 }
 

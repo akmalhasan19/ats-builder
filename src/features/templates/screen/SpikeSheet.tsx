@@ -6,7 +6,7 @@ import { SPIKE_FONTS, formatContactLine, headingLabel, spikeSpec } from '../spik
 const spec = spikeSpec
 
 /**
- * Padanan layar dari `pdf/SpikeDocument`. Setiap nilai diturunkan dari
+ * Padanan layar dari `pdf/SpikePdfLib`. Setiap nilai diturunkan dari
  * `spikeSpec` lewat konversi mm/pt → px, jadi tidak ada angka layout di sini (P4).
  */
 const styles = {

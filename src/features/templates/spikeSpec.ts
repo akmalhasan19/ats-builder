@@ -1,6 +1,6 @@
 /**
  * Spec tunggal untuk spike Fase 0 (P4: satu sumber layout, dua presentasi).
- * Renderer layar (`screen/SpikeSheet`) dan renderer PDF (`pdf/SpikeDocument`)
+ * Renderer layar (`screen/SpikeSheet`) dan renderer PDF (`pdf/SpikePdfLib`)
  * membaca objek ini — tidak boleh ada nilai layout yang diduplikasi.
  *
  * Satuan sengaja dpi-independen: mm untuk ruang, pt untuk tipe.
