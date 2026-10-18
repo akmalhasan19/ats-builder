@@ -31,7 +31,9 @@ const yearMonth = (): z.ZodType<ISOYearMonth> =>
 
 const idField = (): z.ZodType<string> => z.string().min(1, 'ID entri tidak boleh kosong.')
 
-const profileSchema = z.object({
+export const linkItemSchema = z.object({ label: z.string(), url: z.string() })
+
+export const profileSchema = z.object({
   fullName: z.string().max(120, 'Nama terlalu panjang — maksimal 120 karakter.'),
   headline: z.string().max(120, 'Profesi terlalu panjang — maksimal 120 karakter.'),
   email: z.union([z.literal(''), z.email({ error: 'Email belum benar. Contoh: nama@domain.com' })]),
@@ -39,11 +41,11 @@ const profileSchema = z.object({
     .string()
     .regex(/^(\+?\d[\d\s()-]{4,})?$/, 'Nomor telepon belum benar. Contoh: +62 812 3456 7890'),
   location: z.string(),
-  links: z.array(z.object({ label: z.string(), url: z.string() })),
+  links: z.array(linkItemSchema),
   photoEnabled: z.literal(false),
 })
 
-const experienceSchema = z.object({
+export const experienceSchema = z.object({
   id: idField(),
   role: z.string(),
   company: z.string(),
@@ -55,7 +57,7 @@ const experienceSchema = z.object({
   stack: z.array(z.string()),
 })
 
-const educationSchema = z.object({
+export const educationSchema = z.object({
   id: idField(),
   degree: z.string(),
   field: z.string(),
@@ -63,17 +65,19 @@ const educationSchema = z.object({
   location: z.string(),
   startDate: yearMonth(),
   endDate: yearMonth(),
-  gpa: z.string().regex(/^([0-4](\.\d{1,2})?)?$/, 'IPK harus antara 0.00–4.00. Contoh: 3.71'),
+  gpa: z
+    .string()
+    .regex(/^(?:[0-3](?:\.\d{1,2})?|4(?:\.0{1,2})?)?$/, 'IPK harus antara 0.00–4.00. Contoh: 3.71'),
   notes: z.array(z.string()),
 })
 
-const skillGroupSchema = z.object({
+export const skillGroupSchema = z.object({
   id: idField(),
   name: z.string(),
   items: z.array(z.string()),
 })
 
-const projectSchema = z.object({
+export const projectSchema = z.object({
   id: idField(),
   name: z.string(),
   role: z.string(),
@@ -84,7 +88,7 @@ const projectSchema = z.object({
   stack: z.array(z.string()),
 })
 
-const certificationSchema = z.object({
+export const certificationSchema = z.object({
   id: idField(),
   name: z.string(),
   issuer: z.string(),
@@ -93,13 +97,13 @@ const certificationSchema = z.object({
   url: z.string(),
 })
 
-const languageSchema = z.object({
+export const languageSchema = z.object({
   id: idField(),
   name: z.string(),
   proficiency: z.enum(['Native', 'Fluent', 'Professional', 'Intermediate', 'Basic']),
 })
 
-const awardSchema = z.object({
+export const awardSchema = z.object({
   id: idField(),
   title: z.string(),
   issuer: z.string(),
@@ -107,7 +111,7 @@ const awardSchema = z.object({
   description: z.string(),
 })
 
-const volunteeringSchema = z.object({
+export const volunteeringSchema = z.object({
   id: idField(),
   role: z.string(),
   organization: z.string(),

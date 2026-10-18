@@ -37,6 +37,11 @@ type EntryListState = { entries: SectionEntry[] }
 // tumbuh tanpa batas saat mengetik panjang.
 const HISTORY_LIMIT = 50
 
+// Edit field (updateSection/updateEntry) menimpa history dalam jendela ini
+// supaya satu burst ketikan jadi satu entri undo (keputusan T3.4).
+const EDIT_COALESCE_MS = 150
+let lastEditCommitAt = -Infinity
+
 const move = <T>(items: T[], from: number, to: number): T[] => {
   if (from < 0 || from >= items.length || to < 0 || to >= items.length || from === to) return items
   const next = [...items]
@@ -62,7 +67,7 @@ export type DocStore = {
   doc: ResumeDoc
   activeSectionId: string
   history: ResumeDoc[]
-  commit: (updater: (doc: ResumeDoc) => ResumeDoc) => void
+  commit: (updater: (doc: ResumeDoc) => ResumeDoc, options?: { coalesce?: boolean }) => void
   updateSection: (sectionId: string, mutator: (data: SectionData) => SectionData) => void
   updateEntry: (
     sectionId: string,
@@ -76,6 +81,7 @@ export type DocStore = {
   reorderEntry: (sectionId: string, from: number, to: number) => void
   toggleSectionVisible: (sectionId: string) => void
   addSection: (kind: SectionKind) => void
+  duplicateSection: (sectionId: string) => void
   removeSection: (sectionId: string) => void
   setActiveSection: (sectionId: string) => void
   setTemplate: (templateId: TemplateId) => void
@@ -93,34 +99,42 @@ export const useDocStore = create<DocStore>((set, get) => ({
   activeSectionId: initialDoc.sections[0]?.id ?? '',
   history: [],
 
-  commit: (updater) =>
+  commit: (updater, options) =>
     set((state) => {
       const next = updater(state.doc)
       if (next === state.doc) return state
+      const now = Date.now()
+      const coalesce = options?.coalesce === true && now - lastEditCommitAt < EDIT_COALESCE_MS
+      lastEditCommitAt = options?.coalesce === true ? now : -Infinity
       return {
         doc: {
           ...next,
-          meta: { ...next.meta, updatedAt: Date.now() },
+          meta: { ...next.meta, updatedAt: now },
         },
-        history: [...state.history, state.doc].slice(-HISTORY_LIMIT),
+        history: coalesce ? state.history : [...state.history, state.doc].slice(-HISTORY_LIMIT),
       }
     }),
 
   updateSection: (sectionId, mutator) =>
-    get().commit((doc) => ({
-      ...doc,
-      sections: doc.sections.map((section): SectionInstance =>
-        section.id === sectionId
-          ? ({ ...section, data: mutator(section.data) } as SectionInstance)
-          : section,
-      ),
-    })),
+    get().commit(
+      (doc) => ({
+        ...doc,
+        sections: doc.sections.map((section): SectionInstance =>
+          section.id === sectionId
+            ? ({ ...section, data: mutator(section.data) } as SectionInstance)
+            : section,
+        ),
+      }),
+      { coalesce: true },
+    ),
 
   updateEntry: (sectionId, entryId, mutator) =>
-    get().commit((doc) =>
-      withEntries(doc, sectionId, (entries) =>
-        entries.map((entry) => (entry.id === entryId ? mutator(entry) : entry)),
-      ),
+    get().commit(
+      (doc) =>
+        withEntries(doc, sectionId, (entries) =>
+          entries.map((entry) => (entry.id === entryId ? mutator(entry) : entry)),
+        ),
+      { coalesce: true },
     ),
 
   addEntry: (sectionId) => {
@@ -178,6 +192,38 @@ export const useDocStore = create<DocStore>((set, get) => ({
     set({ activeSectionId: id })
   },
 
+  duplicateSection: (sectionId) => {
+    const sourceIndex = get().doc.sections.findIndex((section) => section.id === sectionId)
+    if (sourceIndex < 0) return
+    const source = get().doc.sections[sourceIndex]!
+    const newId = crypto.randomUUID()
+    let newData: SectionInstance['data'] = { ...source.data }
+    if ('entries' in source.data && Array.isArray(source.data.entries)) {
+      newData = {
+        ...source.data,
+        entries: (source.data.entries as SectionEntry[]).map((entry) => ({
+          ...entry,
+          id: crypto.randomUUID(),
+        })),
+      } as SectionInstance['data']
+    } else if ('groups' in source.data && Array.isArray(source.data.groups)) {
+      newData = {
+        ...source.data,
+        groups: source.data.groups.map((group) => ({
+          ...group,
+          id: crypto.randomUUID(),
+        })),
+      } as SectionInstance['data']
+    }
+    const copy: SectionInstance = { ...source, id: newId, data: newData } as SectionInstance
+    get().commit((doc) => {
+      const sections = [...doc.sections]
+      sections.splice(sourceIndex + 1, 0, copy)
+      return { ...doc, sections }
+    })
+    set({ activeSectionId: newId })
+  },
+
   removeSection: (sectionId) => {
     get().commit((doc) => {
       const sections = doc.sections.filter((section) => section.id !== sectionId)
@@ -207,10 +253,12 @@ export const useDocStore = create<DocStore>((set, get) => ({
 
   resetDoc: (doc) => get().commit(() => doc),
 
-  loadDoc: (doc) =>
+  loadDoc: (doc) => {
+    lastEditCommitAt = -Infinity
     set({
       doc,
       history: [],
       activeSectionId: doc.sections[0]?.id ?? '',
-    }),
+    })
+  },
 }))

@@ -19,8 +19,14 @@ export function setLang(next: Lang): void {
  * Penerjemah (P7). Bahasa default `id`; kamus `en` diisi di Fase 11, jadi
  * kunci yang belum ada selalu jatuh balik ke `id`.
  */
-export function t(key: TranslationKey): string {
-  return dictionaries[lang][key] ?? id[key]
+export function t(key: TranslationKey, params?: Record<string, string | number>): string {
+  let text: string = dictionaries[lang][key] ?? id[key] ?? key
+  if (params && text) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v))
+    }
+  }
+  return text
 }
 
 export type { TranslationKey }

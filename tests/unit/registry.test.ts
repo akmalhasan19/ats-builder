@@ -66,6 +66,132 @@ describe('sectionRegistry', () => {
     }
   })
 
+  it('isComplete bernilai true untuk semua kind ketika data valid terisi', () => {
+    expect(
+      sectionRegistry.profile.isComplete({
+        fullName: 'Budi Santoso',
+        headline: 'Frontend Engineer',
+        email: 'budi@example.com',
+        phone: '+62812345678',
+        location: 'Jakarta',
+        links: [],
+        photoEnabled: false,
+      }),
+    ).toBe(true)
+
+    expect(sectionRegistry.summary.isComplete({ text: 'Ringkasan profesional.' })).toBe(true)
+
+    expect(
+      sectionRegistry.experience.isComplete({
+        entries: [
+          {
+            id: '1',
+            role: 'Dev',
+            company: 'PT Maju',
+            location: 'Jakarta',
+            startDate: '2023-01',
+            endDate: '',
+            current: true,
+            bullets: ['Membuat fitur A'],
+            stack: ['React'],
+          },
+        ],
+      }),
+    ).toBe(true)
+
+    expect(
+      sectionRegistry.education.isComplete({
+        entries: [
+          {
+            id: '1',
+            degree: 'S1',
+            field: 'Informatika',
+            institution: 'UI',
+            location: 'Depok',
+            startDate: '2019-08',
+            endDate: '2023-07',
+            gpa: '3.8',
+            notes: [],
+          },
+        ],
+      }),
+    ).toBe(true)
+
+    expect(
+      sectionRegistry.skills.isComplete({
+        groups: [{ id: '1', name: 'Frontend', items: ['React', 'TypeScript'] }],
+      }),
+    ).toBe(true)
+
+    expect(
+      sectionRegistry.projects.isComplete({
+        entries: [
+          {
+            id: '1',
+            name: 'Web Store',
+            role: 'Creator',
+            url: 'https://example.com',
+            startDate: '2023-05',
+            endDate: '',
+            bullets: ['Built app'],
+            stack: [],
+          },
+        ],
+      }),
+    ).toBe(true)
+
+    expect(
+      sectionRegistry.certifications.isComplete({
+        entries: [
+          {
+            id: '1',
+            name: 'AWS Cloud',
+            issuer: 'Amazon',
+            issuedAt: '2023-04',
+            credentialId: '123',
+            url: '',
+          },
+        ],
+      }),
+    ).toBe(true)
+
+    expect(
+      sectionRegistry.languages.isComplete({
+        entries: [{ id: '1', name: 'Bahasa Indonesia', proficiency: 'Native' }],
+      }),
+    ).toBe(true)
+
+    expect(
+      sectionRegistry.awards.isComplete({
+        entries: [
+          {
+            id: '1',
+            title: 'Juara 1',
+            issuer: 'Kominfo',
+            awardedAt: '2023-10',
+            description: 'Lomba aplikasi',
+          },
+        ],
+      }),
+    ).toBe(true)
+
+    expect(
+      sectionRegistry.volunteering.isComplete({
+        entries: [
+          {
+            id: '1',
+            role: 'Pengajar',
+            organization: 'Komunitas Coding',
+            startDate: '2022-01',
+            endDate: '',
+            current: true,
+            bullets: ['Mengajar dasar web'],
+          },
+        ],
+      }),
+    ).toBe(true)
+  })
+
   it('isComplete experience menolak entri tanpa bullet atau tanpa perusahaan', () => {
     const doc = createSampleDoc()
     const section = doc.sections.find((item) => item.kind === 'experience')
@@ -79,5 +205,19 @@ describe('sectionRegistry', () => {
     expect(
       sectionRegistry.experience.isComplete({ entries: [{ ...entries[0]!, bullets: [] }] }),
     ).toBe(false)
+  })
+
+  it('getCompleteness menghitung dots dan total persentase kelengkapan', () => {
+    const emptyDoc = createEmptyDoc()
+    const emptyProfile = emptyDoc.sections[0]!
+    const emptyResult = sectionRegistry.profile.getCompleteness(emptyProfile.data)
+    expect(emptyResult.dots).toBe(0)
+    expect(emptyResult.isComplete).toBe(false)
+
+    const sampleDoc = createSampleDoc()
+    const sampleProfile = sampleDoc.sections[0]!
+    const sampleResult = sectionRegistry.profile.getCompleteness(sampleProfile.data)
+    expect(sampleResult.dots).toBe(3)
+    expect(sampleResult.isComplete).toBe(true)
   })
 })

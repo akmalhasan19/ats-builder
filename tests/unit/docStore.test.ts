@@ -35,6 +35,29 @@ describe('commit', () => {
     expect(store().history).toHaveLength(50)
     expect(store().history[49]?.title).toBe('Judul 58')
   })
+
+  it('edit field dalam jendela 150ms menimpa history jadi satu entri undo (T3.4)', () => {
+    let clock = 1700000000000
+    vi.spyOn(Date, 'now').mockImplementation(() => clock)
+    const profileId = store().doc.sections[0]!.id
+    const setName = (name: string) =>
+      store().updateSection(profileId, (data) => ({ ...(data as ProfileData), fullName: name }))
+
+    setName('Dewi')
+    clock += 50
+    setName('Dewi Ra')
+    clock += 50
+    setName('Dewi Rahayu')
+
+    expect(store().history).toHaveLength(1)
+
+    clock += 200
+    setName('Dewi Rahayu S.')
+
+    expect(store().history).toHaveLength(2)
+    const firstUndo = store().history[0]?.sections.find((s) => s.kind === 'profile')
+    expect(firstUndo?.kind === 'profile' && firstUndo.data.fullName).toBe('')
+  })
 })
 
 describe('aksi bagian', () => {
@@ -89,6 +112,19 @@ describe('aksi bagian', () => {
     const before = store().history.length
     store().removeSection('tidak-ada')
     expect(store().history).toHaveLength(before)
+  })
+
+  it('duplicateSection menduplikasi bagian dengan ID baru dan menjadikannya aktif', () => {
+    const target = store().doc.sections[0]!
+    const beforeCount = store().doc.sections.length
+
+    store().duplicateSection(target.id)
+
+    expect(store().doc.sections).toHaveLength(beforeCount + 1)
+    const duplicate = store().doc.sections[1]!
+    expect(duplicate.kind).toBe(target.kind)
+    expect(duplicate.id).not.toBe(target.id)
+    expect(store().activeSectionId).toBe(duplicate.id)
   })
 
   it('reorderSection memindahkan urutan array', () => {

@@ -1,9 +1,17 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { Check, Download, Menu, ScanSearch } from 'lucide-react'
+import { Check, Download, Menu, RotateCcw, ScanSearch } from 'lucide-react'
 import { cn } from 'cn'
 import { BrandMark } from '@/app/BrandMark'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { IconButton } from '@/components/ui/icon-button'
 import {
   Sheet,
@@ -14,7 +22,9 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { createEmptyDoc, createSampleDoc } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
+import { toast } from 'sonner'
 import { t } from '@/lib/i18n'
 import { DocumentTitle } from './DocumentTitle'
 import { SaveStatusPill } from './SaveStatusPill'
@@ -56,8 +66,10 @@ function DownloadButton() {
 /** §5.2 — di bawah 768px hanya brand, judul, dan menu; sisanya masuk sheet ini. */
 function MobileMenu() {
   const [open, setOpen] = useState(false)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const activeId = useDocStore((state) => state.doc.templateId)
   const setTemplate = useDocStore((state) => state.setTemplate)
+  const resetDoc = useDocStore((state) => state.resetDoc)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -95,7 +107,49 @@ function MobileMenu() {
             <ScanSearch aria-hidden="true" className="size-[15px]" />
             {t('topbar.checkAts')}
           </Button>
+
+          <Button
+            variant="ghost"
+            onClick={() => setResetDialogOpen(true)}
+            className="text-signal-bad hover:bg-bad-wash hover:text-signal-bad mt-4 justify-start gap-2"
+          >
+            <RotateCcw aria-hidden="true" className="size-[15px]" />
+            {t('menu.resetDoc')}
+          </Button>
         </div>
+
+        <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t('menu.resetDocTitle')}</DialogTitle>
+              <DialogDescription>{t('menu.resetDocBody')}</DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col gap-2 sm:flex-row">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  resetDoc(createSampleDoc())
+                  toast(t('firstRun.sampleToast'))
+                  setResetDialogOpen(false)
+                  setOpen(false)
+                }}
+              >
+                {t('menu.resetToSample')}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  resetDoc(createEmptyDoc())
+                  toast(t('firstRun.emptyToast'))
+                  setResetDialogOpen(false)
+                  setOpen(false)
+                }}
+              >
+                {t('menu.resetToEmpty')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </SheetContent>
     </Sheet>
   )

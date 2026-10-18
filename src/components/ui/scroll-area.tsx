@@ -17,7 +17,12 @@ function ScrollArea({
     >
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
-        className="size-full rounded-[inherit] outline-none"
+        // Radix membungkus children dalam div `display: table` (inline style)
+        // supaya konten mendefinisikan ukuran scroll. Untuk daftar vertikal
+        // seperti rail, itu melebarkan baris melebihi lebar panel sehingga
+        // tombol di tepi kanan terpotong. Paksa block supaya baris mengikuti
+        // lebar viewport.
+        className="[&>div]:block! size-full rounded-[inherit] outline-none"
       >
         {children}
       </ScrollAreaPrimitive.Viewport>

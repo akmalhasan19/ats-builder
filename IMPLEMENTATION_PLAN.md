@@ -713,59 +713,59 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
-### ☐ FASE 3 — Rail Section & Form Editor Lengkap
+### ☑ FASE 3 — Rail Section & Form Editor Lengkap *(selesai 2026-10-18, semua gate hijau)*
 
-- [ ] **T3.1 SectionList (rail kiri)** — §5.3
-  - [ ] Render dari `doc.sections` (urutan array)
-  - [ ] Visibility checkbox, ikon per kind, label, `CompletenessDots` (0–3) + tooltip penjelasan
-  - [ ] State aktif (wash + inset bar 2px cyanotype) terikat `activeSectionId`
-  - [ ] PanelHeader `SECTIONS` + counter `visible/total`
-  - [ ] `AddSectionButton` + Dialog katalog (hanya kind yang belum ada; tiap baris: ikon, nama, deskripsi 1 kalimat, tombol `Tambah`)
-  - [ ] Menu konteks per item (klik kanan / `⋯`): Sembunyikan · Duplikat · Hapus (dengan Dialog konfirmasi bila berisi data)
-  - [ ] `CompletenessMeter` + klik membuka drawer ATS
-- [ ] **T3.2 Reorder section (@dnd-kit)**
-  - [ ] `SortableContext` vertical, `PointerSensor` (activationConstraint distance 5) + `KeyboardSensor` (Space angkat, panah pindah, Space lepas)
-  - [ ] DragOverlay: kartu bg raised radius 6 shadow raised scale 1.01; placeholder garis 2px `--cyanotype`
-  - [ ] **Alternatif non-drag**: tombol `ArrowUp`/`ArrowDown` 28×28 muncul saat hover/focus (wajib di mobile & untuk keyboard)
-  - [ ] `aria-live` mengumumkan urutan baru ("Experience pindah ke posisi 3")
-- [ ] **T3.3 Field & EntryCard dasar**
-  - [ ] `Field`, `MonthPicker`, `DateRangeField` + toggle `Saya masih bekerja di sini` (mengunci endDate, chip `SEKARANG`)
-  - [ ] `EntryCard` collapse/expand, header ringkasan, kluster ikon (drag/duplikat/hapus), strip error
-  - [ ] `EntryList`: `+ Tambah <entri>`, reorder entri (dnd-kit + panah), duplikat (id baru), hapus dengan konfirmasi bila > 1
-  - [ ] Auto-expand entri baru & scroll ke dalamnya; entri lain collapse otomatis (satu terbuka pada satu waktu, bisa di-override)
-- [ ] **T3.4 Editor per section** (React Hook Form + Zod, `mode: 'onBlur'`, defaultValues dari store, `watch` → commit debounced 150ms)
-  - [ ] **Profile**: fullName, headline, email, phone, location, `LinksEditor` (label + url, tambah/hapus, validasi URL, auto-prefix `https://`)
-  - [ ] **Summary**: TextArea auto-grow + counter kata (target 40–90 kata, hint mono) + tombol `Contoh` (mengisi contoh yang bisa diubah)
-  - [ ] **Experience**: role, company, location, DateRangeField+current, `BulletListEditor`, `ChipsInput` stack
-  - [ ] **Education**: degree, field, institution, location, DateRange, gpa (validasi 0–4.00), notes (bullet)
-  - [ ] **Skills**: `SkillGroups` + `ChipsInput`. **Tanpa** level/bintang/bar
-  - [ ] **Projects**: name, role, url, DateRange, bullets, stack
-  - [ ] **Certifications**: name, issuer, issuedAt, credentialId, url
-  - [ ] **Languages**: name + `ProficiencySelect` (5 tingkat, teks bukan bar)
-  - [ ] **Awards**: title, issuer, awardedAt, description
-  - [ ] **Volunteering**: role, organization, DateRange+current, bullets
-- [ ] **T3.5 BulletListEditor detail** — §5.4
-  - [ ] Auto-grow textarea, prefix `›`, counter char dengan ambang 40/200 berwarna warn/bad
-  - [ ] Reorder bullet (dnd + panah), hapus, `+ Tambah bullet`
-  - [ ] Deteksi `startsWithActionVerb` & `containsMetric` → hint inline non-blocking mono 10.5px `--signal-warn` ("Belum ada angka. Tambahkan dampak terukur.") — **tidak** memblokir simpan
-  - [ ] Paste multi-baris → otomatis pecah jadi beberapa bullet
-- [ ] **T3.6 FirstRunCard** — §5.4
-  - [ ] Muncul hanya bila `!firstRunSeen`; 3 opsi; default `Pakai contoh CV`
-  - [ ] `Mulai dari kosong` → `resetDoc(createEmptyDoc())` + toast "Dokumen kosong dibuat"
-  - [ ] Set flag di IndexedDB; sediakan `Reset dokumen` di Menu mobile / dialog pengaturan
-- [ ] **T3.7 Validasi & UX error**
-  - [ ] Pesan error spesifik per field, Bahasa Indonesia, menyebut cara memperbaiki
-  - [ ] Rail menandai section bermasalah (badge mono 10px `<n> isu`)
-  - [ ] `scroll-to-first-error` saat pengguna mencoba export dengan data invalid
-  - [ ] Semua error terhubung `aria-describedby` + `role="alert"`
+- [x] **T3.1 SectionList (rail kiri)** — §5.3
+  - [x] Render dari `doc.sections` (urutan array)
+  - [x] Visibility checkbox, ikon per kind, label, `CompletenessDots` (0–3) + tooltip penjelasan
+  - [x] State aktif (wash + inset bar 2px cyanotype) terikat `activeSectionId`
+  - [x] PanelHeader `SECTIONS` + counter `visible/total`
+  - [x] `AddSectionButton` + Dialog katalog (hanya kind yang belum ada; tiap baris: ikon, nama, deskripsi 1 kalimat, tombol `Tambah`)
+  - [x] Menu konteks per item (klik kanan / `⋯`): Sembunyikan · Duplikat · Hapus (dengan Dialog konfirmasi bila berisi data)
+  - [x] `CompletenessMeter` + klik membuka drawer ATS
+- [x] **T3.2 Reorder section (@dnd-kit)**
+  - [x] `SortableContext` vertical, `PointerSensor` (activationConstraint distance 5) + `KeyboardSensor` (Space angkat, panah pindah, Space lepas)
+  - [x] DragOverlay: kartu bg raised radius 6 shadow raised scale 1.01; placeholder garis 2px `--cyanotype`
+  - [x] **Alternatif non-drag**: tombol `ArrowUp`/`ArrowDown` 28×28 muncul saat hover/focus (wajib di mobile & untuk keyboard)
+  - [x] `aria-live` mengumumkan urutan baru ("Experience pindah ke posisi 3")
+- [x] **T3.3 Field & EntryCard dasar**
+  - [x] `Field`, `MonthPicker`, `DateRangeField` + toggle `Saya masih bekerja di sini` (mengunci endDate, chip `SEKARANG`)
+  - [x] `EntryCard` collapse/expand, header ringkasan, kluster ikon (drag/duplikat/hapus), strip error
+  - [x] `EntryList`: `+ Tambah <entri>`, reorder entri (dnd-kit + panah), duplikat (id baru), hapus dengan konfirmasi bila > 1
+  - [x] Auto-expand entri baru & scroll ke dalamnya; entri lain collapse otomatis (satu terbuka pada satu waktu, bisa di-override)
+- [x] **T3.4 Editor per section** (binding langsung ke store: controlled components, validasi Zod per field saat nilai berubah, `updateSection`/`updateEntry` menimpa history dalam jendela 150ms supaya undo nanti per-burst ketikan, bukan per-ketikan — keputusan owner 2026-10-18 mengganti "React Hook Form + `watch` debounced")
+  - [x] **Profile**: fullName, headline, email, phone, location, `LinksEditor` (label + url, tambah/hapus, validasi URL, auto-prefix `https://`)
+  - [x] **Summary**: TextArea auto-grow + counter kata (target 40–90 kata, hint mono) + tombol `Contoh` (mengisi contoh yang bisa diubah)
+  - [x] **Experience**: role, company, location, DateRangeField+current, `BulletListEditor`, `ChipsInput` stack
+  - [x] **Education**: degree, field, institution, location, DateRange, gpa (validasi 0–4.00), notes (bullet)
+  - [x] **Skills**: `SkillGroups` + `ChipsInput`. **Tanpa** level/bintang/bar
+  - [x] **Projects**: name, role, url, DateRange, bullets, stack
+  - [x] **Certifications**: name, issuer, issuedAt, credentialId, url
+  - [x] **Languages**: name + `ProficiencySelect` (5 tingkat, teks bukan bar)
+  - [x] **Awards**: title, issuer, awardedAt, description
+  - [x] **Volunteering**: role, organization, DateRange+current, bullets
+- [x] **T3.5 BulletListEditor detail** — §5.4
+  - [x] Auto-grow textarea, prefix `›`, counter char dengan ambang 40/200 berwarna warn/bad
+  - [x] Reorder bullet (dnd + panah), hapus, `+ Tambah bullet`
+  - [x] Deteksi `startsWithActionVerb` & `containsMetric` → hint inline non-blocking mono 10.5px `--signal-warn` ("Belum ada angka. Tambahkan dampak terukur.") — **tidak** memblokir simpan
+  - [x] Paste multi-baris → otomatis pecah jadi beberapa bullet
+- [x] **T3.6 FirstRunCard** — §5.4
+  - [x] Muncul hanya bila `!firstRunSeen`; 3 opsi; default `Pakai contoh CV`
+  - [x] `Mulai dari kosong` → `resetDoc(createEmptyDoc())` + toast "Dokumen kosong dibuat"
+  - [x] Set flag di IndexedDB; sediakan `Reset dokumen` di Menu mobile / dialog pengaturan
+- [x] **T3.7 Validasi & UX error**
+  - [x] Pesan error spesifik per field, Bahasa Indonesia, menyebut cara memperbaiki
+  - [x] Rail menandai section bermasalah (badge mono 10px `<n> isu`)
+  - [x] `scroll-to-first-error` saat pengguna mencoba export dengan data invalid (mekanisme `scrollToFirstInvalidField` + unit test; pemanggilan dari tombol Download menyusul T5.2 karena tombol masih disabled)
+  - [x] Semua error terhubung `aria-describedby` + `role="alert"`
 
 **Gate Fase 3**
-- [ ] Sembilan section bisa diisi, ditambah, disembunyikan, dihapus, dan diurutkan ulang
-- [ ] Reorder berfungsi dengan **mouse, sentuhan, dan keyboard**
-- [ ] Data bertahan setelah refresh (IndexedDB)
-- [ ] Unit test: `registry.isComplete` untuk semua kind; validasi Zod tiap entri; reducer reorder
-- [ ] E2E Playwright: `editor-flow.spec.ts` — isi profile + 1 experience + 2 bullet → refresh → data ada
-- [ ] Tidak ada field tanpa label yang terikat (`<label for>`)
+- [x] Sembilan section bisa diisi, ditambah, disembunyikan, dihapus, dan diurutkan ulang
+- [x] Reorder berfungsi dengan **mouse, sentuhan, dan keyboard**
+- [x] Data bertahan setelah refresh (IndexedDB)
+- [x] Unit test: `registry.isComplete` untuk semua kind; validasi Zod tiap entri; reducer reorder
+- [x] E2E Playwright: `editor-flow.spec.ts` — isi profile + 1 experience + 2 bullet → refresh → data ada
+- [x] Tidak ada field tanpa label yang terikat (`<label for>`)
 
 ---
 
@@ -1187,9 +1187,8 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 
 ## 9. Execution Log
 
-| Tanggal | Fase | Task | Catatan / Bukti | Status |
-| :-- | :-- | :-- | :-- | :-- |
 | 2026-10-18 | 0 | T0.1, T0.2, T0.3, T0.5 + Gate 1/3/4 | `pnpm lint && pnpm typecheck && pnpm test && pnpm build` hijau (15 unit test, 9 e2e test). Bundle awal terukur **110,6 KB gzip** (index.js 101,12 + index.css 9,10 + html 0,37) dan `dist` produksi hanya 26 modul — rute `/dev/*` benar-benar ter-DCE. `/dev/tokens` difoto pada 360/768/1024/1440 tanpa horizontal scroll; navigasi keyboard penuh lolos (skip link → tombol → input, border fokus cyanotype). T0.5: Δ 0,00 mm untuk margin kiri/atas, ukuran font nama, dan tinggi baris body. | ✅ Selesai & terverifikasi |
+| 2026-10-18 | 3 | T3.1–T3.7 + Gate Fase 3 | `pnpm lint`, `pnpm typecheck`, `pnpm test` (147 test, 18 file) hijau; `pnpm build` sukses via `vite build` exit 0 (`pnpm build` membungkusnya exit 1 di PowerShell lokal karena warning chunk-size > 500 kB ditulis ke stderr dan di-escalate shell — di CI Linux `pnpm build` lolos sebagaimana Fase 0–2); e2e `editor-flow.spec.ts` 8/8 + `shell.spec.ts` 7/7 hijau. Reorder dibuktikan 3 input (test + `artifacts/evidence/fase3-reorder-{mouse,touch,keyboard}.png`): drag mouse (dnd-kit PointerSensor), sentuhan (touch pointer dari CDP), keyboard (Space+panah+Space, pengumuman aria-live). Audit label otomatis 10/10 section: 0 field tanpa label terikat. Screenshot manual 360/768/1024/1440 + uji keyboard saja (`artifacts/evidence/fase3-bp-*.png`, `fase3-keyboard-only.png`). **Keputusan owner sesi ini**: T3.4 tanpa React Hook Form — binding langsung + history di-coalesce 150 ms (teks T3.4 diubah dulu di dokumen, lalu kode; test coalescing ditambahkan). **Bug nyata diperbaiki dalam fase**: (1) Radix ScrollArea membungkus konten dengan div `display:table` inline → row rail melebar ~299 px, handle drag terpotong di luar viewport 248 px (pointerdown mendarat di FormPane) — diperbaiki dengan `[&>div]:block!` di `scroll-area.tsx`; (2) regex GPA Fase 1 meloloskan `4.50` padahal pesan & plan bilang skala 0–4.00 — diketatkan, tidak ada fixture/test yang memakai nilai di luar skala. **Catatan terbuka**: `scrollToFirstInvalidField` teruji unit, tapi pemanggilan dari tombol Download menyusul T5.2 (tombol masih disabled). | ✅ Selesai & terverifikasi |
 | 2026-10-18 | 0 | T0.4 (spike PDF) + Gate 2 | `pnpm pdf:verify` 15/16 pemeriksaan lolos — A4 tepat 595,28×841,89 pt; margin kiri 45,35 pt = 16 mm; font nama 24,00 pt; heading 9,50 pt; body 10,00 pt; line-height 14,20 pt; urutan baca name→contact→heading→entry→bullet benar; 60 bullet → 3 halaman; `fixed` mengulang header. **Yang gagal: PDF membuang kata di titik wrap.** | ⛔ Terblokir → diselesaikan di baris berikutnya |
 | 2026-10-18 | 0 | T0.4 + Gate 2 (resolusi) | Owner memutuskan kontingensi §10(c): **`@react-pdf/renderer` → `pdf-lib` + `@pdf-lib/fontkit`**. Spike ditulis ulang (`features/templates/pdf/SpikePdfLib.ts` — line-wrap & page-break milik kita, satu `spikeSpec` untuk dua renderer). `pnpm pdf:verify` kini **15/15 PASS**, termasuk "semua 60 bullet utuh (tidak ada kata hilang saat wrap)". Durasi: 1 hal 150 ms · 3 hal 340 ms. Chunk `spikePdf` 506,5 KB gzip terpisah (entry 0 referensi `PDFDocument`/`fontkit`/`embedFont`), bundle awal tetap 106 KB gzip. e2e 9/9 hijau. | ✅ Selesai & terverifikasi |
 | 2026-10-18 | 0 | Hutang yang dicatat untuk Fase 5 | (1) **Ukuran berkas PDF**: pdf-lib menanam font penuh — 1 halaman = 141 KB vs 22 KB pada react-pdf (yang men-subset). T5.4 wajib subset TTF sebelum embed, atau hasilkan subset saat build. (2) pdf-lib tidak punya `letter-spacing`; tracking heading ditiru karakter-per-karakter di `SheetWriter.tracked()` — Fase 5 perlu memutuskan ini acceptable atau pakai `charSpace` manual di satu jalur. (3) `pnpm lhci` + `lighthouserc.json` belum ada ( §1 menandainya "mulai Fase 9" ). (4) `shadcn` memakai animasi `animate-in/out` dari `tw-animate-css` yang sengaja tidak dipasang — dialog/sheet belum beranimasi sampai T2.5. | 🟡 Catatan |

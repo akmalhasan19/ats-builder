@@ -3,7 +3,8 @@ import { t } from '@/lib/i18n'
 import { createSampleDoc, migrate } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import { useSyncStore } from '@/store/syncStore'
-import { DOC_KEY, quarantineCorruptDoc, readValue, writeValue } from './idb'
+import { useUiStore } from '@/store/uiStore'
+import { DOC_KEY, FIRST_RUN_KEY, quarantineCorruptDoc, readValue, writeValue } from './idb'
 import { startAutosave } from './autosave'
 
 let started = false
@@ -24,6 +25,15 @@ export async function initPersistence(): Promise<void> {
   started = true
 
   registerConnectivityListeners()
+
+  // FirstRunCard hanya untuk kunjungan pertama; tanpa hidrasi ini kartu
+  // muncul ulang setiap reload meski pilihan sudah pernah dibuat.
+  try {
+    const firstRun = await readValue<boolean>(FIRST_RUN_KEY)
+    if (firstRun === true) useUiStore.getState().setFirstRunSeen(true)
+  } catch {
+    // IndexedDB ditolak → kartu tetap tampil; pilihannya tetap berfungsi.
+  }
 
   let raw: unknown
   let readOk = true

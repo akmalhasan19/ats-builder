@@ -59,7 +59,9 @@ test('workspace langsung hidup: brand, judul, status, rail, dan lembar A4', asyn
   await expect(page.getByRole('main', { name: 'Ruang kerja CV' })).toBeVisible()
   await expect(page.getByRole('complementary', { name: 'Bagian' })).toBeVisible()
   await expect(page.locator('[data-probe="paper"]')).toBeVisible()
-  await expect(page.getByRole('status')).toContainText('Disimpan di perangkat')
+  await expect(page.getByRole('status', { name: 'Status penyimpanan' })).toContainText(
+    'Disimpan di perangkat',
+  )
   await expect(page.getByRole('button', { name: /Ubah judul CV/ })).toBeVisible()
   expect(errors).toEqual([])
 })
@@ -158,7 +160,9 @@ test('keyboard saja: skip link, ubah judul, lalu ganti template', async ({ page 
   await page.keyboard.press('Enter')
 
   await expect(titleButton).toContainText('CV Keyboard')
-  await expect(page.getByRole('status')).toContainText('Disimpan di perangkat')
+  await expect(page.getByRole('status', { name: 'Status penyimpanan' })).toContainText(
+    'Disimpan di perangkat',
+  )
 
   const trigger = page.locator('[data-probe="template-trigger"]')
   await expect(trigger).toContainText('Classic ATS')
@@ -195,7 +199,9 @@ test('judul dan template bertahan setelah reload (local-first)', async ({ page }
   await page.getByRole('button', { name: /Ubah judul CV/ }).click()
   await page.getByLabel('Judul dokumen').fill('CV Produk')
   await page.keyboard.press('Enter')
-  await expect(page.getByRole('status')).toContainText('Disimpan di perangkat')
+  await expect(page.getByRole('status', { name: 'Status penyimpanan' })).toContainText(
+    'Disimpan di perangkat',
+  )
 
   await page.reload()
   await expect(page.getByRole('button', { name: /Ubah judul CV/ })).toContainText('CV Produk')
