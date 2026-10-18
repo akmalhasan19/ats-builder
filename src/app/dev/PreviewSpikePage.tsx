@@ -149,7 +149,7 @@ export default function PreviewSpikePage() {
 
           <Button
             className="ml-auto"
-            variant="outline"
+            variant="secondary"
             size="sm"
             disabled={busy}
             onClick={() => void loadComparisonPdf()}

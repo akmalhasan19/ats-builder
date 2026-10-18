@@ -14,7 +14,7 @@
   /* Tinta */
   --color-ink: #10161f;
   --color-ink-secondary: #46505e;
-  --color-ink-tertiary: #78838f;
+  --color-ink-tertiary: #5f6a77;
   --color-rule: #d3d9e0;
   --color-rule-strong: #b4bcc6;
 
@@ -28,7 +28,7 @@
 
   /* Sinyal semantik */
   --color-signal-ok: #2e7a50;
-  --color-signal-warn: #a9761a;
+  --color-signal-warn: #8a5e10;
   --color-signal-bad: #b03a2b;
 
   /* Satu-satunya surface gelap: readout mesin / Parse Tape (§2.2 aturan 2) */
@@ -48,6 +48,25 @@
 
   /* Well di belakang lembar A4 (§2.4) */
   --shadow-well: inset 0 1px 3px rgba(16, 22, 31, 0.06);
+
+  /* Elevasi (§2.4) */
+  --shadow-raised: 0 1px 2px rgba(16, 22, 31, 0.06);
+  --shadow-dialog: 0 24px 64px -16px rgba(16, 22, 31, 0.32);
+  --shadow-drawer: -8px 0 32px -12px rgba(16, 22, 31, 0.22);
+
+  /* Wash turunan §5 — supaya komponen tidak menulis rgba sendiri */
+  --color-hover: rgba(16, 22, 31, 0.04);
+  --color-scrim: rgba(16, 22, 31, 0.2);
+  --color-scrim-strong: rgba(16, 22, 31, 0.42);
+  --color-focus-wash: rgba(15, 90, 120, 0.16);
+  --color-bad-wash: rgba(176, 58, 43, 0.12);
+  --color-warn-wash: rgba(138, 94, 16, 0.14);
+  --color-ok-wash: rgba(46, 122, 80, 0.1);
+  --color-toolbar-glass: rgba(255, 255, 255, 0.86);
+
+  --shadow-focus: 0 0 0 3px var(--color-focus-wash);
+  --shadow-focus-bad: 0 0 0 3px var(--color-bad-wash);
+  --shadow-active-bar: inset 2px 0 0 var(--color-cyanotype);
 }
 
 /* Nama token persis seperti tertulis di §2.2, supaya spesifikasi UI (§5) bisa
@@ -83,6 +102,12 @@
   --popover-foreground: var(--color-ink);
   --border: var(--color-rule);
   --radius: 6px;
+
+  /* Durasi & easing (§2.6, T2.5). Semua animasi memakai nilai ini. */
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 280ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Jembatan ke primitif shadcn/ui. Fase 2 (T2.1) menyetel ulang primitif ini
@@ -180,6 +205,69 @@
   color: var(--color-machine-text);
 }
 
+/* Ukuran turunan yang dipakai §5 (tombol non-primer, rail, chip, hint).
+   Warnanya sengaja tidak ditanam supaya state disabled/hover bisa menimpanya. */
+
+@utility text-button {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@utility text-button-strong {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@utility text-caption {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+@utility text-rail-label {
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+@utility text-chip-label {
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+@utility text-hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+@utility text-button-lg {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+@utility text-page-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+@utility text-dialog-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
 /* ---- Skala tipe: homepage (§2.3) ----------------------------------------- */
 
 @utility display-xl {
@@ -228,6 +316,159 @@
     outline: 2px solid var(--color-cyanotype);
     outline-offset: 2px;
   }
+}
+
+/* ---- Motion (§2.6) — keyframes & state Radix ------------------------------ */
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.985);
+  }
+}
+
+@keyframes sheet-from-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes sheet-from-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes sheet-from-bottom {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes sheet-from-top {
+  from {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes paper-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes accordion-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-close {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+[data-slot='dialog-overlay'],
+[data-slot='sheet-overlay'] {
+  animation-duration: var(--dur-base);
+  animation-timing-function: var(--ease-standard);
+}
+
+[data-slot='dialog-overlay'][data-state='open'],
+[data-slot='sheet-overlay'][data-state='open'] {
+  animation-name: overlay-in;
+}
+
+[data-slot='dialog-overlay'][data-state='closed'],
+[data-slot='sheet-overlay'][data-state='closed'] {
+  animation-name: overlay-out;
+  animation-duration: var(--dur-fast);
+}
+
+[data-slot='dialog-content'][data-state='open'] {
+  animation: dialog-in var(--dur-base) var(--ease-standard);
+}
+
+[data-slot='dialog-content'][data-state='closed'] {
+  animation: pop-in var(--dur-fast) var(--ease-standard) reverse;
+}
+
+[data-slot='sheet-content'][data-state='open'][data-side='right'] {
+  animation: sheet-from-right var(--dur-base) var(--ease-standard);
+}
+
+[data-slot='sheet-content'][data-state='open'][data-side='left'] {
+  animation: sheet-from-left var(--dur-base) var(--ease-standard);
+}
+
+[data-slot='sheet-content'][data-state='open'][data-side='bottom'] {
+  animation: sheet-from-bottom var(--dur-base) var(--ease-standard);
+}
+
+[data-slot='sheet-content'][data-state='open'][data-side='top'] {
+  animation: sheet-from-top var(--dur-base) var(--ease-standard);
+}
+
+[data-slot='popover-content'],
+[data-slot='dropdown-menu-content'],
+[data-slot='tooltip-content'] {
+  animation: pop-in var(--dur-fast) var(--ease-standard);
+}
+
+[data-slot='accordion-content'][data-state='open'] {
+  animation: accordion-open var(--dur-base) var(--ease-standard);
+}
+
+[data-slot='accordion-content'][data-state='closed'] {
+  animation: accordion-close var(--dur-fast) var(--ease-standard);
+}
+
+/* Lembar A4 "settled" saat first paint (§2.6) */
+.animate-paper-settle {
+  animation: paper-settle var(--dur-base) var(--ease-standard) both;
+}
+
+/* Titik status simpan berdenyut 2× lalu diam (§2.6) — bukan spinner. */
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0.35;
+  }
+}
+
+.animate-dot-pulse {
+  animation: dot-pulse 600ms var(--ease-standard) 2;
 }
 
 /* §2.6 — wajib global, bukan tambalan per komponen */

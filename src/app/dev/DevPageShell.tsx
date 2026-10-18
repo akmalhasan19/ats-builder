@@ -48,7 +48,7 @@ export function DevPageShell({
               to={item.to}
               className={({ isActive }) =>
                 [
-                  'rounded-md px-3 py-1.5 text-[13px] font-medium',
+                  'text-button rounded-md px-3 py-1.5',
                   isActive
                     ? 'bg-cyanotype-wash text-cyanotype'
                     : 'text-ink-secondary hover:bg-sunken hover:text-ink',

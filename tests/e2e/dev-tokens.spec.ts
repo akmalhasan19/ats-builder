@@ -35,6 +35,45 @@ test('seluruh token warna §2.2 tampil di /dev/tokens', async ({ page }) => {
   }
 })
 
+const CATALOG_SECTIONS = [
+  'panel-header',
+  'buttons',
+  'icon-buttons',
+  'fields',
+  'toggles',
+  'chips',
+  'empty-state',
+  'dialog',
+  'sheet',
+  'popover',
+  'tooltip',
+  'tabs',
+  'accordion',
+  'scroll',
+  'toast',
+]
+
+test('katalog primitif T2.1 lengkap di /dev/tokens', async ({ page }) => {
+  await page.goto('/dev/tokens')
+  for (const section of CATALOG_SECTIONS) {
+    await expect(page.locator(`[data-catalog="${section}"]`)).toBeVisible()
+  }
+  await expect(page.locator('[data-catalog="buttons"] button')).toHaveCount(13)
+  await expect(page.getByRole('button', { name: 'Buka dialog' })).toBeVisible()
+
+  // State hover nyata, bukan hanya kelas di markup (§5.2).
+  const primary = page.locator('[data-catalog="buttons"] button').first()
+  await primary.hover()
+  await expect(primary).toHaveCSS('background-color', 'rgb(18, 121, 163)')
+
+  // Tooltip harus memakai surface mesin dengan teks terang (§5.11).
+  await page.getByRole('button', { name: 'Arahkan kursor ke sini' }).hover()
+  const tooltip = page.locator('[data-slot="tooltip-content"]')
+  await expect(tooltip).toBeVisible()
+  await expect(tooltip).toHaveCSS('color', 'rgb(232, 237, 244)')
+  await expect(tooltip).toHaveCSS('background-color', 'rgb(16, 22, 31)')
+})
+
 test('seluruh skala tipe §2.3 tampil beserta metrik terukurnya', async ({ page }) => {
   await page.goto('/dev/tokens')
   for (const utility of [...CHROME_TYPE_TOKENS, ...HOME_TYPE_TOKENS]) {

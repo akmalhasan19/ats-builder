@@ -1,15 +1,22 @@
 import * as React from 'react'
 import { cn } from 'cn'
 
+/** §5.4 — focus memakai border cyanotype + ring 3px, bukan outline ganda. */
+export const fieldFocusClasses =
+  'focus-visible:border-cyanotype focus-visible:shadow-[var(--shadow-focus)] focus-visible:outline-none data-[demo-focus=true]:border-cyanotype data-[demo-focus=true]:shadow-[var(--shadow-focus)]'
+
+export const fieldInvalidClasses =
+  'aria-invalid:border-signal-bad aria-invalid:shadow-[var(--shadow-focus-bad)]'
+
 function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
   return (
     <input
       type={type}
       data-slot="input"
       className={cn(
-        'h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none selection:bg-primary selection:text-primary-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30',
-        'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
-        'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
+        'text-input h-[38px] w-full min-w-0 rounded-md border border-rule bg-raised px-[11px] transition-[border-color,box-shadow] duration-[var(--dur-fast)] outline-none placeholder:text-ink-tertiary hover:border-rule-strong disabled:cursor-not-allowed disabled:border-rule disabled:bg-sunken disabled:text-ink-tertiary',
+        fieldFocusClasses,
+        fieldInvalidClasses,
         className,
       )}
       {...props}

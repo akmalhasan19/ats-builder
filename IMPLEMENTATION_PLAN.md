@@ -71,7 +71,7 @@ Aksen utama bukan biru SaaS generik, tapi **biru cyanotype** — biru tinta repr
 /* Tinta */
 --ink               : #10161F;  /* teks utama, judul */
 --ink-secondary     : #46505E;  /* teks pendukung, label */
---ink-tertiary      : #78838F;  /* placeholder, caption, mono redup */
+--ink-tertiary      : #5F6A77;  /* placeholder, caption, mono redup */
 --rule              : #D3D9E0;  /* border 1px */
 --rule-strong       : #B4BCC6;  /* border input focus-adjacent, divider tabel */
 
@@ -85,7 +85,7 @@ Aksen utama bukan biru SaaS generik, tapi **biru cyanotype** — biru tinta repr
 
 /* Sinyal semantik (dipakai checker & validasi form) */
 --signal-ok         : #2E7A50;
---signal-warn       : #A9761A;
+--signal-warn       : #8A5E10;
 --signal-bad        : #B03A2B;
 
 /* Satu-satunya surface gelap: readout mesin (Parse Tape) */
@@ -93,6 +93,10 @@ Aksen utama bukan biru SaaS generik, tapi **biru cyanotype** — biru tinta repr
 --machine-text      : #E8EDF4;
 --machine-dim       : #7C8B9C;
 ```
+
+> **Revisi 2026-10-18 (disetujui owner, Fase 2):** `--ink-tertiary` `#78838F → #5F6A77` dan `--signal-warn` `#A9761A → #8A5E10`.
+> Alasan: audit kontras T2.5 menunjukkan keduanya dipakai §5 untuk teks 10–10.5px dan hanya mencapai 3,86:1 / 3,97:1 di atas putih — di bawah ambang AA 4,5:1 (P8).
+> Nilai baru: ink-tertiary 5,51:1 (raised) · 4,82:1 (sunken) · 4,31:1 (workbench, hanya dekorasi); signal-warn 5,69:1 (raised) · 4,98:1 (sunken). Hue dan hierarki tidak berubah.
 
 **Aturan pemakaian yang tidak boleh dilanggar:**
 1. `--highlighter` tidak pernah dipakai untuk tombol, ikon chrome, atau latar panel. Hanya untuk menandai teks di atas kertas.
@@ -669,43 +673,43 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
-### ☐ FASE 2 — Design System & App Shell
+### ☑ FASE 2 — Design System & App Shell *(selesai 2026-10-18, semua gate hijau)*
 
-- [ ] **T2.1 Primitif sesuai token**
-  - [ ] `Button` varian: `primary` (solid cyanotype) · `secondary` (outlined cyanotype) · `ghost` · `subtle` (bg surface) · `destructive`; ukuran `sm 32` `md 36` `lg 44`; state hover/active/disabled/focus-visible persis §5.2
-  - [ ] `Input`, `Textarea` (auto-grow), `Label`, `FieldWrapper` (label + hint + error + `aria-describedby`), `Switch`, `Checkbox` kustom 16px
-  - [ ] `Dialog`, `Sheet` (kanan & bawah), `Popover`, `DropdownMenu`, `Tooltip`, `Tabs`, `Accordion`, `ScrollArea`, `Separator`, `Sonner/Toast` bertema `--machine`
-  - [ ] `IconButton` (28/32/36), `Chip`, `Badge`, `EmptyState`, `PanelHeader`, `Eyebrow`
-  - [ ] Storybook-**lite**: perluas `/dev/tokens` jadi katalog semua komponen & state (tanpa dependensi Storybook)
-- [ ] **T2.2 Routing & shell**
-  - [ ] React Router: `/`, `/r/:resumeId`, `/templates`, `/dashboard`, `/login`, `/auth/callback`, `/privacy`, `/terms`, `/cover-letter`
-  - [ ] `AppShell`: `TopBar` + `main` grid; breakpoint listener (`matchMedia`) → `uiStore.panelMode`
-  - [ ] `ErrorBoundary` root + per-route: layar bg `--surface`, ikon `AlertOctagon` `--signal-bad`, judul Archivo 600 18px "Ada yang tidak beres", body menjelaskan + tombol `Muat ulang` dan `Kembali ke editor` (data lokal aman)
-  - [ ] `SkipToContent` link (muncul saat Tab pertama)
-- [ ] **T2.3 Top Bar** — implementasi penuh §5.2
-  - [ ] `BrandMark` (SVG inline 22×22, goresan stabilo), wordmark Archivo Expanded
-  - [ ] `DocumentTitle` editable inline (Enter/Esc, blur = simpan, kosong → revert + toast)
-  - [ ] `SaveStatusPill` 5 status + `aria-live="polite"` + klik retry saat error
-  - [ ] Slot kanan: `TemplateSelect` (popover grid — isi thumbnail menyusul Fase 6, sementara nama + ikon), `CheckAtsButton` (disabled + tooltip "Tersedia setelah Fase 7" selama dev), `DownloadButton`
-  - [ ] Mobile: collapse ke Brand + Title + `Download` + `Menu` sheet
-- [ ] **T2.4 Grid 3 panel + responsif**
-  - [ ] Layout `grid-cols-[248px_minmax(380px,520px)_1fr]` ≥1280; `grid-cols-[56px_minmax(360px,1fr)_1fr]` 1024–1279; single-col + `SegmentedTab` 768–1023; mobile < 768
-  - [ ] `Rail` (sunken) dengan scroll-area; mode icon-rail + tooltip
-  - [ ] `PreviewWell` (workbench) dengan inset shadow
-  - [ ] `MobileTabBar` segmented dengan indikator geser
-  - [ ] `StickyActionBar` mobile + `env(safe-area-inset-bottom)` + body padding-bottom agar tidak menutupi konten
-- [ ] **T2.5 Motion & a11y dasar**
-  - [ ] `MotionProvider`/CSS vars untuk durasi; semua animasi lewat token (`--dur-fast 120ms`, `--dur-base 180ms`, `--dur-slow 280ms`)
-  - [ ] Reduced-motion menghormati §2.6 (uji manual dengan emulasi Chrome)
-  - [ ] `focus-visible` di semua interaktif; uji Tab penuh tanpa mouse di desktop & mobile
-  - [ ] Kontras: audit semua pasangan teks/latar ≥ 4.5:1 (body) & ≥ 3:1 (teks besar, ikon)
+- [x] **T2.1 Primitif sesuai token**
+  - [x] `Button` varian: `primary` (solid cyanotype) · `secondary` (outlined cyanotype) · `ghost` · `subtle` (bg surface) · `destructive`; ukuran `sm 32` `md 36` `lg 44`; state hover/active/disabled/focus-visible persis §5.2
+  - [x] `Input`, `Textarea` (auto-grow), `Label`, `FieldWrapper` (label + hint + error + `aria-describedby`), `Switch`, `Checkbox` kustom 16px
+  - [x] `Dialog`, `Sheet` (kanan & bawah), `Popover`, `DropdownMenu`, `Tooltip`, `Tabs`, `Accordion`, `ScrollArea`, `Separator`, `Sonner/Toast` bertema `--machine`
+  - [x] `IconButton` (28/32/36), `Chip`, `Badge`, `EmptyState`, `PanelHeader`, `Eyebrow`
+  - [x] Storybook-**lite**: perluas `/dev/tokens` jadi katalog semua komponen & state (tanpa dependensi Storybook)
+- [x] **T2.2 Routing & shell**
+  - [x] React Router: `/`, `/r/:resumeId`, `/templates`, `/dashboard`, `/login`, `/auth/callback`, `/privacy`, `/terms`, `/cover-letter`
+  - [x] `AppShell`: `TopBar` + `main` grid; breakpoint listener (`matchMedia`) → `uiStore.panelMode`
+  - [x] `ErrorBoundary` root + per-route: layar bg `--surface`, ikon `AlertOctagon` `--signal-bad`, judul Archivo 600 18px "Ada yang tidak beres", body menjelaskan + tombol `Muat ulang` dan `Kembali ke editor` (data lokal aman)
+  - [x] `SkipToContent` link (muncul saat Tab pertama)
+- [x] **T2.3 Top Bar** — implementasi penuh §5.2
+  - [x] `BrandMark` (SVG inline 22×22, goresan stabilo), wordmark Archivo Expanded
+  - [x] `DocumentTitle` editable inline (Enter/Esc, blur = simpan, kosong → revert + toast)
+  - [x] `SaveStatusPill` 5 status + `aria-live="polite"` + klik retry saat error
+  - [x] Slot kanan: `TemplateSelect` (popover grid — isi thumbnail menyusul Fase 6, sementara nama + ikon), `CheckAtsButton` (disabled + tooltip "Tersedia setelah Fase 7" selama dev), `DownloadButton` — *tombol unduh tampil dengan state disabled + tooltip "Tersedia setelah Fase 5" sampai jalur PDF ada; state `Membuat PDF…` menyusul bersama T5.2*
+  - [x] Mobile: collapse ke Brand + Title + `Download` + `Menu` sheet — *di 768–1023 unduh tetap di top bar, di <768 pindah ke sticky bar (§5.7)*
+- [x] **T2.4 Grid 3 panel + responsif**
+  - [x] Layout `grid-cols-[248px_minmax(380px,520px)_1fr]` ≥1280; `grid-cols-[56px_minmax(360px,1fr)_1fr]` 1024–1279; single-col + `SegmentedTab` 768–1023; mobile < 768
+  - [x] `Rail` (sunken) dengan scroll-area; mode icon-rail + tooltip — *isi rail masih navigasi minimum; visibility checkbox, completeness dots, dan reorder adalah T3.1–T3.2*
+  - [x] `PreviewWell` (workbench) dengan inset shadow
+  - [x] `MobileTabBar` segmented dengan indikator geser
+  - [x] `StickyActionBar` mobile + `env(safe-area-inset-bottom)` + body padding-bottom agar tidak menutupi konten
+- [x] **T2.5 Motion & a11y dasar**
+  - [x] `MotionProvider`/CSS vars untuk durasi; semua animasi lewat token (`--dur-fast 120ms`, `--dur-base 180ms`, `--dur-slow 280ms`)
+  - [x] Reduced-motion menghormati §2.6 (uji manual dengan emulasi Chrome)
+  - [x] `focus-visible` di semua interaktif; uji Tab penuh tanpa mouse di desktop & mobile
+  - [x] Kontras: audit semua pasangan teks/latar ≥ 4.5:1 (body) & ≥ 3:1 (teks besar, ikon) — *`tests/unit/contrast.test.ts`, 25 pasangan; dua token digelapkan minimal sesuai revisi §2.2*
 
 **Gate Fase 2**
-- [ ] `/dev/tokens` menampilkan seluruh komponen dengan semua state
-- [ ] Resize 360 → 1920 tanpa layout rusak, tanpa horizontal scroll (kecuali di PreviewWell)
-- [ ] Navigasi keyboard penuh: semua kontrol bisa dicapai & dioperasikan tanpa mouse
-- [ ] `pnpm build` hijau; CLS pada shell = 0 (diukur Lighthouse lokal)
-- [ ] Tidak ada warna/ukuran hardcoded di komponen — semua lewat token (verifikasi: grep hex di `src/components` & `src/features` = 0 hasil di luar `tokens.css` dan renderer template)
+- [x] `/dev/tokens` menampilkan seluruh komponen dengan semua state
+- [x] Resize 360 → 1920 tanpa layout rusak, tanpa horizontal scroll (kecuali di PreviewWell)
+- [x] Navigasi keyboard penuh: semua kontrol bisa dicapai & dioperasikan tanpa mouse
+- [x] `pnpm build` hijau; CLS pada shell = 0 (diukur Lighthouse lokal) — *terukur 0,0000 lewat PerformanceObserver `layout-shift` (metrik yang sama dengan Lighthouse); `lhci` baru dipasang di Fase 9 sesuai §1*
+- [x] Tidak ada warna/ukuran hardcoded di komponen — semua lewat token (verifikasi: grep hex di `src/components` & `src/features` = 0 hasil di luar `tokens.css` dan renderer template)
 
 ---
 
@@ -1191,6 +1195,9 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | 2026-10-18 | 0 | Hutang yang dicatat untuk Fase 5 | (1) **Ukuran berkas PDF**: pdf-lib menanam font penuh — 1 halaman = 141 KB vs 22 KB pada react-pdf (yang men-subset). T5.4 wajib subset TTF sebelum embed, atau hasilkan subset saat build. (2) pdf-lib tidak punya `letter-spacing`; tracking heading ditiru karakter-per-karakter di `SheetWriter.tracked()` — Fase 5 perlu memutuskan ini acceptable atau pakai `charSpace` manual di satu jalur. (3) `pnpm lhci` + `lighthouserc.json` belum ada ( §1 menandainya "mulai Fase 9" ). (4) `shadcn` memakai animasi `animate-in/out` dari `tw-animate-css` yang sengaja tidak dipasang — dialog/sheet belum beranimasi sampai T2.5. | 🟡 Catatan |
 | 2026-10-18 | 1 | T1.1–T1.5 + Gate Fase 1 | `pnpm lint && pnpm typecheck && pnpm test && pnpm build` hijau — **102 test** (termasuk 15 test Fase 0 yang tetap lulus, tanpa regresi). `pnpm test --coverage`: **lib 100/100 · schema 100 stmts/88,13 branch · store 100/93,02** — semua ≥ 85% (ambang di `vite.config.ts`, provider `@vitest/coverage-v8` yang disetujui owner). e2e `tests/e2e/persistence.spec.ts` 2/2: (1) isi form → reload → data utuh; (2) dokumen korup → karantina `ats:doc:corrupt:<ts>` + dokumen contoh + toast penjelasan, tanpa white screen. e2e penuh 11/11. Grep: 0 string UI hardcoded di luar `dictionaries/` (sisa literal Bahasa = pesan Zod yang dimandatkan T1.1 + data CV contoh), 0 hex di luar `tokens.css` & renderer template, 0 TODO/FIXME, 0 klaim "lolos ATS". Manual browser `/dev/persist`: 360/768/1024/1440 tanpa scroll horizontal (screenshot 360 & 1440), keyboard-only: Tab 7× dari body → input judul, ketik → pill `Menyimpan…` → `Disimpan di perangkat` → reload manual → nilai tetap. | ✅ Selesai & terverifikasi |
 | 2026-10-18 | 1 | Keputusan kecil di luar teks plan | (1) Bukti gate "isi form → refresh" memakai harness dev `/dev/persist` (rute dev-only, ter-DCE dari build produksi) karena form editor baru ada di Fase 2–3 — **disetujui owner**. (2) `@vitest/coverage-v8` dipasang sebagai devDependency (dimandat perintah verifikasi) — **disetujui owner**. (3) `<Toaster/>` global dipasang di `main.tsx` dan boot persistensi dipindah ke efek `PersistenceBoot` setelahnya: sonner membuang toast yang dipanggil tanpa subscriber, jadi urutan ini membuat toast boot korup deterministik. (4) `syncStore` menambah `storageMode: 'idb'\u00a0\|\u00a0'memory'` — field tambahan di luar daftar T1.2, dibutuhkan agar banner T1.3 ("Perubahan tidak tersimpan di perangkat ini") bisa dibaca UI. (5) `addEntry(sectionId)` membuat entri via `createEmptyEntry(kind)` sehingga id selalu lahir di factory (aturan §4). (6) `createEmptyDoc()` memakai `title: ''`; fallback tampilan `doc.untitled` ("CV tanpa judul") diserahkan ke UI Fase 2. (7) `types/resume.ts` diformat prettier (`semi: false`); isi identik dengan §4. (8) Di Windows, `pnpm test -- --coverage` meneruskan literal `--` tanpa mengaktifkan coverage — bukti coverage memakai `pnpm test --coverage`. | 🟡 Catatan owner |
+
+| 2026-10-18 | 2 | T2.1–T2.5 + Gate Fase 2 | `pnpm lint && pnpm typecheck && pnpm test && pnpm build` hijau — **136 unit test** (16 file) dan **19 e2e**. Bundle awal **193,82 KB gzip** (masih < 220 KB); `dist` tanpa rute `/dev/*` dan tanpa `PDFDocument`. `/dev/tokens` kini katalog 15 bagian (`data-catalog`: panel-header, buttons, icon-buttons, fields, toggles, chips, empty-state, dialog, sheet, popover, tooltip, tabs, accordion, scroll, toast) + hover state diukur nyata. Resize 360/768/1024/1440/1920: 0 horizontal scroll, rail hanya ≥1024, tab mobile <1024, sticky bar <768; screenshot `artifacts/shell-{360,768,1024,1440,1920}.png`. Keyboard tanpa mouse: Tab → skip link → brand → judul (Enter, ketik, Enter) → template (Enter → Ledger) → rail (Enter → heading berganti). CLS shell **0,0000**; reduced-motion mematikan animasi. Kontras: 25 pasangan di `tests/unit/contrast.test.ts`. Grep hex di `src/components` + `src/features` di luar renderer template = **0 hasil**. | ✅ Selesai & terverifikasi |
+| 2026-10-18 | 2 | Keputusan kecil di luar teks plan | (1) Dua token digelapkan sesuai keputusan owner: `--ink-tertiary #78838F→#5F6A77`, `--signal-warn #A9761A→#8A5E10`; `--color-ok-wash` 0,12→0,10 agar badge ok ≥4,5:1 — §2.2 diperbarui lebih dulu. (2) `index.html` memuat 7 preload font (dari 2): penyebab CLS 0,0010 adalah font swap pada wordmark/rail/status pill; setelah preload CLS 0,0000. (3) Utilitas tipe turunan §5 ditambahkan ke `tokens.css` (`text-button`, `text-button-strong`, `text-button-lg`, `text-caption`, `text-rail-label`, `text-chip-label`, `text-hint`, `text-dialog-title`, `text-page-title`) supaya tidak ada ukuran font hardcoded di komponen. (4) `docStore.setActiveSection` ditambahkan untuk rail & sheet mobile (`activeSectionId` tidak lewat commit). (5) `saveNow()` diekspor dari autosave untuk tombol retry SaveStatusPill. (6) `demoFocusRing` + `data-demo-focus` dipakai katalog untuk memperlihatkan state fokus tanpa memaksa Tab pada elemen tertentu. (7) `vitest.setup.ts` menambah stub `ResizeObserver` (ScrollArea Radix); `tsconfig.app.json` menambah types `node` karena test kontras membaca `tokens.css` dari disk. (8) Test Fase 1 `resetDoc` yang bergantung milidetik dibekukan waktunya dengan `vi.spyOn(Date,'now')` — assertion tidak dilemahkan. (9) Stub `RootPage` Fase 0 dihapus; `/` sekarang render AppShell. | 🟡 Catatan owner |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 

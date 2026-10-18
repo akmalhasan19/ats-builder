@@ -9,26 +9,42 @@ import {
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
+import { useUiStore } from '@/store/uiStore'
 
-/* MVP tidak punya dark mode (§2.2 aturan 2), jadi theme dikunci 'light' dan
-   next-themes tidak dipakai. Gaya final toast (--machine) diatur di T2.1. */
+/* §5.11 — toast adalah satu-satunya tempat --machine muncul di chrome; MVP
+   tidak punya dark mode, jadi theme dikunci 'light'. */
 const Toaster = ({ ...props }: ToasterProps) => {
+  const compact = useUiStore((state) => state.panelMode === 'tabs')
+
   return (
     <Sonner
       theme="light"
       className="toaster group"
+      duration={3500}
+      visibleToasts={3}
+      position={compact ? 'top-center' : 'bottom-right'}
+      closeButton={false}
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
+        success: <CircleCheckIcon className="text-signal-ok size-4" />,
+        info: <InfoIcon className="text-cyanotype size-4" />,
+        warning: <TriangleAlertIcon className="text-signal-warn size-4" />,
+        error: <OctagonXIcon className="text-signal-bad size-4" />,
         loading: <Loader2Icon className="size-4 animate-spin" />,
+      }}
+      toastOptions={{
+        classNames: {
+          toast:
+            'bg-machine text-machine-text border-0 rounded-lg px-3.5 py-2.5 text-button items-start gap-2 shadow-[var(--shadow-dialog)]',
+          description: 'text-machine-dim',
+          actionButton: 'bg-cyanotype text-machine-text',
+          cancelButton: 'bg-machine-dim text-machine-text',
+        },
       }}
       style={
         {
-          '--normal-bg': 'var(--popover)',
-          '--normal-text': 'var(--popover-foreground)',
-          '--normal-border': 'var(--border)',
+          '--normal-bg': 'var(--machine)',
+          '--normal-text': 'var(--machine-text)',
+          '--normal-border': 'transparent',
           '--border-radius': 'var(--radius)',
         } as CSSProperties
       }

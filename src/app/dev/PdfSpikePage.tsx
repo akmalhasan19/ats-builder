@@ -79,7 +79,7 @@ export default function PdfSpikePage() {
             {busy ? t('pdf.state.generating') : t('pdf.action.short')}
           </Button>
           <Button
-            variant="outline"
+            variant="secondary"
             disabled={busy}
             onClick={() =>
               void generate('spike-a4-60-bullet.pdf', { repeatHeader: true }, LONG_BULLET_COUNT)

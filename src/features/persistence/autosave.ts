@@ -46,6 +46,13 @@ export function flushPendingWrite(): void {
   if (docToWrite !== null) void persistNow(docToWrite)
 }
 
+// Dipakai tombol retry di SaveStatusPill saat status 'error' (T2.3): tulis
+// dokumen yang sedang aktif sekarang juga, tanpa menunggu perubahan berikutnya.
+export function saveNow(): void {
+  useSyncStore.getState().setStatus('saving')
+  void persistNow(useDocStore.getState().doc)
+}
+
 export function startAutosave(): () => void {
   if (unsubscribe === null) {
     unsubscribe = useDocStore.subscribe((state, previous) => {

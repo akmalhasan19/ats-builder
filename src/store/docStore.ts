@@ -77,6 +77,7 @@ export type DocStore = {
   toggleSectionVisible: (sectionId: string) => void
   addSection: (kind: SectionKind) => void
   removeSection: (sectionId: string) => void
+  setActiveSection: (sectionId: string) => void
   setTemplate: (templateId: TemplateId) => void
   setTitle: (title: string) => void
   setPageSettings: (page: Partial<PageSettings>) => void
@@ -186,6 +187,10 @@ export const useDocStore = create<DocStore>((set, get) => ({
       set({ activeSectionId: get().doc.sections[0]?.id ?? '' })
     }
   },
+
+  // Navigasi rail (T2.4). activeSectionId bukan bagian dari dokumen, jadi
+  // tidak lewat commit dan tidak mengubah meta.updatedAt.
+  setActiveSection: (sectionId) => set({ activeSectionId: sectionId }),
 
   setTemplate: (templateId) =>
     get().commit((doc) => (doc.templateId === templateId ? doc : { ...doc, templateId })),

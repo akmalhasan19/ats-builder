@@ -273,6 +273,9 @@ describe('loadDoc & resetDoc', () => {
   })
 
   it('resetDoc lewat commit sehingga tetap ter-undo di Fase 11', () => {
+    // Waktu dibekukan: commit menaikkan meta.updatedAt, dan test ini
+    // membandingkan seluruh objek — tanpa ini hasilnya bergantung milidetik.
+    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
     store().setTitle('Sebelum reset')
     const sample = createSampleDoc()
 
