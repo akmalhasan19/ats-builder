@@ -6,6 +6,7 @@ const NAV: { to: string; labelKey: TranslationKey }[] = [
   { to: '/dev/tokens', labelKey: 'dev.nav.tokens' },
   { to: '/dev/pdf', labelKey: 'dev.nav.pdf' },
   { to: '/dev/preview', labelKey: 'dev.nav.preview' },
+  { to: '/dev/persist', labelKey: 'dev.nav.persist' },
 ]
 
 export type DevPageShellProps = {

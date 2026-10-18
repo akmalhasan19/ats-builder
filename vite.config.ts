@@ -27,5 +27,17 @@ export default defineConfig(({ mode }) => ({
     setupFiles: [path.resolve(srcDir, '../vitest.setup.ts')],
     include: ['tests/unit/**/*.test.{ts,tsx}'],
     restoreMocks: true,
+    // Gate Fase 1: lib/, store/, schema/ ≥ 85%.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text'],
+      include: ['src/lib/**', 'src/store/**', 'src/schema/**'],
+      thresholds: {
+        lines: 85,
+        statements: 85,
+        functions: 85,
+        branches: 85,
+      },
+    },
   },
 }))

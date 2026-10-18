@@ -6,6 +6,7 @@ const DEV_LINKS = [
   { to: '/dev/tokens', labelKey: 'dev.nav.tokens' },
   { to: '/dev/pdf', labelKey: 'dev.nav.pdf' },
   { to: '/dev/preview', labelKey: 'dev.nav.preview' },
+  { to: '/dev/persist', labelKey: 'dev.nav.persist' },
 ] as const
 
 export function RootPage() {

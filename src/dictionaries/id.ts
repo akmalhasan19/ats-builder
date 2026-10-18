@@ -19,6 +19,39 @@ export const id = {
   'dev.nav.tokens': 'Token desain',
   'dev.nav.pdf': 'Spike PDF',
   'dev.nav.preview': 'Spike preview',
+  'dev.nav.persist': 'Uji persistensi',
+
+  'section.profile': 'Profil',
+  'section.summary': 'Ringkasan',
+  'section.experience': 'Pengalaman',
+  'section.education': 'Pendidikan',
+  'section.skills': 'Keahlian',
+  'section.projects': 'Proyek',
+  'section.certifications': 'Sertifikasi',
+  'section.languages': 'Bahasa',
+  'section.awards': 'Penghargaan',
+  'section.volunteering': 'Relawan',
+
+  'doc.untitled': 'CV tanpa judul',
+
+  'status.savedLocal': 'Disimpan di perangkat',
+  'status.saving': 'Menyimpan…',
+  'status.savedCloud': 'Tersimpan di cloud',
+  'status.offline': 'Offline \u00b7 data aman di perangkat',
+  'status.error': 'Gagal menyimpan \u00b7 coba lagi',
+
+  'persist.corrupt.restored':
+    'Dokumen di perangkat ini rusak dan tidak bisa dibaca. Salinannya disimpan, lalu dokumen contoh dimuat ulang.',
+  'persist.banner.memory': 'Perubahan tidak tersimpan di perangkat ini',
+
+  'persist.dev.title': 'Harness persistensi lokal',
+  'persist.dev.subtitle':
+    'Halaman internal untuk membuktikan Gate Fase 1: tulis ke IndexedDB, muat ulang, data kembali identik. Tidak ada di build produksi.',
+  'persist.dev.docTitle': 'Judul dokumen',
+  'persist.dev.fullName': 'Nama lengkap',
+  'persist.dev.status': 'Status simpan',
+  'persist.dev.hint':
+    'Ubah isinya, tunggu status berubah jadi “Disimpan di perangkat”, lalu reload halaman — nilainya harus tetap sama.',
 
   'tokens.title': 'Token desain',
   'tokens.subtitle':

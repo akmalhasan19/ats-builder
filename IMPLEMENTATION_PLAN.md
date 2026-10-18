@@ -630,42 +630,42 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
-### ☐ FASE 1 — Skema Data, Store, dan Persistensi Lokal
+### ☑ FASE 1 — Skema Data, Store, dan Persistensi Lokal *(selesai 2026-10-18, semua gate hijau)*
 
-- [ ] **T1.1 Tipe & skema**
-  - [ ] `src/types/resume.ts` — salin persis §4
-  - [ ] `src/schema/resume.ts` — Zod schema untuk `ResumeDoc` + tiap entri; pesan error dalam Bahasa Indonesia & spesifik ("Email belum benar. Contoh: nama@domain.com")
-  - [ ] `schemaVersion = 1` + `migrate(doc: unknown): ResumeDoc` berantai, dengan test fixture dokumen v0/rusak
-  - [ ] Factory `createEmptyDoc()`, `createSampleDoc()` (Alex Morgan, Software Engineer, 2 pengalaman, 1 pendidikan, 3 grup skill, 2 proyek, 1 sertifikasi, 2 bahasa) — **lengkap dan realistis**, ini yang dilihat pengguna di detik pertama
-  - [ ] `src/features/sections/registry.ts`: per kind → `{ kind, labelId, icon, defaultData(), isComplete(data), requiredFields[], maxEntries? }`
-- [ ] **T1.2 Zustand store**
-  - [ ] `docStore`: `doc`, `activeSectionId`, aksi `updateSection`, `updateEntry`, `addEntry`, `removeEntry`, `duplicateEntry`, `reorderSection`, `reorderEntry`, `toggleSectionVisible`, `addSection`, `removeSection`, `setTemplate`, `setTitle`, `setPageSettings`, `setThemeTokens`, `resetDoc`, `loadDoc`
-  - [ ] Semua aksi melewati satu `commit(mutator)` yang menaikkan `meta.updatedAt` dan mendorong ke history stack (siap dipakai Fase 11)
-  - [ ] `uiStore`: `zoom`, `fitMode`, `panelMode('3col'|'icon-rail'|'tabs')`, `activeTab('form'|'preview')`, `showMarginGuides`, `showKeywordMarks`, `atsDrawerOpen`, `atsTab`, `firstRunSeen`
-  - [ ] `atsStore`: `report`, `isChecking`, `lastCheckedAt`, `keywords`
-  - [ ] `syncStore`: `status('saved-local'|'saving'|'saved-cloud'|'offline'|'error')`, `lastSyncedAt`, `error`
-  - [ ] Uji selector: pastikan perubahan `experience` **tidak** merender komponen `skills` (test dengan render counter)
-- [ ] **T1.3 Persistensi IndexedDB**
-  - [ ] `src/features/persistence/idb.ts` via `idb-keyval`: key `ats:doc:v1`, `ats:prefs:v1`, `ats:firstRun`
-  - [ ] `autosave.ts`: subscribe `docStore`, debounce 400ms → tulis; status `saving` → `saved-local`
-  - [ ] Flush paksa di `visibilitychange`(hidden) & `pagehide`
-  - [ ] Load saat boot: baca → `migrate` → validasi Zod → kalau gagal, simpan salinan di `ats:doc:corrupt:<ts>` lalu mulai dari `createSampleDoc()` + toast penjelasan (bukan layar kosong)
-  - [ ] Fallback bila IndexedDB ditolak (private mode): pakai in-memory + banner non-blocking "Perubahan tidak tersimpan di perangkat ini"
-  - [ ] Deteksi `navigator.onLine` + event `online`/`offline` → `syncStore.status`
-- [ ] **T1.4 Utilitas**
-  - [ ] `lib/dates.ts`: `formatMonth('2024-03', lang)` → `Mar 2024` / `Mar 2024` (id: `Mar 2024`), `durationLabel(start,end,current)` → `1 thn 4 bln`, `isReverseChronological(entries)`, `hasGapOver(entries, months)`
-  - [ ] `lib/text.ts`: `wordCount`, `charLen`, `startsWithActionVerb`, `containsMetric`, `stripDiacritics`, `tokenize`
-  - [ ] `lib/i18n.ts`: `t(key)` + `dictionaries/id.ts` (lengkap) + `en.ts` (stub). Semua string UI **wajib** lewat `t()` sejak fase ini
-- [ ] **T1.5 Test**
-  - [ ] Unit: Zod schema (valid/invalid per field), migrate, dates, text
-  - [ ] Unit: setiap aksi docStore (termasuk reorder & undo-able commit)
-  - [ ] Integration (fake-indexeddb): tulis → reload store → data identik
+- [x] **T1.1 Tipe & skema**
+  - [x] `src/types/resume.ts` — salin persis §4
+  - [x] `src/schema/resume.ts` — Zod schema untuk `ResumeDoc` + tiap entri; pesan error dalam Bahasa Indonesia & spesifik ("Email belum benar. Contoh: nama@domain.com")
+  - [x] `schemaVersion = 1` + `migrate(doc: unknown): ResumeDoc` berantai, dengan test fixture dokumen v0/rusak
+  - [x] Factory `createEmptyDoc()`, `createSampleDoc()` (Alex Morgan, Software Engineer, 2 pengalaman, 1 pendidikan, 3 grup skill, 2 proyek, 1 sertifikasi, 2 bahasa) — **lengkap dan realistis**, ini yang dilihat pengguna di detik pertama
+  - [x] `src/features/sections/registry.ts`: per kind → `{ kind, labelId, icon, defaultData(), isComplete(data), requiredFields[], maxEntries? }`
+- [x] **T1.2 Zustand store**
+  - [x] `docStore`: `doc`, `activeSectionId`, aksi `updateSection`, `updateEntry`, `addEntry`, `removeEntry`, `duplicateEntry`, `reorderSection`, `reorderEntry`, `toggleSectionVisible`, `addSection`, `removeSection`, `setTemplate`, `setTitle`, `setPageSettings`, `setThemeTokens`, `resetDoc`, `loadDoc`
+  - [x] Semua aksi melewati satu `commit(mutator)` yang menaikkan `meta.updatedAt` dan mendorong ke history stack (siap dipakai Fase 11)
+  - [x] `uiStore`: `zoom`, `fitMode`, `panelMode('3col'|'icon-rail'|'tabs')`, `activeTab('form'|'preview')`, `showMarginGuides`, `showKeywordMarks`, `atsDrawerOpen`, `atsTab`, `firstRunSeen`
+  - [x] `atsStore`: `report`, `isChecking`, `lastCheckedAt`, `keywords`
+  - [x] `syncStore`: `status('saved-local'|'saving'|'saved-cloud'|'offline'|'error')`, `lastSyncedAt`, `error`
+  - [x] Uji selector: pastikan perubahan `experience` **tidak** merender komponen `skills` (test dengan render counter)
+- [x] **T1.3 Persistensi IndexedDB**
+  - [x] `src/features/persistence/idb.ts` via `idb-keyval`: key `ats:doc:v1`, `ats:prefs:v1`, `ats:firstRun`
+  - [x] `autosave.ts`: subscribe `docStore`, debounce 400ms → tulis; status `saving` → `saved-local`
+  - [x] Flush paksa di `visibilitychange`(hidden) & `pagehide`
+  - [x] Load saat boot: baca → `migrate` → validasi Zod → kalau gagal, simpan salinan di `ats:doc:corrupt:<ts>` lalu mulai dari `createSampleDoc()` + toast penjelasan (bukan layar kosong)
+  - [x] Fallback bila IndexedDB ditolak (private mode): pakai in-memory + banner non-blocking "Perubahan tidak tersimpan di perangkat ini"
+  - [x] Deteksi `navigator.onLine` + event `online`/`offline` → `syncStore.status`
+- [x] **T1.4 Utilitas**
+  - [x] `lib/dates.ts`: `formatMonth('2024-03', lang)` → `Mar 2024` / `Mar 2024` (id: `Mar 2024`), `durationLabel(start,end,current)` → `1 thn 4 bln`, `isReverseChronological(entries)`, `hasGapOver(entries, months)`
+  - [x] `lib/text.ts`: `wordCount`, `charLen`, `startsWithActionVerb`, `containsMetric`, `stripDiacritics`, `tokenize`
+  - [x] `lib/i18n.ts`: `t(key)` + `dictionaries/id.ts` (lengkap) + `en.ts` (stub). Semua string UI **wajib** lewat `t()` sejak fase ini
+- [x] **T1.5 Test**
+  - [x] Unit: Zod schema (valid/invalid per field), migrate, dates, text
+  - [x] Unit: setiap aksi docStore (termasuk reorder & undo-able commit)
+  - [x] Integration (fake-indexeddb): tulis → reload store → data identik
 
 **Gate Fase 1**
-- [ ] `pnpm test` hijau, coverage `lib/` + `store/` + `schema/` ≥ 85%
-- [ ] Isi form → refresh browser → data utuh (dibuktikan test Playwright mini `tests/e2e/persistence.spec.ts`)
-- [ ] `pnpm typecheck` hijau tanpa `any` di `types/` & `store/`
-- [ ] Tidak ada string UI hardcoded (grep `'Simpan'` dll. hanya muncul di `dictionaries/`)
+- [x] `pnpm test` hijau, coverage `lib/` + `store/` + `schema/` ≥ 85%
+- [x] Isi form → refresh browser → data utuh (dibuktikan test Playwright mini `tests/e2e/persistence.spec.ts`)
+- [x] `pnpm typecheck` hijau tanpa `any` di `types/` & `store/`
+- [x] Tidak ada string UI hardcoded (grep `'Simpan'` dll. hanya muncul di `dictionaries/`)
 
 ---
 
@@ -1189,6 +1189,8 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | 2026-10-18 | 0 | T0.4 (spike PDF) + Gate 2 | `pnpm pdf:verify` 15/16 pemeriksaan lolos — A4 tepat 595,28×841,89 pt; margin kiri 45,35 pt = 16 mm; font nama 24,00 pt; heading 9,50 pt; body 10,00 pt; line-height 14,20 pt; urutan baca name→contact→heading→entry→bullet benar; 60 bullet → 3 halaman; `fixed` mengulang header. **Yang gagal: PDF membuang kata di titik wrap.** | ⛔ Terblokir → diselesaikan di baris berikutnya |
 | 2026-10-18 | 0 | T0.4 + Gate 2 (resolusi) | Owner memutuskan kontingensi §10(c): **`@react-pdf/renderer` → `pdf-lib` + `@pdf-lib/fontkit`**. Spike ditulis ulang (`features/templates/pdf/SpikePdfLib.ts` — line-wrap & page-break milik kita, satu `spikeSpec` untuk dua renderer). `pnpm pdf:verify` kini **15/15 PASS**, termasuk "semua 60 bullet utuh (tidak ada kata hilang saat wrap)". Durasi: 1 hal 150 ms · 3 hal 340 ms. Chunk `spikePdf` 506,5 KB gzip terpisah (entry 0 referensi `PDFDocument`/`fontkit`/`embedFont`), bundle awal tetap 106 KB gzip. e2e 9/9 hijau. | ✅ Selesai & terverifikasi |
 | 2026-10-18 | 0 | Hutang yang dicatat untuk Fase 5 | (1) **Ukuran berkas PDF**: pdf-lib menanam font penuh — 1 halaman = 141 KB vs 22 KB pada react-pdf (yang men-subset). T5.4 wajib subset TTF sebelum embed, atau hasilkan subset saat build. (2) pdf-lib tidak punya `letter-spacing`; tracking heading ditiru karakter-per-karakter di `SheetWriter.tracked()` — Fase 5 perlu memutuskan ini acceptable atau pakai `charSpace` manual di satu jalur. (3) `pnpm lhci` + `lighthouserc.json` belum ada ( §1 menandainya "mulai Fase 9" ). (4) `shadcn` memakai animasi `animate-in/out` dari `tw-animate-css` yang sengaja tidak dipasang — dialog/sheet belum beranimasi sampai T2.5. | 🟡 Catatan |
+| 2026-10-18 | 1 | T1.1–T1.5 + Gate Fase 1 | `pnpm lint && pnpm typecheck && pnpm test && pnpm build` hijau — **102 test** (termasuk 15 test Fase 0 yang tetap lulus, tanpa regresi). `pnpm test --coverage`: **lib 100/100 · schema 100 stmts/88,13 branch · store 100/93,02** — semua ≥ 85% (ambang di `vite.config.ts`, provider `@vitest/coverage-v8` yang disetujui owner). e2e `tests/e2e/persistence.spec.ts` 2/2: (1) isi form → reload → data utuh; (2) dokumen korup → karantina `ats:doc:corrupt:<ts>` + dokumen contoh + toast penjelasan, tanpa white screen. e2e penuh 11/11. Grep: 0 string UI hardcoded di luar `dictionaries/` (sisa literal Bahasa = pesan Zod yang dimandatkan T1.1 + data CV contoh), 0 hex di luar `tokens.css` & renderer template, 0 TODO/FIXME, 0 klaim "lolos ATS". Manual browser `/dev/persist`: 360/768/1024/1440 tanpa scroll horizontal (screenshot 360 & 1440), keyboard-only: Tab 7× dari body → input judul, ketik → pill `Menyimpan…` → `Disimpan di perangkat` → reload manual → nilai tetap. | ✅ Selesai & terverifikasi |
+| 2026-10-18 | 1 | Keputusan kecil di luar teks plan | (1) Bukti gate "isi form → refresh" memakai harness dev `/dev/persist` (rute dev-only, ter-DCE dari build produksi) karena form editor baru ada di Fase 2–3 — **disetujui owner**. (2) `@vitest/coverage-v8` dipasang sebagai devDependency (dimandat perintah verifikasi) — **disetujui owner**. (3) `<Toaster/>` global dipasang di `main.tsx` dan boot persistensi dipindah ke efek `PersistenceBoot` setelahnya: sonner membuang toast yang dipanggil tanpa subscriber, jadi urutan ini membuat toast boot korup deterministik. (4) `syncStore` menambah `storageMode: 'idb'\u00a0\|\u00a0'memory'` — field tambahan di luar daftar T1.2, dibutuhkan agar banner T1.3 ("Perubahan tidak tersimpan di perangkat ini") bisa dibaca UI. (5) `addEntry(sectionId)` membuat entri via `createEmptyEntry(kind)` sehingga id selalu lahir di factory (aturan §4). (6) `createEmptyDoc()` memakai `title: ''`; fallback tampilan `doc.untitled` ("CV tanpa judul") diserahkan ke UI Fase 2. (7) `types/resume.ts` diformat prettier (`semi: false`); isi identik dengan §4. (8) Di Windows, `pnpm test -- --coverage` meneruskan literal `--` tanpa mengaktifkan coverage — bukti coverage memakai `pnpm test --coverage`. | 🟡 Catatan owner |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 
