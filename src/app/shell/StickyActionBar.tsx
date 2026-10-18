@@ -77,7 +77,10 @@ export function StickyActionBar() {
           <List aria-hidden="true" className="size-4" />
           {t('mobile.sections')}
         </Button>
-        <PdfDownloadButton className="text-button-lg h-11 flex-1" />
+        {/* h-44 tanpa utility tipe lain: tw-merge menganggap text-button-lg
+            dan text-button-primary (varian primary) satu grup font dan
+            membuang warna putihnya — kontras 2,38:1 di Lighthouse. */}
+        <PdfDownloadButton className="h-11 flex-1" />
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>

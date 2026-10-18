@@ -31,7 +31,7 @@ import { PdfDownloadButton } from '@/features/pdf/PdfDownloadButton'
 import { DocumentTitle } from './DocumentTitle'
 import { SaveStatusPill } from './SaveStatusPill'
 import { TemplateSelect } from './TemplateSelect'
-import { TEMPLATE_IDS, templateLabelKey } from './templateList'
+import { applyTemplate, TEMPLATE_IDS, templateLabelKey } from './templateList'
 
 function CheckAtsButton() {
   return (
@@ -54,7 +54,6 @@ function MobileMenu() {
   const [open, setOpen] = useState(false)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
   const activeId = useDocStore((state) => state.doc.templateId)
-  const setTemplate = useDocStore((state) => state.setTemplate)
   const resetDoc = useDocStore((state) => state.resetDoc)
   const isGenerating = usePdfExportStore((state) => state.isGenerating)
 
@@ -80,7 +79,9 @@ function MobileMenu() {
                 type="button"
                 aria-pressed={active}
                 disabled={isGenerating}
-                onClick={() => setTemplate(id)}
+                onClick={() => {
+                  applyTemplate(id)
+                }}
                 className={cn(
                   'border-rule bg-raised text-button text-ink flex h-10 items-center justify-between gap-2 rounded-md border px-3 text-left',
                   active && 'border-cyanotype bg-cyanotype-wash text-cyanotype',

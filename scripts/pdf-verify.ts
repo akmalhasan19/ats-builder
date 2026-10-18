@@ -170,7 +170,10 @@ function expectedPieces(doc: ResumeDoc, spec: TemplateSpec): string[] {
       continue
     }
     if (block.kind === 'section-heading') {
-      pieces.push(headingLabel(sectionLabel(section.kind), spec))
+      // small-caps diekstrak sebagai glyph kapital (sintesis per-run), jadi
+      // ekspektasinya di-uppercase agar bisa dicocokkan.
+      const label = headingLabel(sectionLabel(section.kind), spec)
+      pieces.push(spec.headingStyle.transform === 'small-caps' ? label.toUpperCase() : label)
       continue
     }
     if (block.kind === 'summary') {
@@ -188,7 +191,15 @@ function expectedPieces(doc: ResumeDoc, spec: TemplateSpec): string[] {
     const entry = entriesOf(section).find((item) => item.id === block.itemId)
     if (!entry) continue
     const content = entryContentOf(section.kind, entry, doc.settings.language)
-    if (block.kind === 'entry-head') pieces.push(content.title, content.meta)
+    if (block.kind === 'entry-head') {
+      // Tanggal-kanan (T6.2) menggambar judul, tanggal, lalu sisa meta —
+      // urutan yang sama yang harus dibaca ekstraktor.
+      if (spec.entryLayout.datePosition === 'right') {
+        pieces.push(content.title, content.dates, content.metaNoDates)
+      } else {
+        pieces.push(content.title, content.meta)
+      }
+    }
     if (block.kind === 'entry-line') {
       const line = content.bodyLines[block.lineIndex ?? 0]
       if (line) pieces.push(line.text)
@@ -277,12 +288,26 @@ function assertTextQuality(label: string, extracted: string, expected: readonly 
 
   const text = normalise(extracted)
   let cursor = 0
+  // Awal jendela transposisi: posisi sebelum bagian yang baru dicocokkan.
+  let windowStart = 0
   const missing: string[] = []
   for (const piece of expected) {
     const needle = normalise(piece)
-    const found = text.indexOf(needle, cursor)
-    if (found === -1) missing.push(piece.slice(0, 64))
-    else cursor = found + needle.length
+    let found = text.indexOf(needle, cursor)
+    if (found === -1) {
+      // poppler -layout mencetak teks kolom kanan (tanggal-kanan T6.2) pada
+      // baris kisi di ATAS judulnya bila celah kolomnya lebar, padahal baseline
+      // PDF-nya sama (pdfjs membaca urutan benar). Terima kecocokan yang jatuh
+      // di celah antara bagian sebelumnya dan posisi kursor sekarang.
+      const early = text.indexOf(needle, windowStart)
+      if (early !== -1 && early + needle.length <= cursor) found = early
+    }
+    if (found === -1) {
+      missing.push(piece.slice(0, 64))
+      continue
+    }
+    windowStart = cursor
+    cursor = found + needle.length
   }
   check(
     `${label}: urutan baca & field lengkap`,
@@ -343,36 +368,40 @@ async function verifyTemplate(templateId: TemplateId): Promise<void> {
 }
 
 async function verifyPaginationFixtures(): Promise<void> {
-  for (const fixtureName of FIXTURES) {
-    const rendered = await render(paginationDoc(fixtureName), 'ledger')
-    const name = `ledger-${fixtureName}`
-    await writeFile(path.join(ARTIFACT_DIR, `${name}.pdf`), rendered.bytes)
-    const { pages } = await extractPdf(rendered.bytes)
-    const extracted = pages
-      .flat()
-      .map((line) => line.text)
-      .join('\n')
-    await writeFile(path.join(ARTIFACT_DIR, `${name}.pdfjs-layout.txt`), extracted)
-    check(
-      `fixture ${fixtureName}: pageCount PDF = preview`,
-      pages.length === rendered.plan.pageCount,
-      `PDF ${pages.length} · preview ${rendered.plan.pageCount}`,
-    )
-    assertTextQuality(
-      `fixture ${fixtureName}`,
-      extracted,
-      expectedPieces(rendered.doc, rendered.spec),
-    )
-
-    const pdfPath = path.join(ARTIFACT_DIR, `${name}.pdf`)
-    const layout = extractWithPdftotext(pdfPath)
-    if (layout !== null) {
-      await writeFile(path.join(ARTIFACT_DIR, `${name}.pdftotext-layout.txt`), layout)
+  // Gate Fase 6: setiap template harus menghasilkan PDF valid untuk ketiga
+  // fixture — 5 × 3 kombinasi, bukan hanya ledger.
+  for (const templateId of TEMPLATE_IDS) {
+    for (const fixtureName of FIXTURES) {
+      const rendered = await render(paginationDoc(fixtureName), templateId)
+      const name = `${templateId}-${fixtureName}`
+      await writeFile(path.join(ARTIFACT_DIR, `${name}.pdf`), rendered.bytes)
+      const { pages } = await extractPdf(rendered.bytes)
+      const extracted = pages
+        .flat()
+        .map((line) => line.text)
+        .join('\n')
+      await writeFile(path.join(ARTIFACT_DIR, `${name}.pdfjs-layout.txt`), extracted)
+      check(
+        `fixture ${fixtureName} × ${templateId}: pageCount PDF = preview`,
+        pages.length === rendered.plan.pageCount,
+        `PDF ${pages.length} · preview ${rendered.plan.pageCount}`,
+      )
       assertTextQuality(
-        `fixture ${fixtureName} [pdftotext -layout]`,
-        layout,
+        `fixture ${fixtureName} × ${templateId}`,
+        extracted,
         expectedPieces(rendered.doc, rendered.spec),
       )
+
+      const pdfPath = path.join(ARTIFACT_DIR, `${name}.pdf`)
+      const layout = extractWithPdftotext(pdfPath)
+      if (layout !== null) {
+        await writeFile(path.join(ARTIFACT_DIR, `${name}.pdftotext-layout.txt`), layout)
+        assertTextQuality(
+          `fixture ${fixtureName} × ${templateId} [pdftotext -layout]`,
+          layout,
+          expectedPieces(rendered.doc, rendered.spec),
+        )
+      }
     }
   }
 }
@@ -388,7 +417,11 @@ const cmapCache = new Map<string, ReturnType<typeof fontkit.create>>()
 function verifyGlyphCoverage(label: string, spec: TemplateSpec, text: string): void {
   const absent: string[] = []
   for (const role of Object.values(spec.typeScale)) {
-    const file = fontFileFor(PDF_FONT_FAMILY[role.font], role.weight)
+    const file = fontFileFor(
+      PDF_FONT_FAMILY[role.font],
+      role.weight,
+      role.italic ? 'italic' : 'normal',
+    )
     let font = cmapCache.get(file)
     if (!font) {
       font = fontkit.create(
@@ -422,9 +455,11 @@ function verifySubsetSize(): void {
     (sum, file) => sum + statSync(path.resolve(process.cwd(), 'public/fonts', file)).size,
     0,
   )
+  // Fase 6 menambah keluarga ketiga (Source Serif 4 §2.3) — budget §10 naik
+  // 400 → 600 KB; ekspor tetap memuat hanya face yang dipakai spec aktif.
   check(
-    'total font PDF subset < 400 KB',
-    total < 400 * 1024,
+    'total font PDF subset < 600 KB',
+    total < 600 * 1024,
     `${(total / 1024).toFixed(1)} KB untuk ${files.size} berkas`,
   )
 }

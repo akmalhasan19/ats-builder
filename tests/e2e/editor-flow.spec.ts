@@ -19,7 +19,9 @@ test.describe('editor-flow — Gate Fase 3', () => {
 
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('#pane-preview [data-probe="page-sheet"]').first()).toBeVisible({
+      timeout: 10000,
+    })
 
     // ---- Batalkan FirstRunCard jika muncul (pilih Nanti saja) ----
     const laterBtn = page.getByRole('button', { name: 'Lanjut' })
@@ -88,7 +90,9 @@ test.describe('editor-flow — Gate Fase 3', () => {
     // ---- Reload dan verifikasi ----
     await page.reload()
     await page.setViewportSize({ width: 1440, height: 900 })
-    await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('#pane-preview [data-probe="page-sheet"]').first()).toBeVisible({
+      timeout: 10000,
+    })
 
     // Profil harus terbaca setelah reload
     const profileBtnR = page

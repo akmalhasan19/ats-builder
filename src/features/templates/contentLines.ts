@@ -23,7 +23,19 @@ import type {
 export type EntriesSection = Exclude<SectionInstance, { kind: 'profile' | 'summary' | 'skills' }>
 export type EntriesSectionKind = EntriesSection['kind']
 export type DocLine = { text: string; bullet: boolean }
-export type EntryContent = { title: string; meta: string; bodyLines: DocLine[] }
+
+/**
+ * `meta` = satu baris meta utuh (lokasi · tanggal) untuk layout next-line.
+ * `metaNoDates` + `dates` = potongannya untuk layout tanggal-kanan (T6.2):
+ * tanggal naik ke ujung kanan baris judul, sisanya tetap di baris meta.
+ */
+export type EntryContent = {
+  title: string
+  meta: string
+  metaNoDates: string
+  dates: string
+  bodyLines: DocLine[]
+}
 
 const join = (parts: (string | undefined)[], separator = ' · '): string =>
   parts.filter((part) => Boolean(part)).join(separator)
@@ -72,9 +84,12 @@ function buildEntryContent(
   switch (kind) {
     case 'experience': {
       const item = as<ExperienceEntry>(entry)
+      const dates = range(item.startDate, item.endDate, item.current, lang)
       return {
         title: join([item.role, item.company], ' — '),
-        meta: join([item.location, range(item.startDate, item.endDate, item.current, lang)]),
+        meta: join([item.location, dates]),
+        metaNoDates: item.location,
+        dates,
         bodyLines: [...bullets(item.bullets), ...stackLine(item.stack)],
       }
     }
@@ -87,42 +102,66 @@ function buildEntryContent(
           item.location,
           item.gpa ? `${t('doc.gpaPrefix')}${item.gpa}` : '',
         ]),
+        metaNoDates: join([
+          item.institution,
+          item.location,
+          item.gpa ? `${t('doc.gpaPrefix')}${item.gpa}` : '',
+        ]),
+        dates: '',
         bodyLines: bullets(item.notes),
       }
     }
     case 'projects': {
       const item = as<ProjectEntry>(entry)
+      const dates = range(item.startDate, item.endDate, false, lang)
       return {
         title: join([item.name, item.role], ' — '),
-        meta: join([item.url, range(item.startDate, item.endDate, false, lang)]),
+        meta: join([item.url, dates]),
+        metaNoDates: item.url,
+        dates,
         bodyLines: [...bullets(item.bullets), ...stackLine(item.stack)],
       }
     }
     case 'certifications': {
       const item = as<CertificationEntry>(entry)
+      const dates = formatMonth(item.issuedAt, lang)
       return {
         title: item.name,
-        meta: join([item.issuer, formatMonth(item.issuedAt, lang), item.credentialId]),
+        meta: join([item.issuer, dates, item.credentialId]),
+        metaNoDates: join([item.issuer, item.credentialId]),
+        dates,
         bodyLines: plain(item.url),
       }
     }
     case 'languages': {
       const item = as<LanguageEntry>(entry)
-      return { title: item.name, meta: item.proficiency, bodyLines: [] }
+      return {
+        title: item.name,
+        meta: item.proficiency,
+        metaNoDates: item.proficiency,
+        dates: '',
+        bodyLines: [],
+      }
     }
     case 'awards': {
       const item = as<AwardEntry>(entry)
+      const dates = formatMonth(item.awardedAt, lang)
       return {
         title: item.title,
-        meta: join([item.issuer, formatMonth(item.awardedAt, lang)]),
+        meta: join([item.issuer, dates]),
+        metaNoDates: item.issuer,
+        dates,
         bodyLines: plain(item.description),
       }
     }
     default: {
       const item = as<VolunteeringEntry>(entry)
+      const dates = range(item.startDate, item.endDate, item.current, lang)
       return {
         title: join([item.role, item.organization], ' — '),
-        meta: range(item.startDate, item.endDate, item.current, lang),
+        meta: dates,
+        metaNoDates: '',
+        dates,
         bodyLines: bullets(item.bullets),
       }
     }

@@ -124,6 +124,7 @@ const TYPE_HOMEPAGE: TypeSample[] = [
 ]
 
 const FONT_FACES = [
+  { family: 'IBM Plex Sans', weight: '300', style: 'normal' },
   { family: 'IBM Plex Sans', weight: '400', style: 'normal' },
   { family: 'IBM Plex Sans', weight: '400', style: 'italic' },
   { family: 'IBM Plex Sans', weight: '500', style: 'normal' },
@@ -133,6 +134,10 @@ const FONT_FACES = [
   { family: 'IBM Plex Mono', weight: '600', style: 'normal' },
   { family: 'Archivo', weight: '600', style: 'normal' },
   { family: 'Archivo Expanded', weight: '700', style: 'normal' },
+  // Fase 6 (§2.3): nama/body Classic ATS & Executive + meta italic.
+  { family: 'Source Serif 4', weight: '400', style: 'normal' },
+  { family: 'Source Serif 4', weight: '700', style: 'normal' },
+  { family: 'Source Serif 4', weight: '400', style: 'italic' },
 ] as const
 
 const faceKey = (family: string, weight: string, style: string) => `${family}|${weight}|${style}`

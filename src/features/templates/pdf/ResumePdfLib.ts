@@ -25,6 +25,8 @@ import {
   summaryText,
 } from '@/features/templates/contentLines'
 import {
+  ACCENT_HEX,
+  SMALL_CAPS_RATIO,
   contactLine,
   headingLabel,
   type SpecColorKey,
@@ -58,6 +60,7 @@ export const PDF_FONT_FAMILY: Record<TemplateFontKey, PdfFontFamily> = {
   archivo: 'archivo',
   plexSans: 'plex-sans',
   plexMono: 'plex-mono',
+  sourceSerif: 'source-serif',
 }
 
 // Renderer PDF tidak membaca CSS; padanan token §2.2 ini hanya hidup di jalur
@@ -67,7 +70,7 @@ const PDF_COLORS: Record<SpecColorKey, string> = {
   secondary: '#46505E',
   tertiary: '#5F6A77',
   rule: '#D3D9E0',
-  accent: '#0F5A78',
+  accent: ACCENT_HEX,
   paper: '#FFFFFF',
 }
 
@@ -85,15 +88,37 @@ type TextStyle = {
   color: Color
 }
 
-type FontFace = { family: TemplateFontKey; weight: number }
+type FontFace = { family: TemplateFontKey; weight: number; style: 'normal' | 'italic' }
 
-const fontKey = ({ family, weight }: FontFace): string => `${family}|${weight}`
+const fontKey = ({ family, weight, style }: FontFace): string => `${family}|${weight}|${style}`
+
+const fontFaceOf = (role: TypeRole): FontFace => ({
+  family: role.font,
+  weight: role.weight,
+  style: role.italic ? 'italic' : 'normal',
+})
+
+/** Karakter kecil → glyph kapital pada 0,8× (sintesis small-caps §2.3 executive). */
+const isLowercase = (ch: string): boolean => ch !== ch.toUpperCase() && ch === ch.toLowerCase()
+
+const smallCapsSize = (ch: string, sizePt: number): number =>
+  isLowercase(ch) ? sizePt * SMALL_CAPS_RATIO : sizePt
+
+const widthOfSmallCaps = (text: string, font: PDFFont, sizePt: number): number =>
+  [...text].reduce(
+    (sum, ch) => sum + font.widthOfTextAtSize(ch.toUpperCase(), smallCapsSize(ch, sizePt)),
+    0,
+  )
 
 const baselineOffset = (font: PDFFont, sizePt: number, lineHeightPt: number): number =>
   (lineHeightPt - font.heightAtSize(sizePt)) / 2 + font.heightAtSize(sizePt, { descender: false })
 
-const hyphenatedPieces = (word: string, font: PDFFont, sizePt: number, width: number): string[] => {
-  if (word.length <= 12 || font.widthOfTextAtSize(word, sizePt) <= width) return [word]
+const hyphenatedPieces = (
+  word: string,
+  width: number,
+  measure: (text: string) => number,
+): string[] => {
+  if (word.length <= 12 || measure(word) <= width) return [word]
 
   const pieces: string[] = []
   let rest = word
@@ -101,7 +126,7 @@ const hyphenatedPieces = (word: string, font: PDFFont, sizePt: number, width: nu
     let end = rest.length
     while (end > 1) {
       const suffix = end < rest.length ? '-' : ''
-      if (font.widthOfTextAtSize(`${rest.slice(0, end)}${suffix}`, sizePt) <= width) break
+      if (measure(`${rest.slice(0, end)}${suffix}`) <= width) break
       end -= 1
     }
     if (end === rest.length) {
@@ -120,6 +145,7 @@ export function wrapPdfLines(
   font: PDFFont,
   sizePt: number,
   maxWidthPt: number,
+  measure: (text: string) => number = (line) => font.widthOfTextAtSize(line, sizePt),
 ): string[] {
   const words = text.trim().split(/\s+/u).filter(Boolean)
   if (words.length === 0) return ['']
@@ -127,10 +153,10 @@ export function wrapPdfLines(
   const lines: string[] = []
   let current = ''
   for (const word of words) {
-    const pieces = hyphenatedPieces(word, font, sizePt, maxWidthPt)
+    const pieces = hyphenatedPieces(word, maxWidthPt, measure)
     for (const piece of pieces) {
       const candidate = current ? `${current} ${piece}` : piece
-      if (current && font.widthOfTextAtSize(candidate, sizePt) > maxWidthPt) {
+      if (current && measure(candidate) > maxWidthPt) {
         lines.push(current)
         current = piece
       } else {
@@ -164,7 +190,7 @@ class PageWriter {
   }
 
   private font(role: TypeRole): PDFFont {
-    const font = this.fonts.get(fontKey({ family: role.font, weight: role.weight }))
+    const font = this.fonts.get(fontKey(fontFaceOf(role)))
     if (!font)
       throw new PdfExportError('font', `Font PDF belum di-embed: ${role.font} ${role.weight}`)
     return font
@@ -201,10 +227,41 @@ class PageWriter {
     )
   }
 
+  /**
+   * Small-caps (T6.2): glyph kapital dari huruf kecil digambar pada
+   * SMALL_CAPS_RATIO × ukuran. Run berukuran sama digabung supaya teks tetap
+   * terbaca utuh oleh parser ("PENGALAMAN KERJA", bukan huruf terpisah); spasi
+   * digambar sebagai spasi agar pemisah kata tidak hilang dari text layer.
+   */
+  private drawSmallCapsLine(
+    line: string,
+    x: number,
+    y: number,
+    style: TextStyle,
+    font: PDFFont,
+  ): void {
+    let cursor = x
+    let run = ''
+    let runSize = -1
+    const flush = () => {
+      if (run === '') return
+      this.page.drawText(run, { x: cursor, y, size: runSize, font, color: style.color })
+      cursor += font.widthOfTextAtSize(run, runSize)
+      run = ''
+    }
+    for (const ch of line) {
+      const size = smallCapsSize(ch, style.role.sizePt)
+      if (runSize !== -1 && size !== runSize) flush()
+      runSize = size
+      run += ch.toUpperCase()
+    }
+    flush()
+  }
+
   paragraph(
     text: string,
     style: TextStyle,
-    options: { indentPt?: number; align?: 'left' | 'center' } = {},
+    options: { indentPt?: number; align?: 'left' | 'center'; smallCaps?: boolean } = {},
   ): void {
     if (text.trim() === '') return
     const indentPt = options.indentPt ?? 0
@@ -212,15 +269,75 @@ class PageWriter {
     const font = this.font(style.role)
     const maxWidth = this.contentWidthPt - indentPt
     const lineHeight = style.role.sizePt * style.role.lineHeight
+    const measure = options.smallCaps
+      ? (line: string) => widthOfSmallCaps(line, font, style.role.sizePt)
+      : undefined
 
-    for (const line of wrapPdfLines(text, font, style.role.sizePt, maxWidth)) {
-      const width = font.widthOfTextAtSize(line, style.role.sizePt)
+    for (const line of wrapPdfLines(text, font, style.role.sizePt, maxWidth, measure)) {
+      const width = measure ? measure(line) : font.widthOfTextAtSize(line, style.role.sizePt)
       const x =
         this.marginPt + indentPt + (align === 'center' ? Math.max(0, (maxWidth - width) / 2) : 0)
       const baseline = this.cursorY - baselineOffset(font, style.role.sizePt, lineHeight)
-      this.drawTracked(line, x, baseline, style, font)
+      if (options.smallCaps) this.drawSmallCapsLine(line, x, baseline, style, font)
+      else this.drawTracked(line, x, baseline, style, font)
       this.cursorY -= lineHeight
     }
+  }
+
+  /**
+   * Kepala entri tanggal-kanan (T6.2): judul kiri, tanggal kanan pada baseline
+   * yang sama — flex, bukan tabel. Bila keduanya tidak muat satu baris, tanggal
+   * turun menjadi paragraf tersendiri, mirroring `flex-wrap` di renderer layar.
+   */
+  entryHeadRow(
+    title: string,
+    dates: string,
+    titleStyle: TextStyle,
+    dateStyle: TextStyle,
+    gapToDatePt: number,
+  ): void {
+    const hasTitle = title.trim() !== ''
+    const hasDates = dates.trim() !== ''
+    if (!hasTitle && !hasDates) return
+    const titleFont = this.font(titleStyle.role)
+    const dateFont = this.font(dateStyle.role)
+    const rowLH = Math.max(
+      titleStyle.role.sizePt * titleStyle.role.lineHeight,
+      dateStyle.role.sizePt * dateStyle.role.lineHeight,
+    )
+    const datesWidth = hasDates ? dateFont.widthOfTextAtSize(dates, dateStyle.role.sizePt) : 0
+    const titleWidth = hasTitle ? titleFont.widthOfTextAtSize(title, titleStyle.role.sizePt) : 0
+    const fitsOneLine =
+      titleWidth + datesWidth + (hasTitle && hasDates ? gapToDatePt : 0) <= this.contentWidthPt
+
+    if (fitsOneLine) {
+      const baseline =
+        this.cursorY -
+        Math.max(
+          baselineOffset(titleFont, titleStyle.role.sizePt, rowLH),
+          baselineOffset(dateFont, dateStyle.role.sizePt, rowLH),
+        )
+      if (hasTitle)
+        this.page.drawText(title, {
+          x: this.marginPt,
+          y: baseline,
+          size: titleStyle.role.sizePt,
+          font: titleFont,
+          color: titleStyle.color,
+        })
+      if (hasDates)
+        this.page.drawText(dates, {
+          x: this.marginPt + this.contentWidthPt - datesWidth,
+          y: baseline,
+          size: dateStyle.role.sizePt,
+          font: dateFont,
+          color: dateStyle.color,
+        })
+      this.cursorY -= rowLH
+      return
+    }
+    this.paragraph(title, titleStyle)
+    this.paragraph(dates, dateStyle)
   }
 
   bullet(text: string, style: TextStyle): void {
@@ -336,6 +453,7 @@ function drawBlock(writer: PageWriter, doc: ResumeDoc, block: DocBlock, spec: Te
     writer.paragraph(
       headingLabel(sectionLabel(section.kind), spec),
       style(spec.typeScale.heading, spec.colors.heading),
+      { smallCaps: spec.headingStyle.transform === 'small-caps' },
     )
     writer.gap(spec.gapMm.headingToRule)
     writer.rule()
@@ -359,10 +477,26 @@ function drawBlock(writer: PageWriter, doc: ResumeDoc, block: DocBlock, spec: Te
     if (!entry) return
     const content = entryContentOf(section.kind, entry, doc.settings.language)
     if (block.kind === 'entry-head') {
-      writer.paragraph(content.title, style(spec.typeScale.title, spec.colors.entryTitle))
-      if (content.meta) {
-        writer.gap(spec.gapMm.titleToMeta)
-        writer.paragraph(content.meta, style(spec.typeScale.meta, spec.colors.entryMeta))
+      const titleStyle = style(spec.typeScale.title, spec.colors.entryTitle)
+      const metaStyle = style(spec.typeScale.meta, spec.colors.entryMeta)
+      if (spec.entryLayout.datePosition === 'right') {
+        writer.entryHeadRow(
+          content.title,
+          content.dates,
+          titleStyle,
+          metaStyle,
+          mmToPt(spec.gapMm.titleToDate),
+        )
+        if (content.metaNoDates) {
+          writer.gap(spec.gapMm.titleToMeta)
+          writer.paragraph(content.metaNoDates, metaStyle)
+        }
+      } else {
+        writer.paragraph(content.title, titleStyle)
+        if (content.meta) {
+          writer.gap(spec.gapMm.titleToMeta)
+          writer.paragraph(content.meta, metaStyle)
+        }
       }
     } else if (block.kind === 'entry-line') {
       const line = content.bodyLines[block.lineIndex ?? 0]
@@ -386,7 +520,7 @@ async function embedFonts(
 ): Promise<Map<string, PDFFont>> {
   const faces = new Map<string, FontFace>()
   for (const role of Object.values(spec.typeScale)) {
-    const face = { family: role.font, weight: role.weight }
+    const face = fontFaceOf(role)
     faces.set(fontKey(face), face)
   }
 
@@ -394,7 +528,7 @@ async function embedFonts(
   for (const [key, face] of faces) {
     let bytes: Uint8Array
     try {
-      bytes = await loadFontFile(fontFileFor(PDF_FONT_FAMILY[face.family], face.weight))
+      bytes = await loadFontFile(fontFileFor(PDF_FONT_FAMILY[face.family], face.weight, face.style))
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       throw new PdfExportError('font', message)

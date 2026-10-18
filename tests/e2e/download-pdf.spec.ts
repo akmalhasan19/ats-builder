@@ -52,7 +52,9 @@ test.describe('download-pdf — Gate Fase 5', () => {
 
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible({ timeout: 10_000 })
+    await expect(page.locator('#pane-preview [data-probe="page-sheet"]').first()).toBeVisible({
+      timeout: 10_000,
+    })
     expect(engineRequests, 'chunk PDF tidak dimuat sebelum tombol diklik').toHaveLength(0)
 
     // FirstRunCard: dokumen contoh sudah terisi, jadi cukup tutup kartunya.

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 const COLOR_TOKEN_COUNT = 19
-const FONT_FACE_COUNT = 9
+const FONT_FACE_COUNT = 13
 
 const CHROME_TYPE_TOKENS = [
   'text-brand',
@@ -90,7 +90,7 @@ test('seluruh skala tipe §2.3 tampil beserta metrik terukurnya', async ({ page 
   await expect(page.locator('[data-type-token="display-xl"]')).toHaveCSS('font-family', /Archivo/)
 })
 
-test('sembilan @font-face layar self-host terdaftar', async ({ page }) => {
+test('tiga belas @font-face layar self-host terdaftar', async ({ page }) => {
   await page.goto('/dev/tokens')
   await expect(page.locator('[data-probe="swatch"]')).toHaveCount(COLOR_TOKEN_COUNT)
   await expect(page.locator('[data-probe="font-face"][data-declared="true"]')).toHaveCount(

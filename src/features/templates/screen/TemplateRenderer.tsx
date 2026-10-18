@@ -14,6 +14,8 @@ export type TemplateRendererProps = {
   spec: TemplateSpec
   keywords?: readonly string[]
   showMarks?: boolean
+  /** Namespace kunci pengukuran untuk salinan di luar pratinjau utama (T6.4). */
+  scope?: string
 }
 
 /**
@@ -26,6 +28,7 @@ export const TemplateRenderer = memo(function TemplateRenderer({
   spec,
   keywords = NO_KEYWORDS,
   showMarks = false,
+  scope,
 }: TemplateRendererProps) {
   const showMarginGuides = useUiStore((state) => state.showMarginGuides)
 
@@ -49,6 +52,7 @@ export const TemplateRenderer = memo(function TemplateRenderer({
               {pageBlocks.map((block) => (
                 <BlockView
                   key={block.key}
+                  scope={scope}
                   blockKey={block.key}
                   kind={block.kind}
                   sectionKind={block.sectionKind}

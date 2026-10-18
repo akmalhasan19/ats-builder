@@ -35,6 +35,12 @@ export type BlockViewProps = {
   spec: TemplateSpec
   keywords: readonly string[]
   showMarks: boolean
+  /**
+   * Namespace kunci pengukuran & probe untuk salinan di luar pratinjau utama
+   * (thumbnail T6.4). Wajib — tinggi antar-template berbeda, dan store tinggi
+   * bersifat global: tanpa scope, thumbnail menimpa metrik pratinjau utama.
+   */
+  scope?: string
 }
 
 type Marked = { keywords: readonly string[]; showMarks: boolean }
@@ -150,10 +156,40 @@ const EntryHeadBlock = ({ sectionId, itemId, spec, marked }: SliceProps) => {
   const data = useDocStore(
     useShallow((state) => {
       const content = contentOf(state.doc, sectionId, itemId)
-      return { title: content?.title ?? '', meta: content?.meta ?? '' }
+      return {
+        title: content?.title ?? '',
+        meta: content?.meta ?? '',
+        metaNoDates: content?.metaNoDates ?? '',
+        dates: content?.dates ?? '',
+      }
     }),
   )
   const styles = screenStylesOf(spec)
+  if (spec.entryLayout.datePosition === 'right') {
+    return (
+      <div>
+        {data.title || data.dates ? (
+          <div style={styles.entryHeadRow}>
+            {data.title ? (
+              <span style={styles.entryHeadTitle}>
+                <Text text={data.title} marked={marked} />
+              </span>
+            ) : null}
+            {data.dates ? (
+              <span style={styles.entryHeadDates}>
+                <Text text={data.dates} marked={marked} />
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {data.metaNoDates ? (
+          <div style={styles.entryMeta}>
+            <Text text={data.metaNoDates} marked={marked} />
+          </div>
+        ) : null}
+      </div>
+    )
+  }
   return (
     <div>
       {data.title ? (
@@ -205,7 +241,8 @@ const EntryLineBlock = ({
 }
 
 export const BlockView = memo(function BlockView(props: BlockViewProps) {
-  const ref = useMeasuredHeight<HTMLDivElement>(props.blockKey)
+  const heightKey = props.scope ? `${props.scope}:${props.blockKey}` : props.blockKey
+  const ref = useMeasuredHeight<HTMLDivElement>(heightKey)
   const slice = {
     sectionId: props.sectionId,
     itemId: props.itemId ?? '',
@@ -231,12 +268,12 @@ export const BlockView = memo(function BlockView(props: BlockViewProps) {
     <div
       ref={ref}
       data-probe="preview-block"
-      data-block-key={props.blockKey}
+      data-block-key={heightKey}
       data-block-kind={props.kind}
       style={{ display: 'flow-root', paddingBottom: mmToPx(props.padAfterMm) }}
     >
       {inner}
     </div>,
-    props.blockKey,
+    heightKey,
   )
 })

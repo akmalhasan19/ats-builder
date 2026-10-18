@@ -8,6 +8,7 @@ const NAV: { to: string; labelKey: TranslationKey }[] = [
   { to: '/dev/preview', labelKey: 'dev.nav.preview' },
   { to: '/dev/persist', labelKey: 'dev.nav.persist' },
   { to: '/dev/pagination', labelKey: 'dev.nav.pagination' },
+  { to: '/dev/template-compare', labelKey: 'dev.nav.compare' },
 ]
 
 export type DevPageShellProps = {

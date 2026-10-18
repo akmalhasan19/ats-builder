@@ -10,7 +10,7 @@
  * (T5.4) tanpa mengubah font layar.
  */
 
-export type PdfFontFamily = 'plex-sans' | 'plex-mono' | 'archivo'
+export type PdfFontFamily = 'plex-sans' | 'plex-mono' | 'archivo' | 'source-serif'
 export type PdfFontStyle = 'normal' | 'italic'
 
 type PdfFontSource = {
@@ -21,6 +21,7 @@ type PdfFontSource = {
 
 export const FONT_SOURCES: Record<PdfFontFamily, PdfFontSource[]> = {
   'plex-sans': [
+    { file: 'pdf/IBMPlexSans-Light.ttf', weight: 300, style: 'normal' },
     { file: 'pdf/IBMPlexSans-Regular.ttf', weight: 400, style: 'normal' },
     { file: 'pdf/IBMPlexSans-Medium.ttf', weight: 500, style: 'normal' },
     { file: 'pdf/IBMPlexSans-SemiBold.ttf', weight: 600, style: 'normal' },
@@ -30,6 +31,11 @@ export const FONT_SOURCES: Record<PdfFontFamily, PdfFontSource[]> = {
     { file: 'pdf/IBMPlexMono-SemiBold.ttf', weight: 600, style: 'normal' },
   ],
   archivo: [{ file: 'pdf/Archivo-SemiBold.ttf', weight: 600, style: 'normal' }],
+  'source-serif': [
+    { file: 'pdf/SourceSerif4-Regular.ttf', weight: 400, style: 'normal' },
+    { file: 'pdf/SourceSerif4-Bold.ttf', weight: 700, style: 'normal' },
+    { file: 'pdf/SourceSerif4-Italic.ttf', weight: 400, style: 'italic' },
+  ],
 }
 
 export function fontFileFor(

@@ -37,6 +37,13 @@ const SOURCES = [
     axes: ['wght=400', 'wdth=100'],
   },
   {
+    file: 'IBMPlexSans-Light.ttf',
+    url: `${GOOGLE_FONTS}/ibmplexsans/IBMPlexSans%5Bwdth,wght%5D.ttf`,
+    axes: ['wght=300', 'wdth=100'],
+    // Fase 6 — §2.3 nama template `minimal` memakai Plex Sans 300.
+    screen: 'IBMPlexSans-Light.woff2',
+  },
+  {
     file: 'IBMPlexSans-Medium.ttf',
     url: `${GOOGLE_FONTS}/ibmplexsans/IBMPlexSans%5Bwdth,wght%5D.ttf`,
     axes: ['wght=500', 'wdth=100'],
@@ -58,6 +65,29 @@ const SOURCES = [
     file: 'Archivo-SemiBold.ttf',
     url: `${GOOGLE_FONTS}/archivo/Archivo%5Bwdth,wght%5D.ttf`,
     axes: ['wght=600', 'wdth=100'],
+  },
+  // Fase 6 — T6.1: classic-ats & executive memakai Source Serif 4 (§2.3). TTF
+  // yang lama di `public/fonts/` adalah potongan 245-glyph — cmap-nya gagal
+  // Gate "tanpa glyph hilang", jadi instance statis ditarik dari font variabel.
+  // opsz dipatok 20 (default): satu static harus melayani nama 22–24 pt dan
+  // body 10 pt, dan 20 adalah titik tengah rentang teks 8–60.
+  {
+    file: 'SourceSerif4-Regular.ttf',
+    url: `${GOOGLE_FONTS}/sourceserif4/SourceSerif4%5Bopsz,wght%5D.ttf`,
+    axes: ['wght=400', 'opsz=20'],
+    screen: 'SourceSerif4-Regular.woff2',
+  },
+  {
+    file: 'SourceSerif4-Bold.ttf',
+    url: `${GOOGLE_FONTS}/sourceserif4/SourceSerif4%5Bopsz,wght%5D.ttf`,
+    axes: ['wght=700', 'opsz=20'],
+    screen: 'SourceSerif4-Bold.woff2',
+  },
+  {
+    file: 'SourceSerif4-Italic.ttf',
+    url: `${GOOGLE_FONTS}/sourceserif4/SourceSerif4-Italic%5Bopsz,wght%5D.ttf`,
+    axes: ['wght=400', 'opsz=20'],
+    screen: 'SourceSerif4-Italic.woff2',
   },
 ]
 
@@ -103,6 +133,19 @@ for (const source of SOURCES) {
     '--no-hinting',
   ])
   console.log(`${source.file}: ${(statSync(subset).size / 1024).toFixed(1)} KB`)
+
+  if (source.screen) {
+    const screenOut = path.resolve('public', 'fonts', source.screen)
+    execFileSync('pyftsubset', [
+      source.axes ? staticFile : downloaded,
+      `--output-file=${screenOut}`,
+      '--flavor=woff2',
+      `--unicodes=${UNICODES}`,
+      '--layout-features=kern',
+      '--no-hinting',
+    ])
+    console.log(`${source.screen}: ${(statSync(screenOut).size / 1024).toFixed(1)} KB`)
+  }
 }
 
 const total = readdirSync(outDir)

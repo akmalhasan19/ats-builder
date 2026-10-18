@@ -14,6 +14,7 @@ import {
 import {
   contactLine,
   headingLabel,
+  ruleAdvancePt,
   type TemplateSpec,
   type TypeRole,
 } from '@/features/templates/specs'
@@ -61,7 +62,9 @@ const headingEstimatePx = (spec: TemplateSpec, label: string, contentWidthPx: nu
   const role = spec.typeScale.heading
   const lines = linesFor(headingLabel(label, spec), role.sizePt, contentWidthPx)
   return (
-    linePx(role, lines) + mmToPx(spec.gapMm.headingToRule) + ptToPx(spec.headingStyle.rule.widthPt)
+    linePx(role, lines) +
+    mmToPx(spec.gapMm.headingToRule) +
+    ptToPx(ruleAdvancePt(spec.headingStyle.rule))
   )
 }
 
@@ -142,9 +145,22 @@ export function buildBlocks(doc: ResumeDoc, spec: TemplateSpec): DocBlock[] {
         const content = entryContentOf(section.kind, entry, lang)
         if (isBlankEntry(content)) return
         const itemId = itemIdOf(entry, index)
+        const rightDates = spec.entryLayout.datePosition === 'right'
         const titleLines = linesFor(content.title, spec.typeScale.title.sizePt, contentWidthPx)
-        const metaLines = linesFor(content.meta, spec.typeScale.meta.sizePt, contentWidthPx)
-        let headHeight = linePx(spec.typeScale.title, titleLines)
+        // Tanggal-kanan (T6.2): tanggal berbagi baris dengan judul, meta baris
+        // berikutnya hanya memuat sisa meta (lokasi, dsb).
+        const headLineCount = rightDates
+          ? Math.max(
+              titleLines,
+              linesFor(content.dates, spec.typeScale.meta.sizePt, contentWidthPx),
+            )
+          : titleLines
+        const metaLines = linesFor(
+          rightDates ? content.metaNoDates : content.meta,
+          spec.typeScale.meta.sizePt,
+          contentWidthPx,
+        )
+        let headHeight = linePx(spec.typeScale.title, headLineCount)
         if (metaLines > 0)
           headHeight += mmToPx(spec.gapMm.titleToMeta) + linePx(spec.typeScale.meta, metaLines)
         body.push({

@@ -12,6 +12,7 @@ function createDevRoutes(): RouteObject[] {
   const PreviewSpikePage = lazy(() => import('./dev/PreviewSpikePage'))
   const PersistPage = lazy(() => import('./dev/PersistPage'))
   const PaginationPage = lazy(() => import('./dev/PaginationPage'))
+  const TemplateComparePage = lazy(() => import('./dev/TemplateComparePage'))
 
   const mounted = (page: ReactNode): ReactNode => <Suspense fallback={null}>{page}</Suspense>
 
@@ -21,6 +22,7 @@ function createDevRoutes(): RouteObject[] {
     { path: '/dev/preview', element: mounted(<PreviewSpikePage />) },
     { path: '/dev/persist', element: mounted(<PersistPage />) },
     { path: '/dev/pagination', element: mounted(<PaginationPage />) },
+    { path: '/dev/template-compare', element: mounted(<TemplateComparePage />) },
   ]
 }
 
@@ -35,7 +37,11 @@ const placeholder = (path: string, titleKey: TranslationKey): RouteObject => ({
 export const router = createBrowserRouter([
   { path: '/', element: <AppShell />, errorElement: <ErrorScreen /> },
   { path: '/r/:resumeId', element: <AppShell />, errorElement: <ErrorScreen /> },
-  placeholder('/templates', 'route.templates'),
+  {
+    path: '/templates',
+    lazy: () => import('./pages/TemplatesPage').then((m) => ({ element: <m.TemplatesPage /> })),
+    errorElement: <ErrorScreen />,
+  },
   placeholder('/dashboard', 'route.dashboard'),
   placeholder('/login', 'route.login'),
   placeholder('/auth/callback', 'route.authCallback'),

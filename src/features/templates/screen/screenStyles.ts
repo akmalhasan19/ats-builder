@@ -18,6 +18,13 @@ const roleStyle = (role: TypeRole) => ({
   fontWeight: role.weight,
   lineHeight: role.lineHeight,
   letterSpacing: role.trackingEm === 0 ? undefined : `${role.trackingEm}em`,
+  fontStyle: role.italic ? ('italic' as const) : undefined,
+})
+
+/** Dua garis dipisah satu lebar-garis — footprint 3× lebar, sama dengan rule() PDF. */
+const doubleRuleStyle = (heightPx: number, color: string) => ({
+  height: heightPx * 3,
+  background: `linear-gradient(to bottom, ${color} 0 ${heightPx}px, transparent ${heightPx}px ${heightPx * 2}px, ${color} ${heightPx * 2}px ${heightPx * 3}px)`,
 })
 
 export function screenStylesOf(spec: TemplateSpec) {
@@ -53,6 +60,8 @@ export function screenStylesOf(spec: TemplateSpec) {
     heading: {
       ...roleStyle(spec.typeScale.heading),
       color: color('heading'),
+      fontVariant:
+        spec.headingStyle.transform === 'small-caps' ? ('small-caps' as const) : undefined,
       marginBottom: mmToPx(spec.gapMm.headingToRule),
     },
     headingRule:
@@ -60,9 +69,11 @@ export function screenStylesOf(spec: TemplateSpec) {
         ? undefined
         : spec.headingStyle.rule.kind === 'solid'
           ? { height: ruleHeightPx, background: ruleColor }
-          : {
-              borderBottom: `${ruleHeightPx}px ${spec.headingStyle.rule.kind} ${ruleColor}`,
-            },
+          : spec.headingStyle.rule.kind === 'double'
+            ? doubleRuleStyle(ruleHeightPx, ruleColor)
+            : {
+                borderBottom: `${ruleHeightPx}px ${spec.headingStyle.rule.kind} ${ruleColor}`,
+              },
     entryTitle: {
       ...roleStyle(spec.typeScale.title),
       color: color('entryTitle'),
@@ -79,6 +90,22 @@ export function screenStylesOf(spec: TemplateSpec) {
       flex: 'none',
     },
     lineText: { ...roleStyle(spec.typeScale.body), color: color('body'), flex: 1 },
+    // T6.2 — tanggal kanan: flex, bukan tabel; wrap membuat tanggal turun ke
+    // baris baru saat judul+tanggal tidak muat (fallback yang sama di PDF).
+    entryHeadRow: {
+      display: 'flex',
+      flexWrap: 'wrap' as const,
+      justifyContent: 'space-between' as const,
+      alignItems: 'baseline' as const,
+      columnGap: mmToPx(spec.gapMm.titleToDate),
+      marginBottom: mmToPx(spec.gapMm.titleToMeta),
+    },
+    entryHeadTitle: { ...roleStyle(spec.typeScale.title), color: color('entryTitle') },
+    entryHeadDates: {
+      ...roleStyle(spec.typeScale.meta),
+      color: color('entryMeta'),
+      textAlign: 'right' as const,
+    },
     bulletGlyph: spec.bulletGlyph,
   }
 }
