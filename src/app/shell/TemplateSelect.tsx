@@ -4,6 +4,7 @@ import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useDocStore } from '@/store/docStore'
+import { usePdfExportStore } from '@/store/pdfExportStore'
 import { t } from '@/lib/i18n'
 import { TEMPLATE_IDS, templateLabelKey } from './templateList'
 
@@ -30,6 +31,9 @@ export function TemplateSelect({ className }: TemplateSelectProps) {
   const [open, setOpen] = useState(false)
   const activeId = useDocStore((state) => state.doc.templateId)
   const setTemplate = useDocStore((state) => state.setTemplate)
+  // T5.2 — mengganti template di tengah proses ekspor akan membuat PDF tidak
+  // cocok dengan rencana halaman yang sedang dipakai.
+  const isGenerating = usePdfExportStore((state) => state.isGenerating)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -37,6 +41,7 @@ export function TemplateSelect({ className }: TemplateSelectProps) {
         <Button
           data-probe="template-trigger"
           variant="ghost"
+          disabled={isGenerating}
           className={cn(
             'border-rule bg-raised text-ink hover:border-rule-strong hover:bg-hover gap-1.5 border px-2.5',
             className,
@@ -59,6 +64,7 @@ export function TemplateSelect({ className }: TemplateSelectProps) {
                 key={id}
                 type="button"
                 aria-pressed={active}
+                disabled={isGenerating}
                 onClick={() => {
                   setTemplate(id)
                   setOpen(false)

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { Check, Download, Menu, RotateCcw, ScanSearch } from 'lucide-react'
+import { Check, Menu, RotateCcw, ScanSearch } from 'lucide-react'
 import { cn } from 'cn'
 import { BrandMark } from '@/app/BrandMark'
 import { Button } from '@/components/ui/button'
@@ -24,8 +24,10 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { createEmptyDoc, createSampleDoc } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
+import { usePdfExportStore } from '@/store/pdfExportStore'
 import { toast } from 'sonner'
 import { t } from '@/lib/i18n'
+import { PdfDownloadButton } from '@/features/pdf/PdfDownloadButton'
 import { DocumentTitle } from './DocumentTitle'
 import { SaveStatusPill } from './SaveStatusPill'
 import { TemplateSelect } from './TemplateSelect'
@@ -47,22 +49,6 @@ function CheckAtsButton() {
   )
 }
 
-function DownloadButton() {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex">
-          <Button disabled className="gap-1.5 px-3.5">
-            <Download aria-hidden="true" className="size-[15px]" />
-            {t('topbar.download')}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{t('topbar.downloadPending')}</TooltipContent>
-    </Tooltip>
-  )
-}
-
 /** §5.2 — di bawah 768px hanya brand, judul, dan menu; sisanya masuk sheet ini. */
 function MobileMenu() {
   const [open, setOpen] = useState(false)
@@ -70,6 +56,7 @@ function MobileMenu() {
   const activeId = useDocStore((state) => state.doc.templateId)
   const setTemplate = useDocStore((state) => state.setTemplate)
   const resetDoc = useDocStore((state) => state.resetDoc)
+  const isGenerating = usePdfExportStore((state) => state.isGenerating)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -92,6 +79,7 @@ function MobileMenu() {
                 key={id}
                 type="button"
                 aria-pressed={active}
+                disabled={isGenerating}
                 onClick={() => setTemplate(id)}
                 className={cn(
                   'border-rule bg-raised text-button text-ink flex h-10 items-center justify-between gap-2 rounded-md border px-3 text-left',
@@ -110,6 +98,7 @@ function MobileMenu() {
 
           <Button
             variant="ghost"
+            disabled={isGenerating}
             onClick={() => setResetDialogOpen(true)}
             className="text-signal-bad hover:bg-bad-wash hover:text-signal-bad mt-4 justify-start gap-2"
           >
@@ -182,7 +171,7 @@ export function TopBar() {
           <CheckAtsButton />
         </span>
         <span className="hidden md:inline-flex">
-          <DownloadButton />
+          <PdfDownloadButton className="gap-1.5 px-3.5" />
         </span>
       </div>
 

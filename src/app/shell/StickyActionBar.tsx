@@ -19,8 +19,10 @@ import {
 import { getSectionCompleteness, sectionRegistry } from '@/features/sections/registry'
 import { SECTION_ORDER } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
+import { usePdfExportStore } from '@/store/pdfExportStore'
 import { useUiStore } from '@/store/uiStore'
 import { t } from '@/lib/i18n'
+import { PdfDownloadButton } from '@/features/pdf/PdfDownloadButton'
 
 function CompletenessDots({ dots }: { dots: 0 | 1 | 2 | 3 }) {
   return (
@@ -58,6 +60,7 @@ export function StickyActionBar() {
   const reorderSection = useDocStore((state) => state.reorderSection)
   const addSection = useDocStore((state) => state.addSection)
   const setActiveTab = useUiStore((state) => state.setActiveTab)
+  const isGenerating = usePdfExportStore((state) => state.isGenerating)
 
   const existingKinds = new Set(sections.map((section) => section.kind))
   const availableCatalogKinds = SECTION_ORDER.filter((kind) => !existingKinds.has(kind))
@@ -65,13 +68,16 @@ export function StickyActionBar() {
   return (
     <>
       <div className="border-rule bg-raised fixed inset-x-0 bottom-0 z-30 flex min-h-16 items-center gap-2 border-t px-3 pb-[env(safe-area-inset-bottom)] md:hidden">
-        <Button variant="ghost" className="h-11 gap-1.5 px-3" onClick={() => setOpen(true)}>
+        <Button
+          variant="ghost"
+          disabled={isGenerating}
+          className="h-11 gap-1.5 px-3"
+          onClick={() => setOpen(true)}
+        >
           <List aria-hidden="true" className="size-4" />
           {t('mobile.sections')}
         </Button>
-        <Button disabled className="text-button-lg h-11 flex-1">
-          {t('topbar.download')}
-        </Button>
+        <PdfDownloadButton className="text-button-lg h-11 flex-1" />
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>

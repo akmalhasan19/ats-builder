@@ -1,10 +1,16 @@
 /**
  * Inventaris font TTF untuk PDF (§2.3: pdf-lib menanam TTF, bukan WOFF2) dan
- * cara memetakannya ke keluarga yang dipakai `spikeSpec`.
- * Fase 5 (T5.1) memperluas ini jadi registrasi penuh per template.
+ * cara memetakannya ke keluarga yang dipakai `TemplateSpec`.
+ *
+ * Berkas di `pdf/` dihasilkan `scripts/subset-fonts.mjs`: subset Latin (Dasar +
+ * Extended-A/B) tanpa feature ligatur GSUB. Ligatur mengganti `fi` dengan satu
+ * glyph gabungan yang tidak punya padanan Unicode, sehingga parser membaca
+ * `traffic` sebagai `traf c` — dokumen ATS tidak boleh bergantung pada
+ * substitusi glyph. Kepadatan ini juga yang menjaga total font ekspor < 400 KB
+ * (T5.4) tanpa mengubah font layar.
  */
 
-export type PdfFontFamily = 'plex-sans' | 'plex-mono' | 'archivo' | 'source-serif'
+export type PdfFontFamily = 'plex-sans' | 'plex-mono' | 'archivo'
 export type PdfFontStyle = 'normal' | 'italic'
 
 type PdfFontSource = {
@@ -15,26 +21,15 @@ type PdfFontSource = {
 
 export const FONT_SOURCES: Record<PdfFontFamily, PdfFontSource[]> = {
   'plex-sans': [
-    { file: 'IBMPlexSans-Regular.ttf', weight: 400, style: 'normal' },
-    { file: 'IBMPlexSans-Italic.ttf', weight: 400, style: 'italic' },
-    { file: 'IBMPlexSans-Medium.ttf', weight: 500, style: 'normal' },
-    { file: 'IBMPlexSans-SemiBold.ttf', weight: 600, style: 'normal' },
-    { file: 'IBMPlexSans-Bold.ttf', weight: 700, style: 'normal' },
+    { file: 'pdf/IBMPlexSans-Regular.ttf', weight: 400, style: 'normal' },
+    { file: 'pdf/IBMPlexSans-Medium.ttf', weight: 500, style: 'normal' },
+    { file: 'pdf/IBMPlexSans-SemiBold.ttf', weight: 600, style: 'normal' },
   ],
   'plex-mono': [
-    { file: 'IBMPlexMono-Regular.ttf', weight: 400, style: 'normal' },
-    { file: 'IBMPlexMono-Medium.ttf', weight: 500, style: 'normal' },
-    { file: 'IBMPlexMono-SemiBold.ttf', weight: 600, style: 'normal' },
+    { file: 'pdf/IBMPlexMono-Regular.ttf', weight: 400, style: 'normal' },
+    { file: 'pdf/IBMPlexMono-SemiBold.ttf', weight: 600, style: 'normal' },
   ],
-  archivo: [
-    { file: 'Archivo-SemiBold.ttf', weight: 600, style: 'normal' },
-    { file: 'Archivo-Bold.ttf', weight: 700, style: 'normal' },
-  ],
-  'source-serif': [
-    { file: 'SourceSerif4-Regular.ttf', weight: 400, style: 'normal' },
-    { file: 'SourceSerif4-Italic.ttf', weight: 400, style: 'italic' },
-    { file: 'SourceSerif4-Bold.ttf', weight: 700, style: 'normal' },
-  ],
+  archivo: [{ file: 'pdf/Archivo-SemiBold.ttf', weight: 600, style: 'normal' }],
 }
 
 export function fontFileFor(

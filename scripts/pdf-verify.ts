@@ -1,52 +1,81 @@
 /**
- * `pnpm pdf:verify` — bukti Gate Fase 0 untuk spike PDF (engine: pdf-lib).
+ * `pnpm pdf:verify` — bukti Gate Fase 5 untuk ekspor PDF pdf-lib.
  *
- * Merender dokumen spike di Node, mengekstrak teksnya dengan pdfjs, lalu
- * membuktikan: PDF berbasis teks (bukan raster), TIDAK ADA kata yang hilang,
- * urutan baca benar, ukuran halaman A4 tepat, margin kiri & ukuran font sesuai
- * spikeSpec (±1 mm), page-break otomatis jalan, dan header berulang ikut di
- * tiap halaman.
- *
- * Pemeriksaan kelengkapan teks adalah alasan engine PDF diganti — jangan dihapus.
- * Artefak ditulis ke `artifacts/` (di-gitignore) sebagai lampiran bukti.
+ * Memeriksa lima ID template, teks asli (bukan raster), metadata, urutan baca,
+ * diakritik, font subset, serta kesamaan jumlah halaman dengan PagePlan preview.
  */
-import { readFileSync } from 'node:fs'
+import { execFileSync, spawnSync } from 'node:child_process'
+import { readFileSync, statSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { makeLongSpikeContent, spikeContent } from '@/features/templates/spikeContent'
-import type { SpikeContent, SpikeRenderOptions } from '@/features/templates/spikeContent'
-import { buildSpikePdf } from '@/features/templates/pdf/SpikePdfLib'
-import { formatContactLine, headingLabel, spikeSpec } from '@/features/templates/spikeSpec'
-import { A4_PT, TOLERANCE_PT, mmToPt } from '@/lib/units'
+import fontkit from '@pdf-lib/fontkit'
+import { createPagePlan } from '@/features/preview/createPagePlan'
+import { buildResumePdf, PDF_FONT_FAMILY } from '@/features/templates/pdf/ResumePdfLib'
+import { FONT_SOURCES, fontFileFor } from '@/features/pdf/fonts'
+import {
+  entriesOf,
+  entryContentOf,
+  profileContact,
+  sectionLabel,
+  skillGroupLines,
+  summaryText,
+} from '@/features/templates/contentLines'
+import {
+  contactLine,
+  headingLabel,
+  resolveSpec,
+  type TemplateSpec,
+} from '@/features/templates/specs'
+import { tokenize } from '@/lib/text'
+import { createSampleDoc } from '@/schema/resume'
+import type { ResumeDoc, SectionInstance, TemplateId } from '@/types/resume'
+import { paginationDoc, type PaginationFixtureName } from '../tests/fixtures/docs'
 
-const ARTIFACT_DIR = path.resolve(process.cwd(), 'artifacts')
-const LONG_BULLET_COUNT = 60
+const ARTIFACT_DIR = path.resolve(process.cwd(), 'artifacts', 'fase5')
+const TEMPLATE_IDS: readonly TemplateId[] = [
+  'classic-ats',
+  'ledger',
+  'executive',
+  'minimal',
+  'technician',
+]
+const FIXTURES: readonly PaginationFixtureName[] = ['pendek', 'sedang', 'panjang']
 
 type Check = { name: string; pass: boolean; detail: string }
+type ExtractedItem = { str: string; transform: number[] }
+type PdfLine = { text: string; baselineY: number }
+
 const checks: Check[] = []
 
 const check = (name: string, pass: boolean, detail: string): void => {
   checks.push({ name, pass, detail })
 }
 
-const closeTo = (actual: number, expected: number, tolerance: number): boolean =>
-  Math.abs(actual - expected) <= tolerance
+const normalise = (text: string): string =>
+  text
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '')
 
-/** Buang semua non-alfanumerik supaya perbedaan spasi/pungtuasi tidak menggagalkan uji. */
-const norm = (value: string): string => value.toLowerCase().replace(/[^a-z0-9]+/g, '')
+/**
+ * Heading template ber-tracking (§2.3) menyisipkan jarak antar huruf, dan pdfjs
+ * membaca jarak itu sebagai spasi: "R I N G K A S A N". Extractor lain (poppler /
+ * xpdf) membacanya sebagai satu kata — lihat `pdftotext` silang di bawah. Untuk
+ * mengukur jumlah kata secara jujur, token satu-huruf berurutan digabung lagi.
+ */
+const collapseLetterSpacing = (text: string): string =>
+  text.replace(/(?<![\p{L}\p{N}])\p{L}(?:\s+\p{L})+(?![\p{L}\p{N}])/gu, (run) =>
+    run.replace(/\s+/gu, ''),
+  )
 
-type PdfLine = { baselineY: number; text: string; maxSizePt: number; minX: number }
-type ExtractedItem = { str: string; transform: number[] }
+const loadTask = (data: Uint8Array) => getDocument({ data: new Uint8Array(data), verbosity: 0 })
 
-const loadTask = (data: Uint8Array) =>
-  // pdfjs melepas (detach) buffer data, jadi selalu kirim salinan.
-  getDocument({ data: new Uint8Array(data), verbosity: 0 })
-
-async function extractLines(pageNumber: number, data: Uint8Array): Promise<PdfLine[]> {
+async function extractPageLines(pageNumber: number, data: Uint8Array): Promise<PdfLine[]> {
   const task = loadTask(data)
-  const pdfDoc = await task.promise
-  const page = await pdfDoc.getPage(pageNumber)
+  const pdf = await task.promise
+  const page = await pdf.getPage(pageNumber)
   const content = await page.getTextContent()
   await page.cleanup()
   await task.destroy()
@@ -54,261 +83,380 @@ async function extractLines(pageNumber: number, data: Uint8Array): Promise<PdfLi
   const buckets = new Map<number, ExtractedItem[]>()
   for (const item of content.items) {
     if (!('str' in item)) continue
-    const textItem = item as ExtractedItem
-    if (textItem.str.length === 0) continue
-    const bucketKey = Math.round(textItem.transform[5]! * 2) / 2
-    const bucket = buckets.get(bucketKey)
-    if (bucket) bucket.push(textItem)
-    else buckets.set(bucketKey, [textItem])
+    const text = item as ExtractedItem
+    if (text.str.length === 0) continue
+    const key = Math.round(text.transform[5]! * 2) / 2
+    const bucket = buckets.get(key)
+    if (bucket) bucket.push(text)
+    else buckets.set(key, [text])
   }
 
   return [...buckets.values()]
     .map((items) => {
       const ordered = [...items].sort((a, b) => a.transform[4]! - b.transform[4]!)
-      // Rata-rata baseline asli, bukan kunci bucket yang dibulatkan, supaya
-      // jarak antar-baris terukur tanpa noise pembulatan.
-      const baselineY = ordered.reduce((sum, item) => sum + item.transform[5]!, 0) / ordered.length
       return {
-        baselineY,
         text: ordered.map((item) => item.str).join(''),
-        maxSizePt: Math.max(...ordered.map((item) => Math.abs(item.transform[3]!))),
-        minX: Math.min(...ordered.map((item) => item.transform[4]!)),
+        baselineY: ordered.reduce((sum, item) => sum + item.transform[5]!, 0) / ordered.length,
       }
     })
     .sort((a, b) => b.baselineY - a.baselineY)
 }
 
-async function pageSizes(data: Uint8Array): Promise<{ width: number; height: number }[]> {
+async function extractPdf(
+  data: Uint8Array,
+): Promise<{ pages: PdfLine[][]; metadata: Record<string, unknown> }> {
   const task = loadTask(data)
-  const pdfDoc = await task.promise
-  const sizes: { width: number; height: number }[] = []
-  for (let index = 1; index <= pdfDoc.numPages; index += 1) {
-    const page = await pdfDoc.getPage(index)
-    const viewport = page.getViewport({ scale: 1 })
-    sizes.push({ width: viewport.width, height: viewport.height })
-    await page.cleanup()
-  }
+  const pdf = await task.promise
+  const metadata = (await pdf.getMetadata()).info as Record<string, unknown>
+  const pageCount = pdf.numPages
   await task.destroy()
-  return sizes
+
+  const pages: PdfLine[][] = []
+  for (let index = 1; index <= pageCount; index += 1)
+    pages.push(await extractPageLines(index, data))
+  return { pages, metadata }
 }
 
-function expectedPieces(content: SpikeContent): string[] {
-  return [
-    content.name,
-    content.headline,
-    formatContactLine(content.contact, spikeSpec),
-    ...content.sections.flatMap((section) => [
-      headingLabel(section.heading, spikeSpec),
-      ...section.entries.flatMap((entry) => [
-        entry.title,
-        `${entry.org} · ${entry.location}`,
-        entry.dateLabel,
-        ...entry.bullets,
-      ]),
-    ]),
-  ]
+/**
+ * Gate Fase 5 menamai `pdftotext -layout` sebagai pembaca acuan. pdfjs dan
+ * pdftotext berbeda menafsirkan jarak antar huruf pada heading ber-tracking, jadi
+ * keduanya dijalankan: pdfjs untuk halaman/metadata/glyph, pdftotext untuk
+ * urutan baca versi poppler/xpdf.
+ */
+const PDFTOTEXT_CANDIDATES = [
+  process.env.PDFTOTEXT,
+  'pdftotext',
+  'C:/Program Files/Git/mingw64/bin/pdftotext.exe',
+]
+
+function findPdftotext(): string | null {
+  for (const candidate of PDFTOTEXT_CANDIDATES) {
+    if (!candidate) continue
+    // `-v` keluar dengan kode non-nol pada sebagian build, jadi keberadaan
+    // binernya dinilai dari `error` (ENOENT), bukan exit code.
+    const probe = spawnSync(candidate, ['-v'], { stdio: 'ignore' })
+    if (!probe.error) return candidate
+  }
+  return null
 }
 
-async function render(content: SpikeContent, options: SpikeRenderOptions): Promise<Uint8Array> {
-  const { bytes } = await buildSpikePdf(content, options, (file) =>
+const pdftotext = findPdftotext()
+
+function extractWithPdftotext(pdfPath: string): string | null {
+  if (!pdftotext) return null
+  return execFileSync(pdftotext, ['-layout', '-enc', 'UTF-8', pdfPath, '-'], { encoding: 'utf8' })
+}
+
+const sectionFor = (doc: ResumeDoc, sectionId: string): SectionInstance | undefined =>
+  doc.sections.find((section) => section.id === sectionId)
+
+function expectedPieces(doc: ResumeDoc, spec: TemplateSpec): string[] {
+  const plan = createPagePlan(doc, spec)
+  const profile = doc.sections.find(
+    (section): section is Extract<SectionInstance, { kind: 'profile' }> =>
+      section.kind === 'profile' && section.visible,
+  )
+  const pieces: string[] = []
+
+  for (const block of plan.blocks) {
+    const section = sectionFor(doc, block.sectionId)
+    if (!section) continue
+    if (block.kind === 'header' && profile) {
+      pieces.push(
+        profile.data.fullName,
+        profile.data.headline,
+        contactLine(profileContact(profile.data), spec),
+      )
+      continue
+    }
+    if (block.kind === 'section-heading') {
+      pieces.push(headingLabel(sectionLabel(section.kind), spec))
+      continue
+    }
+    if (block.kind === 'summary') {
+      pieces.push(summaryText(section))
+      continue
+    }
+    if (block.kind === 'skill-group' && section.kind === 'skills') {
+      const group = section.data.groups.find((item) => item.id === block.itemId)
+      if (group) pieces.push(...skillGroupLines(group))
+      continue
+    }
+    if (section.kind === 'profile' || section.kind === 'summary' || section.kind === 'skills') {
+      continue
+    }
+    const entry = entriesOf(section).find((item) => item.id === block.itemId)
+    if (!entry) continue
+    const content = entryContentOf(section.kind, entry, doc.settings.language)
+    if (block.kind === 'entry-head') pieces.push(content.title, content.meta)
+    if (block.kind === 'entry-line') {
+      const line = content.bodyLines[block.lineIndex ?? 0]
+      if (line) pieces.push(line.text)
+    }
+  }
+  return pieces.filter((piece) => piece.trim() !== '')
+}
+
+async function render(doc: ResumeDoc, templateId: TemplateId) {
+  const fixture = { ...doc, templateId }
+  const spec = resolveSpec(templateId, fixture.theme, fixture.settings.page)
+  const plan = createPagePlan(fixture, spec)
+  const startedAt = performance.now()
+  const result = await buildResumePdf(fixture, spec, plan, (file) =>
     Promise.resolve(
       new Uint8Array(readFileSync(path.resolve(process.cwd(), 'public/fonts', file))),
     ),
   )
-  return bytes
+  return {
+    ...result,
+    doc: fixture,
+    spec,
+    plan,
+    durationMs: Math.round(performance.now() - startedAt),
+  }
+}
+
+function qualityDoc(): ResumeDoc {
+  const doc = createSampleDoc()
+  return {
+    ...doc,
+    sections: doc.sections.map((section): SectionInstance => {
+      if (section.kind === 'profile') {
+        return {
+          ...section,
+          data: {
+            ...section.data,
+            fullName: 'Désirée Núñez-Łukasz van Ångström dengan Nama Sangat Panjang',
+            headline: 'Principal Software Engineer — Platform Reliability',
+          },
+        }
+      }
+      if (section.kind === 'experience') {
+        const [first, ...rest] = section.data.entries
+        if (!first) return section
+        return {
+          ...section,
+          data: {
+            entries: [
+              {
+                ...first,
+                bullets: [
+                  ...first.bullets,
+                  'Mengoordinasikan migrasi résumés untuk Zürich, São Paulo, dan Łódź sambil menjaga reliabilitas layanan 99,95% pada 40 ribu pengguna harian.',
+                ],
+              },
+              ...rest,
+            ],
+          },
+        }
+      }
+      return section
+    }),
+  }
+}
+
+function assertTextQuality(label: string, extracted: string, expected: readonly string[]): void {
+  const sourceTokens = tokenize(expected.join(' '))
+  const extractedTokens = tokenize(collapseLetterSpacing(extracted))
+  const difference =
+    Math.abs(sourceTokens.length - extractedTokens.length) / Math.max(1, sourceTokens.length)
+  const remaining = [...extractedTokens]
+  const absent: string[] = []
+  for (const token of sourceTokens) {
+    const at = remaining.indexOf(token)
+    if (at === -1) absent.push(token)
+    else remaining.splice(at, 1)
+  }
+  check(
+    `${label}: selisih jumlah kata ≤ 2%`,
+    difference <= 0.02,
+    `sumber ${sourceTokens.length} kata · PDF ${extractedTokens.length} kata · ${(difference * 100).toFixed(2)}%` +
+      ` · hilang ${absent.length}${absent.length > 0 ? `: ${absent.slice(0, 12).join(' ')}` : ''}` +
+      ` · berlebih ${remaining.length}${remaining.length > 0 ? `: ${remaining.slice(0, 12).join(' ')}` : ''}`,
+  )
+
+  const text = normalise(extracted)
+  let cursor = 0
+  const missing: string[] = []
+  for (const piece of expected) {
+    const needle = normalise(piece)
+    const found = text.indexOf(needle, cursor)
+    if (found === -1) missing.push(piece.slice(0, 64))
+    else cursor = found + needle.length
+  }
+  check(
+    `${label}: urutan baca & field lengkap`,
+    missing.length === 0,
+    missing.length === 0 ? `${expected.length} bagian berurutan` : `hilang: ${missing.join(' | ')}`,
+  )
+  check(
+    `${label}: tanpa glyph pecah`,
+    !extracted.includes('\uFFFD'),
+    extracted.includes('\uFFFD') ? 'ditemukan replacement character' : 'bersih',
+  )
+}
+
+async function verifyTemplate(templateId: TemplateId): Promise<void> {
+  const rendered = await render(qualityDoc(), templateId)
+  const name = `${templateId}-quality`
+  const pdfPath = path.join(ARTIFACT_DIR, `${name}.pdf`)
+  await writeFile(pdfPath, rendered.bytes)
+  const { pages, metadata } = await extractPdf(rendered.bytes)
+  const extracted = pages
+    .flat()
+    .map((line) => line.text)
+    .join('\n')
+  await writeFile(path.join(ARTIFACT_DIR, `${name}.pdfjs-layout.txt`), extracted)
+
+  check(
+    `${templateId}: magic bytes %PDF`,
+    String.fromCharCode(...rendered.bytes.slice(0, 4)) === '%PDF',
+    String.fromCharCode(...rendered.bytes.slice(0, 4)),
+  )
+  check(
+    `${templateId}: pageCount PDF = preview`,
+    pages.length === rendered.plan.pageCount,
+    `PDF ${pages.length} · preview ${rendered.plan.pageCount}`,
+  )
+  check(
+    `${templateId}: metadata`,
+    metadata.Title ===
+      'Désirée Núñez-Łukasz van Ångström dengan Nama Sangat Panjang — Principal Software Engineer — Platform Reliability' &&
+      metadata.Author === 'Désirée Núñez-Łukasz van Ångström dengan Nama Sangat Panjang' &&
+      metadata.Subject === 'Resume' &&
+      metadata.Creator === 'Resume Studio',
+    `${String(metadata.Title)} | ${String(metadata.Author)} | ${String(metadata.Subject)} | ${String(metadata.Creator)}`,
+  )
+  const pieces = expectedPieces(rendered.doc, rendered.spec)
+  assertTextQuality(templateId, extracted, pieces)
+  verifyGlyphCoverage(
+    `${templateId} [glyph]`,
+    rendered.spec,
+    `${pieces.join(' ')} ${rendered.spec.bulletGlyph} ${rendered.spec.contactStyle.separator}`,
+  )
+
+  const layout = extractWithPdftotext(pdfPath)
+  if (layout !== null) {
+    await writeFile(path.join(ARTIFACT_DIR, `${name}.pdftotext-layout.txt`), layout)
+    assertTextQuality(`${templateId} [pdftotext -layout]`, layout, pieces)
+  }
+}
+
+async function verifyPaginationFixtures(): Promise<void> {
+  for (const fixtureName of FIXTURES) {
+    const rendered = await render(paginationDoc(fixtureName), 'ledger')
+    const name = `ledger-${fixtureName}`
+    await writeFile(path.join(ARTIFACT_DIR, `${name}.pdf`), rendered.bytes)
+    const { pages } = await extractPdf(rendered.bytes)
+    const extracted = pages
+      .flat()
+      .map((line) => line.text)
+      .join('\n')
+    await writeFile(path.join(ARTIFACT_DIR, `${name}.pdfjs-layout.txt`), extracted)
+    check(
+      `fixture ${fixtureName}: pageCount PDF = preview`,
+      pages.length === rendered.plan.pageCount,
+      `PDF ${pages.length} · preview ${rendered.plan.pageCount}`,
+    )
+    assertTextQuality(
+      `fixture ${fixtureName}`,
+      extracted,
+      expectedPieces(rendered.doc, rendered.spec),
+    )
+
+    const pdfPath = path.join(ARTIFACT_DIR, `${name}.pdf`)
+    const layout = extractWithPdftotext(pdfPath)
+    if (layout !== null) {
+      await writeFile(path.join(ARTIFACT_DIR, `${name}.pdftotext-layout.txt`), layout)
+      assertTextQuality(
+        `fixture ${fixtureName} [pdftotext -layout]`,
+        layout,
+        expectedPieces(rendered.doc, rendered.spec),
+      )
+    }
+  }
+}
+
+/**
+ * Gate "tidak ada glyph hilang" diperiksa di level font, bukan hanya di teks yang
+ * terekstrak: pdf-lib mengganti karakter tanpa glyph dengan `.notdef` secara
+ * senyap (bug Fase 0 menemukan ini pada `Ł`), jadi setiap karakter yang benar-benar
+ * digambar dicocokkan ke cmap subset yang dipakai role tipografi itu.
+ */
+const cmapCache = new Map<string, ReturnType<typeof fontkit.create>>()
+
+function verifyGlyphCoverage(label: string, spec: TemplateSpec, text: string): void {
+  const absent: string[] = []
+  for (const role of Object.values(spec.typeScale)) {
+    const file = fontFileFor(PDF_FONT_FAMILY[role.font], role.weight)
+    let font = cmapCache.get(file)
+    if (!font) {
+      font = fontkit.create(
+        new Uint8Array(readFileSync(path.resolve(process.cwd(), 'public/fonts', file))),
+      )
+      cmapCache.set(file, font)
+    }
+    for (const character of text) {
+      if (/\s/u.test(character)) continue
+      if (font.glyphForCodePoint(character.codePointAt(0)!).id === 0) {
+        absent.push(`${role.font}/${character}`)
+      }
+    }
+  }
+  check(
+    `${label}: semua karakter punya glyph di font PDF`,
+    absent.length === 0,
+    absent.length === 0
+      ? `${text.length} karakter diperiksa di ${Object.keys(spec.typeScale).length} role`
+      : `tanpa glyph: ${[...new Set(absent)].join(' ')}`,
+  )
+}
+
+function verifySubsetSize(): void {
+  const files = new Set(
+    Object.values(FONT_SOURCES)
+      .flat()
+      .map((source) => source.file),
+  )
+  const total = [...files].reduce(
+    (sum, file) => sum + statSync(path.resolve(process.cwd(), 'public/fonts', file)).size,
+    0,
+  )
+  check(
+    'total font PDF subset < 400 KB',
+    total < 400 * 1024,
+    `${(total / 1024).toFixed(1)} KB untuk ${files.size} berkas`,
+  )
+}
+
+async function verifyPerformance(): Promise<void> {
+  const single = await render(paginationDoc('pendek'), 'ledger')
+  const long = await render(paginationDoc('panjang'), 'ledger')
+  check('export 1 halaman < 1,5 detik', single.durationMs < 1500, `${single.durationMs} ms`)
+  check('export 3 halaman < 4 detik', long.durationMs < 4000, `${long.durationMs} ms`)
 }
 
 async function main(): Promise<void> {
   await mkdir(ARTIFACT_DIR, { recursive: true })
+  for (const templateId of TEMPLATE_IDS) await verifyTemplate(templateId)
+  await verifyPaginationFixtures()
+  verifySubsetSize()
+  await verifyPerformance()
 
-  const spec = spikeSpec
-  const marginPt = mmToPt(spec.marginMm)
-  const bodyLineHeightPt = spec.type.bodyPt * spec.lineHeight.body
-
-  // ---- 1. dokumen pendek: 1 halaman -------------------------------------
-  const shortStartedAt = performance.now()
-  const shortData = await render(spikeContent, { repeatHeader: false })
-  const shortMs = Math.round(performance.now() - shortStartedAt)
-  await writeFile(path.join(ARTIFACT_DIR, 'spike-a4.pdf'), shortData)
-
-  check(
-    'magic bytes %PDF',
-    String.fromCharCode(shortData[0]!, shortData[1]!, shortData[2]!, shortData[3]!) === '%PDF',
-    `${shortData[0]!} ${shortData[1]!} ${shortData[2]!} ${shortData[3]!}`,
-  )
-
-  const shortSizes = await pageSizes(shortData)
-  check('jumlah halaman dokumen pendek', shortSizes.length === 1, `${shortSizes.length} halaman`)
-
-  const firstSize = shortSizes[0]!
-  check(
-    'ukuran halaman A4 (pt)',
-    closeTo(firstSize.width, A4_PT.w, 0.5) && closeTo(firstSize.height, A4_PT.h, 0.5),
-    `${firstSize.width.toFixed(2)} × ${firstSize.height.toFixed(2)} pt, harap ${A4_PT.w} × ${A4_PT.h}`,
-  )
-
-  const shortLines = await extractLines(1, shortData)
-  const shortText = shortLines.map((line) => line.text).join(' ')
-  await writeFile(
-    path.join(ARTIFACT_DIR, 'spike-a4-text.txt'),
-    shortLines.map((l) => l.text).join('\n'),
-  )
-
-  check(
-    'teks bisa diekstrak (bukan raster)',
-    shortText.trim().length > 0,
-    `${shortText.length} karakter`,
-  )
-  check(
-    'tidak ada glyph pecah (U+FFFD)',
-    !shortText.includes('\uFFFD'),
-    shortText.includes('\uFFFD') ? 'ditemukan replacement character' : 'bersih',
-  )
-  const leftMarginPt = Math.min(...shortLines.map((line) => line.minX))
-  check(
-    `margin kiri teks = ${spec.marginMm} mm (±1 mm)`,
-    closeTo(leftMarginPt, marginPt, TOLERANCE_PT),
-    `${leftMarginPt.toFixed(2)} pt, harap ${marginPt.toFixed(2)} pt`,
-  )
-
-  const topLine = shortLines[0]!
-  check(
-    'baris pertama adalah nama',
-    norm(topLine.text) === norm(spikeContent.name),
-    `"${topLine.text}"`,
-  )
-  check(
-    `ukuran font nama = ${spec.type.namePt} pt`,
-    closeTo(topLine.maxSizePt, spec.type.namePt, 0.2),
-    `${topLine.maxSizePt.toFixed(2)} pt`,
-  )
-
-  const headingLine = shortLines.find(
-    (line) => norm(line.text) === norm(headingLabel(spikeContent.sections[0]!.heading, spec)),
-  )
-  check(
-    `ukuran font heading = ${spec.type.headingPt} pt`,
-    headingLine !== undefined && closeTo(headingLine.maxSizePt, spec.type.headingPt, 0.2),
-    headingLine ? `${headingLine.maxSizePt.toFixed(2)} pt` : 'heading tidak ditemukan',
-  )
-
-  const bulletSizes = shortLines
-    .filter((line) => line.text.startsWith(spec.bulletGlyph))
-    .map((l) => l.maxSizePt)
-  check(
-    `ukuran font body/bullet = ${spec.type.bodyPt} pt`,
-    bulletSizes.length > 0 && bulletSizes.every((size) => closeTo(size, spec.type.bodyPt, 0.2)),
-    bulletSizes.length > 0
-      ? `${bulletSizes.map((s) => s.toFixed(2)).join(', ')} pt`
-      : 'tidak ada bullet',
-  )
-
-  // ---- 2. urutan baca + kelengkapan teks ---------------------------------
-  const haystack = norm(shortText)
-  let cursor = 0
-  const orderDetail: string[] = []
-  let orderOk = true
-  for (const expected of expectedPieces(spikeContent)) {
-    const needle = norm(expected)
-    const found = haystack.indexOf(needle, cursor)
-    if (found === -1) {
-      orderOk = false
-      orderDetail.push(`HILANG: "${expected.slice(0, 48)}"`)
-      continue
-    }
-    orderDetail.push(`${orderDetail.length + 1}. "${expected.slice(0, 48)}" @${found}`)
-    cursor = found + needle.length
-  }
-  check('urutan baca name → contact → heading → entry → bullet', orderOk, orderDetail.join(' | '))
-
-  // ---- 3. dokumen panjang: wrap, page-break, header berulang -------------
-  const longContent = makeLongSpikeContent(LONG_BULLET_COUNT)
-  const longStartedAt = performance.now()
-  const longData = await render(longContent, { repeatHeader: true })
-  const longMs = Math.round(performance.now() - longStartedAt)
-  await writeFile(path.join(ARTIFACT_DIR, 'spike-a4-60-bullet.pdf'), longData)
-
-  const longSizes = await pageSizes(longData)
-  check(
-    `${LONG_BULLET_COUNT} bullet memicu page-break otomatis`,
-    longSizes.length >= 2,
-    `${longSizes.length} halaman`,
-  )
-
-  const longPages: PdfLine[][] = []
-  for (let page = 1; page <= longSizes.length; page += 1) {
-    longPages.push(await extractLines(page, longData))
-  }
-
-  const longPage2First = longPages[1]?.[0]
-  check(
-    'header berulang digambar lagi di halaman 2',
-    longPage2First !== undefined && norm(longPage2First.text) === norm(longContent.name),
-    longPage2First ? `"${longPage2First.text}"` : 'halaman 2 kosong',
-  )
-
-  const longAllText = longPages.flat().map((line) => line.text)
-  await writeFile(path.join(ARTIFACT_DIR, 'spike-a4-60-bullet-text.txt'), longAllText.join('\n'))
-
-  const longHaystack = norm(longAllText.join(' '))
-  const missingBullets = longContent.sections[0]!.entries[0]!.bullets.filter(
-    (bullet) => !longHaystack.includes(norm(bullet)),
-  )
-  check(
-    `semua ${LONG_BULLET_COUNT} bullet utuh (tidak ada kata hilang saat wrap)`,
-    missingBullets.length === 0,
-    missingBullets.length === 0
-      ? 'lengkap'
-      : `hilang ${missingBullets.length}, contoh: ${missingBullets[0]!.slice(0, 60)}`,
-  )
-
-  // line-height: jarak baseline antar baris LANJUTAN dari body yang ter-wrap.
-  // Jarak baseline bebas dari pengaruh ascender, jadi sah dibandingkan dengan
-  // CSS line-height di preview layar.
-  const bodyBaselines = longPages.flatMap((lines) =>
-    lines
-      .filter((line) => closeTo(line.maxSizePt, spec.type.bodyPt, 0.2))
-      .map((line) => line.baselineY),
-  )
-  const bodyDeltas = bodyBaselines
-    .slice(1)
-    .map((baseline, index) => Math.abs(baseline - bodyBaselines[index]!))
-    .filter((delta) => delta > 0.5)
-  const smallestBodyDelta = bodyDeltas.length > 0 ? Math.min(...bodyDeltas) : Number.NaN
-  check(
-    `line-height body = ${spec.lineHeight.body} × ${spec.type.bodyPt} pt`,
-    Number.isFinite(smallestBodyDelta) && closeTo(smallestBodyDelta, bodyLineHeightPt, 0.25),
-    `${Number.isFinite(smallestBodyDelta) ? smallestBodyDelta.toFixed(2) : '—'} pt, harap ${bodyLineHeightPt.toFixed(2)} pt`,
-  )
-
-  // ---- laporan -----------------------------------------------------------
   const failed = checks.filter((item) => !item.pass)
   console.log('')
-  console.log('pdf:verify — spike PDF Fase 0 (engine: pdf-lib)')
+  console.log('pdf:verify — Fase 5 (pdf-lib, TemplateSpec + PagePlan tunggal)')
   console.log('='.repeat(78))
   for (const item of checks) {
     console.log(`${item.pass ? 'PASS' : 'FAIL'}  ${item.name}`)
     console.log(`        ${item.detail}`)
   }
   console.log('-'.repeat(78))
-  console.log(`durasi render: 1 halaman ${shortMs} ms · ${LONG_BULLET_COUNT} bullet ${longMs} ms`)
-  console.log(
-    `ukuran file    : 1 halaman ${(shortData.byteLength / 1024).toFixed(1)} KB · ${LONG_BULLET_COUNT} bullet ${(longData.byteLength / 1024).toFixed(1)} KB`,
-  )
-  console.log(`artefak        : ${path.relative(process.cwd(), ARTIFACT_DIR)}/`)
+  console.log(`artefak: ${path.relative(process.cwd(), ARTIFACT_DIR)}/`)
+  console.log(`pdftotext silang: ${pdftotext ?? 'tidak ditemukan (dilewati)'}`)
+  console.log(`hasil : ${checks.length - failed.length}/${checks.length} pemeriksaan lolos`)
   console.log('='.repeat(78))
-  console.log('')
-  console.log('Teks hasil ekstraksi halaman 1 (bukti teks bisa diseleksi & di-copy):')
-  console.log('-'.repeat(78))
-  for (const line of shortLines.map((l) => l.text)) console.log(line)
-  console.log('-'.repeat(78))
-
-  if (failed.length > 0) {
-    console.error(`\n${failed.length} pemeriksaan gagal.`)
-    process.exitCode = 1
-  } else {
-    console.log(`\nSemua ${checks.length} pemeriksaan lolos.`)
-  }
+  if (failed.length > 0) process.exitCode = 1
 }
 
 await main()

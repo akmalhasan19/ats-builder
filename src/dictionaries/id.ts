@@ -121,6 +121,14 @@ export const id = {
   'pdf.note.long':
     'Varian 60 bullet menguji wrap, page-break otomatis, dan prop fixed untuk header berulang.',
   'pdf.error.failed': 'PDF gagal dibuat. Coba lagi.',
+  'pdf.error.invalid': 'Lengkapi atau perbaiki kolom yang ditandai sebelum membuat PDF.',
+  'pdf.error.font': 'PDF gagal dibuat karena font dokumen tidak bisa dimuat. Coba lagi.',
+  'pdf.error.content':
+    'PDF gagal dibuat. Ruangan dokumen terlalu penuh — kurangi satu bagian, lalu coba lagi.',
+  'pdf.error.blob': 'PDF dibuat, tetapi browser tidak bisa memulai unduhan. Coba lagi.',
+  'pdf.success.downloaded': 'PDF terunduh',
+  'pdf.action.open': 'Buka',
+  'pdf.state.slow': 'Menyiapkan file PDF. Proses masih berjalan.',
   'pdf.viewer.label': 'Pratinjau PDF hasil spike',
 
   'preview.title': 'Spike preview layar',

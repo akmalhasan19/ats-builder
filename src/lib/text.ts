@@ -116,3 +116,12 @@ export function tokenize(text: string): string[] {
     .split(/[^\p{L}\p{N}]+/u)
     .filter((token) => token.length > 0)
 }
+
+export function slugify(value: string): string {
+  const slug = stripDiacritics(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || 'resume'
+}
