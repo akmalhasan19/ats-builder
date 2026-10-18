@@ -40,3 +40,8 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Tooling / agent folders
+.agents/
+.freebuff/
+
