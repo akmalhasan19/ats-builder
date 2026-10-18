@@ -11,6 +11,7 @@ function createDevRoutes(): RouteObject[] {
   const PdfSpikePage = lazy(() => import('./dev/PdfSpikePage'))
   const PreviewSpikePage = lazy(() => import('./dev/PreviewSpikePage'))
   const PersistPage = lazy(() => import('./dev/PersistPage'))
+  const PaginationPage = lazy(() => import('./dev/PaginationPage'))
 
   const mounted = (page: ReactNode): ReactNode => <Suspense fallback={null}>{page}</Suspense>
 
@@ -19,6 +20,7 @@ function createDevRoutes(): RouteObject[] {
     { path: '/dev/pdf', element: mounted(<PdfSpikePage />) },
     { path: '/dev/preview', element: mounted(<PreviewSpikePage />) },
     { path: '/dev/persist', element: mounted(<PersistPage />) },
+    { path: '/dev/pagination', element: mounted(<PaginationPage />) },
   ]
 }
 

@@ -22,7 +22,11 @@ for (const width of [360, 768, 1024, 1440]) {
   const context = await browser.newContext({ viewport: { width, height: 800 } })
   const page = await context.newPage()
   await page.goto(BASE)
-  await page.locator('[data-probe="paper"]').first().waitFor({ timeout: 10000 }).catch(() => null)
+  await page
+    .locator('[data-probe="page-sheet"]')
+    .first()
+    .waitFor({ timeout: 10000 })
+    .catch(() => null)
   await dismissFirstRun(page)
   await page.screenshot({ path: `artifacts/evidence/fase3-bp-${width}.png` })
   await context.close()
@@ -34,7 +38,11 @@ for (const width of [360, 768, 1024, 1440]) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const page = await context.newPage()
   await page.goto(BASE)
-  await page.locator('[data-probe="paper"]').first().waitFor({ timeout: 10000 }).catch(() => null)
+  await page
+    .locator('[data-probe="page-sheet"]')
+    .first()
+    .waitFor({ timeout: 10000 })
+    .catch(() => null)
   await dismissFirstRun(page)
 
   await page.keyboard.press('Tab')

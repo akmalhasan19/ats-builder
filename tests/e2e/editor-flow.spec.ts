@@ -19,7 +19,7 @@ test.describe('editor-flow — Gate Fase 3', () => {
 
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    await expect(page.locator('[data-probe="paper"]')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible({ timeout: 10000 })
 
     // ---- Batalkan FirstRunCard jika muncul (pilih Nanti saja) ----
     const laterBtn = page.getByRole('button', { name: 'Lanjut' })
@@ -88,7 +88,7 @@ test.describe('editor-flow — Gate Fase 3', () => {
     // ---- Reload dan verifikasi ----
     await page.reload()
     await page.setViewportSize({ width: 1440, height: 900 })
-    await expect(page.locator('[data-probe="paper"]')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible({ timeout: 10000 })
 
     // Profil harus terbaca setelah reload
     const profileBtnR = page
@@ -282,12 +282,17 @@ test.describe('reorder section — Gate Fase 3 (mouse, sentuhan, keyboard)', () 
     // fokus ke drag handle section pertama lalu operasikan keyboard sensor dnd-kit
     await dragHandleOf(page, 0).focus()
     await page.keyboard.press('Space')
+    await expect(page.locator('[data-probe="drag-overlay"]')).toBeVisible()
+    // Sensor keyboard dnd-kit butuh satu frame untuk menyusun ulang rect item
+    // sebelum panah pertama diproses; tanpa jeda ini ArrowDown tertelan.
+    await page.waitForTimeout(200)
     await page.keyboard.press('ArrowDown')
+    await page.waitForTimeout(200)
     await page.keyboard.press('Space')
 
-    const after = await readOrder(page)
-    expect(after[0]).toBe('Ringkasan')
-    expect(after[1]).toBe('Profil')
+    await expect
+      .poll(async () => (await readOrder(page)).slice(0, 2), { timeout: 5000 })
+      .toEqual(['Ringkasan', 'Profil'])
 
     // aria-live mengumumkan urutan baru (T3.2)
     await expect(page.locator('div.sr-only[role="status"]')).toContainText(

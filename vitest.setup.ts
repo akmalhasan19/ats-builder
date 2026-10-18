@@ -13,6 +13,21 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver
 }
 
+// PreviewWell melacak halaman yang sedang terlihat dengan IntersectionObserver;
+// jsdom tidak menyediakannya sama sekali.
+if (typeof globalThis.IntersectionObserver === 'undefined') {
+  class IntersectionObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return []
+    }
+  }
+  globalThis.IntersectionObserver =
+    IntersectionObserverStub as unknown as typeof IntersectionObserver
+}
+
 afterEach(() => {
   cleanup()
 })

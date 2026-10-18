@@ -476,7 +476,10 @@ export function Rail() {
 
             <DragOverlay>
               {activeDragSection ? (
-                <div className="border-rule bg-raised shadow-raised flex h-10 scale-[1.01] items-center gap-2 rounded-md border px-3">
+                <div
+                  data-probe="drag-overlay"
+                  className="border-rule bg-raised shadow-raised flex h-10 scale-[1.01] items-center gap-2 rounded-md border px-3"
+                >
                   <span className="text-rail-label text-ink font-semibold">
                     {t(sectionRegistry[activeDragSection.kind].labelId)}
                   </span>

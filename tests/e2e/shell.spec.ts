@@ -58,7 +58,7 @@ test('workspace langsung hidup: brand, judul, status, rail, dan lembar A4', asyn
 
   await expect(page.getByRole('main', { name: 'Ruang kerja CV' })).toBeVisible()
   await expect(page.getByRole('complementary', { name: 'Bagian' })).toBeVisible()
-  await expect(page.locator('[data-probe="paper"]')).toBeVisible()
+  await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible()
   await expect(page.getByRole('status', { name: 'Status penyimpanan' })).toContainText(
     'Disimpan di perangkat',
   )
@@ -75,7 +75,7 @@ test('resize 360 → 1920 tanpa layout rusak dan tanpa scroll horizontal', async
       'data-panel-mode',
       viewport.mode,
     )
-    const paper = page.locator('[data-probe="paper"]')
+    const paper = page.locator('[data-probe="page-sheet"]').first()
     if (viewport.width >= 1024) {
       await expect(paper).toBeVisible()
     } else {
@@ -223,7 +223,7 @@ test('rute §5.1 bisa dibuka dan tidak ada yang 404 di shell', async ({ page }) 
 
 test('CLS shell tetap 0 dan reduced-motion mematikan animasi', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('[data-probe="paper"]')).toBeVisible()
+  await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible()
 
   const cls = await collectCls(page)
   console.log(`CLS shell = ${cls.toFixed(4)}`)
@@ -232,7 +232,7 @@ test('CLS shell tetap 0 dan reduced-motion mematikan animasi', async ({ page }) 
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.reload()
   const duration = await page
-    .locator('[data-probe="paper"]')
+    .locator('[data-probe="preview-renderer"]')
     .evaluate((element) => getComputedStyle(element).animationDuration)
   expect(parseFloat(duration)).toBeLessThan(0.01)
 })

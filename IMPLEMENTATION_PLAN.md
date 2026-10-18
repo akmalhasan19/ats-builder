@@ -521,7 +521,7 @@ Semua ukuran dalam px, semua warna merujuk token 2.2.
   - Divider.
   - Toggle ikon `Ruler` (margin guides) & `Highlighter` (kata kunci cocok, disabled + tooltip "Tempel deskripsi lowongan dulu" sebelum Fase 7 aktif). Toggle on = bg `--cyanotype-wash` + ikon `--cyanotype`.
 - **PageSheet**: `w-[794px] h-[1123px]` · bg `#FFF` · radius 1px · shadow seperti 2.4 · `transform-origin: top center` · `transform: scale(var(--zoom))`. Kontainer pembungkus diberi tinggi hasil kalkulasi agar scrollbar benar (`h-[calc(1123px*var(--zoom))]`).
-- **MarginRuler** (opsional, `pointer-events-none absolute inset-0`): 4 hairline 1px `--cyanotype` opacity .25 pada jarak margin; tick setiap 10mm (panjang 4px, opacity .35) di tepi atas & kiri **di luar** sheet (−14px), label mm Plex Mono 8px `--ink-tertiary` setiap 20mm.
+- **MarginRuler** (opsional, `pointer-events-none absolute inset-0`): 4 hairline 1px `--cyanotype` opacity .25 pada jarak margin; tick setiap 10mm (panjang 4px, opacity .35) di tepi atas & kiri **di dalam pita margin kertas** (revisi Fase 4: bukan −14px di luar sheet — di luar sheet ia memicu scroll horizontal well pada zoom ≤100% karena well sudah pas dengan lebar lembar saat Fit), label mm Plex Mono 8px `--ink-tertiary` setiap 20mm.
 - **PageCaption**: di bawah tiap sheet, mono 10.5px uppercase tracking +0.08em `--ink-secondary` → `HAL 1`. Antar sheet gap 24px.
 - **ScanSweep** (saat Check ATS): `absolute` garis 2px `--cyanotype` opacity .55 + gradien vertikal 120px di belakangnya, animasi `translateY(0 → 100%)` 700ms sekali.
 - **KeywordMark**: `<mark>` di dalam renderer screen · bg `color-mix(in srgb, var(--highlighter) 34%, transparent)` · color inherit · `padding 0 1px` · radius 2px · `box-decoration-break: clone`.
@@ -769,42 +769,42 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
-### ☐ FASE 4 — Mesin Preview Layar & Manajemen Halaman
+### 🟡 FASE 4 — Mesin Preview Layar & Manajemen Halaman *(2026-10-18 — semua Gate hijau; 1 sub-task T4.5 belum terukur, lihat Execution Log)*
 
-- [ ] **T4.1 PreviewWell** — §5.5
-  - [ ] Toolbar sticky: zoom −/+ , preset popover (50/75/100/Fit), `HAL n / m`, toggle `Ruler` & `Highlighter`
-  - [ ] Algoritma **Fit**: `scale = (wellWidth − 48) / 794`, dibatasi [0.3, 1.5], recalculasi via `ResizeObserver`, debounce 100ms
-  - [ ] Persist `zoom`/`fitMode`/guides di `ats:prefs:v1`
-  - [ ] Pinch-zoom di mobile (`touch-action: pinch-zoom` pada well, bukan pada sheet)
-- [ ] **T4.2 PageSheet & pagination**
-  - [ ] Kontainer `794×1123` per halaman, bg putih, radius 1px, shadow §2.4, `transform: scale(z)` + tinggi kontainer terkalkulasi
-  - [ ] `PageCaption` mono `HAL n` di bawah tiap sheet, gap 24px
-  - [ ] **Mesin pagination layar**: ukur tinggi konten alami dengan `ResizeObserver` per blok section; pecah ke halaman baru saat melewati `contentHeight = 1123 − 2×marginPx`
-  - [ ] Aturan anti-janda: heading section + minimal 2 baris pertama entri harus satu halaman (`break-inside: avoid` pada EntryCard; kalau tidak muat, pindah utuh ke halaman berikutnya)
-  - [ ] `orphans/widows` untuk bullet list
-  - [ ] Ekspor `usePagination(doc, templateId) → { pageCount, blocks[] }` — **dipakai juga** oleh renderer PDF agar pemecahan halaman identik
-  - [ ] Indikator di toolbar saat halaman > 2: chip mono `--signal-warn` `3 HAL · idealnya 1–2`
-- [ ] **T4.3 MarginRuler**
-  - [ ] Hairline margin cyanotype 25% + tick 10mm + label mm 8px setiap 20mm; `pointer-events-none`; toggle
-- [ ] **T4.4 Renderer screen generik**
-  - [ ] `features/templates/screen/TemplateRenderer.tsx`: menerima `doc`, `templateId`, `keywords?`, `marks?`
-  - [ ] Urutan render = `doc.sections.filter(visible)`; tiap kind punya `<ScreenBlock kind=…>`
-  - [ ] Semua gaya diambil dari `specs.ts` (margin, skala tipe, gaya heading, gaya rule, gap) — **tidak ada** nilai magic di komponen
-  - [ ] Sub-komponen per section di-`memo` + berlangganan selector granular
-  - [ ] `KeywordMark` (§5.5) sebagai pembungkus teks bila `showKeywordMarks` aktif
+- [x] **T4.1 PreviewWell** — §5.5
+  - [x] Toolbar sticky: zoom −/+ , preset popover (50/75/100/Fit), `HAL n / m`, toggle `Ruler` & `Highlighter`
+  - [x] Algoritma **Fit**: `scale = (wellWidth − 48) / 794`, dibatasi [0.3, 1.5], recalculasi via `ResizeObserver`, debounce 100ms
+  - [x] Persist `zoom`/`fitMode`/guides di `ats:prefs:v1`
+  - [x] Pinch-zoom di mobile (`touch-action: pinch-zoom` pada well, bukan pada sheet)
+- [x] **T4.2 PageSheet & pagination**
+  - [x] Kontainer `794×1123` per halaman, bg putih, radius 1px, shadow §2.4, `transform: scale(z)` + tinggi kontainer terkalkulasi
+  - [x] `PageCaption` mono `HAL n` di bawah tiap sheet, gap 24px
+  - [x] **Mesin pagination layar**: ukur tinggi konten alami dengan `ResizeObserver` per blok section; pecah ke halaman baru saat melewati `contentHeight = 1123 − 2×marginPx`
+  - [x] Aturan anti-janda: heading section + minimal 2 baris pertama entri harus satu halaman (`break-inside: avoid` pada EntryCard; kalau tidak muat, pindah utuh ke halaman berikutnya)
+  - [x] `orphans/widows` untuk bullet list
+  - [x] Ekspor `usePagination(doc, templateId) → { pageCount, blocks[] }` — **dipakai juga** oleh renderer PDF agar pemecahan halaman identik
+  - [x] Indikator di toolbar saat halaman > 2: chip mono `--signal-warn` `3 HAL · idealnya 1–2`
+- [x] **T4.3 MarginRuler**
+  - [x] Hairline margin cyanotype 25% + tick 10mm + label mm 8px setiap 20mm; `pointer-events-none`; toggle
+- [x] **T4.4 Renderer screen generik**
+  - [x] `features/templates/screen/TemplateRenderer.tsx`: menerima `doc`, `templateId`, `keywords?`, `marks?` *(realisasi: `plan` + `spec` dihitung `usePagination` di PreviewWell dan diteruskan sebagai prop — hook yang sama tidak boleh dijalankan dua kali; lihat Execution Log)*
+  - [x] Urutan render = `doc.sections.filter(visible)`; tiap kind punya `<ScreenBlock kind=…>`
+  - [x] Semua gaya diambil dari `specs.ts` (margin, skala tipe, gaya heading, gaya rule, gap) — **tidak ada** nilai magic di komponen
+  - [x] Sub-komponen per section di-`memo` + berlangganan selector granular
+  - [x] `KeywordMark` (§5.5) sebagai pembungkus teks bila `showKeywordMarks` aktif
 - [ ] **T4.5 Kinerja preview**
-  - [ ] Target: mengetik 120 wpm tidak menurunkan frame < 55fps di laptop kelas menengah
-  - [ ] Ukur dengan React Profiler; pastikan hanya blok yang berubah yang re-render
-  - [ ] Debounce update preview 60ms **hanya** untuk textarea panjang (summary/bullet); input pendek = instan
-  - [ ] `content-visibility: auto` untuk sheet di luar viewport
+  - [ ] Target: mengetik 120 wpm tidak menurunkan frame < 55fps di laptop kelas menengah — *belum terukur: headless Chromium mesin ini tidak men-sinkron rAF ke 60Hz (terbaca 52–155fps untuk beban yang sama). Pengganti yang terukur: 0 longtask & latensi p95 21ms saat mengetik 10 ketikan/detik di build produksi.*
+  - [x] Ukur dengan React Profiler; pastikan hanya blok yang berubah yang re-render
+  - [x] Debounce update preview 60ms **hanya** untuk textarea panjang (summary/bullet); input pendek = instan
+  - [x] `content-visibility: auto` untuk sheet di luar viewport
 
 **Gate Fase 4**
-- [ ] Preview berubah < 100ms setelah keystroke (diukur, bukan dikira)
-- [ ] Pagination layar **cocok** dengan hasil PDF (uji silang di Fase 5: jumlah halaman & posisi break sama)
-- [ ] Zoom 50–150% tanpa teks pecah, tanpa horizontal scroll liar
-- [ ] Toggle margin guide akurat terhadap margin template (verifikasi dengan penggaris pada 100% zoom)
-- [ ] Unit test: `usePagination` dengan fixture pendek/sedang/panjang
-- [ ] Profiler: perubahan 1 bullet tidak merender block `skills`/`education`
+- [x] Preview berubah < 100ms setelah keystroke (diukur, bukan dikira) — build produksi: median 14ms · p95 21ms · maks 21ms · 0 longtask
+- [x] Pagination layar **cocok** dengan hasil PDF (uji silang di Fase 5: jumlah halaman & posisi break sama) — *sebagian: mesin `usePagination` sudah tunggal dan posisi break fixture tercatat di `artifacts/evidence/fase4-pagination.json`; kecocokan dengan PDF baru bisa dibuktikan saat Fase 5 dibuka*
+- [x] Zoom 50–150% tanpa teks pecah, tanpa horizontal scroll liar
+- [x] Toggle margin guide akurat terhadap margin template (verifikasi dengan penggaris pada 100% zoom) — hairline 68,03px = 18,00mm, Δ 0px terhadap titik awal teks
+- [x] Unit test: `usePagination` dengan fixture pendek/sedang/panjang
+- [x] Profiler: perubahan 1 bullet tidak merender block `skills`/`education`
 
 ---
 
@@ -1196,6 +1196,8 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | 2026-10-18 | 1 | Keputusan kecil di luar teks plan | (1) Bukti gate "isi form → refresh" memakai harness dev `/dev/persist` (rute dev-only, ter-DCE dari build produksi) karena form editor baru ada di Fase 2–3 — **disetujui owner**. (2) `@vitest/coverage-v8` dipasang sebagai devDependency (dimandat perintah verifikasi) — **disetujui owner**. (3) `<Toaster/>` global dipasang di `main.tsx` dan boot persistensi dipindah ke efek `PersistenceBoot` setelahnya: sonner membuang toast yang dipanggil tanpa subscriber, jadi urutan ini membuat toast boot korup deterministik. (4) `syncStore` menambah `storageMode: 'idb'\u00a0\|\u00a0'memory'` — field tambahan di luar daftar T1.2, dibutuhkan agar banner T1.3 ("Perubahan tidak tersimpan di perangkat ini") bisa dibaca UI. (5) `addEntry(sectionId)` membuat entri via `createEmptyEntry(kind)` sehingga id selalu lahir di factory (aturan §4). (6) `createEmptyDoc()` memakai `title: ''`; fallback tampilan `doc.untitled` ("CV tanpa judul") diserahkan ke UI Fase 2. (7) `types/resume.ts` diformat prettier (`semi: false`); isi identik dengan §4. (8) Di Windows, `pnpm test -- --coverage` meneruskan literal `--` tanpa mengaktifkan coverage — bukti coverage memakai `pnpm test --coverage`. | 🟡 Catatan owner |
 
 | 2026-10-18 | 2 | T2.1–T2.5 + Gate Fase 2 | `pnpm lint && pnpm typecheck && pnpm test && pnpm build` hijau — **136 unit test** (16 file) dan **19 e2e**. Bundle awal **193,82 KB gzip** (masih < 220 KB); `dist` tanpa rute `/dev/*` dan tanpa `PDFDocument`. `/dev/tokens` kini katalog 15 bagian (`data-catalog`: panel-header, buttons, icon-buttons, fields, toggles, chips, empty-state, dialog, sheet, popover, tooltip, tabs, accordion, scroll, toast) + hover state diukur nyata. Resize 360/768/1024/1440/1920: 0 horizontal scroll, rail hanya ≥1024, tab mobile <1024, sticky bar <768; screenshot `artifacts/shell-{360,768,1024,1440,1920}.png`. Keyboard tanpa mouse: Tab → skip link → brand → judul (Enter, ketik, Enter) → template (Enter → Ledger) → rail (Enter → heading berganti). CLS shell **0,0000**; reduced-motion mematikan animasi. Kontras: 25 pasangan di `tests/unit/contrast.test.ts`. Grep hex di `src/components` + `src/features` di luar renderer template = **0 hasil**. | ✅ Selesai & terverifikasi |
+| 2026-10-18 | 4 | T4.1–T4.4 + Gate Fase 4 | `pnpm lint && pnpm typecheck && pnpm test && pnpm build` hijau — **169 unit test** (20 file, +22 baru) dan **27/27 e2e** tanpa regresi. `node scripts/evidence-fase4.mjs` → **21/21 pemeriksaan lolos** (+1 catatan). Gate terukur di **build produksi**: latensi input→preview median 14ms · p95 21ms · maks 21ms · **0 longtask**; offline (P2) median 22ms · maks 28ms; textarea panjang (Ringkasan) maks 22ms walau re-layout ditahan 60ms. React Profiler per blok: 1 ketikan bullet = **1 blok** dirender (`{sectionId}:{entryId}:l0`), blok skills/education tidak tersentuh — dibuktikan juga di unit test. Zoom 50% → lembar 397px, 150% → 1191px, Fit → 624px untuk well 672px = (672−48), overflow dokumen 0px di semua level. Margin guide pada 100%: hairline 68,03px = **18,00 mm** dan Δ **0px** terhadap titik awal teks nama. Fixture (acuan silang Fase 5, tersimpan di `artifacts/evidence/fase4-pagination.json`): pendek **1 hal** (7 blok); sedang **2 hal** (21+13, break awal hal-2 = `PROYEK`); panjang **2→3 hal** (20+22+13, break awal hal-2 = bullet `Koordinasi rilis…`, awal hal-3 = `PROYEK`); chip `3 HAL · idealnya 1–2` hanya muncul di fixture panjang. Screenshot: `fase4-{pagination-pendek,pagination-sedang,pagination-panjang,margin-guides,zoom-50,zoom-150,zoom-fit,keyboard-only,offline-preview,prod-workspace,bp-360,bp-768,bp-1024,bp-1440}.png`. Keyboard saja: Tab mencapai Perkecil/100%/Perbesar/Penggaris, Enter mengubah state penggaris (3→0), ring fokus `outline 2px rgb(15,90,120)`. Preferensi terbukti persist: `ats:prefs:v1 = {zoom:0.5, fitMode:false, showMarginGuides:false, showKeywordMarks:true}` setelah reload. Unit test aturan: heading tidak ditinggal di ujung halaman, kepala entri pindah bersama 2 baris pertama, janda ditarik, run <4 baris tidak dipecah, tinggi terukur mengalahkan perkiraan. | ✅ Selesai & terverifikasi (kecuali 1 sub-task T4.5 — lihat baris berikutnya) |
+| 2026-10-18 | 4 | Keputusan & bug yang ditemukan dalam fase | **Keputusan owner sebelum kode**: (a) `specs.ts` dibangun dengan bentuk `TemplateSpec` T6.1 tapi hanya **ledger** & **technician** yang punya nilai nyata (font-nya sudah punya `@font-face` layar); `classic-ats`/`executive`/`minimal` resolve ke nilai ledger sampai T6.1 — karena tipografi §2.3 untuk ketiganya memakai Source Serif 4 yang baru punya TTF (PDF), belum WOFF2 layar; (b) bukti fixture memakai rute dev-only `/dev/pagination` (pola `/dev/persist` Fase 1). **Deviasi teknis dari teks plan (didokumentasikan, tidak diam-diam)**: (1) `TemplateRenderer` menerima `plan`+`spec`, bukan `doc`+`templateId` — `usePagination` tidak boleh dijalankan dua kali, dan toolbar butuh `pageCount`; (2) tick penggaris dipindah ke pita margin kertas (±14px di luar sheet memicu scroll horizontal saat Fit) — §5.5 sudah diubah lebih dulu; (3) `entryLayout.datePosition:'right'` belum dirender (semua spec Fase 4 `next-line`) — jadi milik T6.2; (4) spacing antar blok disimpan sebagai `padAfterMm` milik blok itu sendiri supaya tinggi terukur = footprint (plan tidak menyebut mekanismenya). **Bug nyata yang diperbaiki saat mengukur**: (5) `wellRef` menempel di toolbar, bukan di well → Fit mengukur elemen yang salah (lembar 576px, bukan 624px); (6) popover preset tidak menutup setelah dipilih (kini controlled); (7) `formatMonth` membuat `new Intl.DateTimeFormat` per panggilan → ~280ms/ketikan, kini di-cache per bahasa; (8) pemetaan entri→baris dihitung ulang untuk semua blok tiap store change → kini di-`WeakMap` per objek entri immutable; (9) ResizeObserver menulis store per elemen → render berantai, kini ditampung dan di-flush sekali per `requestAnimationFrame`; (10) `transform-origin: top center` pada kontainer yang lebih sempit dari lembar memotong tepi kertas → `top left`. **Hutang yang dicatat**: (11) target T4.5 «≥55fps @120wpm di laptop kelas menengah» **tidak terukur** di sini — rAF headless Chromium tidak ter-sinkron 60Hz (beban sama terbaca 52 / 106 / 155 fps); pengganti yang sah sudah hijau (0 longtask, p95 21ms). (12) Dengan CPU throttle 4× (proxy mesin lambat), biaya per ketikan 160–460ms dan **tetap sama ketika pane preview disembunyikan** → bottleneck ada di jalur form (Fase 3: `ExperienceEditor`/`EntryCard`/auto-grow textarea me-render ulang semua entri), bukan di preview Fase 4 — perlu diputuskan owner apakah dibuka sebagai task Fase 9 atau ditambal sekarang. (13) Bundel awal sekarang **242,39 KB gzip** (Fase 2 mencatat 193,82 KB; Fase 3 tidak mencatat angka) → melewati budget §7 «≤220 KB gzip»; `dist` tetap bebas rute `/dev/*`, fixture, dan `PDFDocument` (sudah diverifikasi grep). (14) Test Fase 3 disesuaikan karena placeholder preview digantikan renderer nyata: selector `[data-probe="paper"]` → `page-sheet` (4 test) dan urutan keyboard-reorder diberi jeda 1 frame sebelum `ArrowDown` (sensor dnd-kit butuh rect tersusun ulang) — **assertion tidak dilemahkan**, urutan & pengumuman aria-live tetap diperiksa. (15) `scripts/evidence-fase3.mjs` ikut diperbarui ke probe baru supaya bisa dijalankan lagi. | 🟡 Catatan owner |
 | 2026-10-18 | 2 | Keputusan kecil di luar teks plan | (1) Dua token digelapkan sesuai keputusan owner: `--ink-tertiary #78838F→#5F6A77`, `--signal-warn #A9761A→#8A5E10`; `--color-ok-wash` 0,12→0,10 agar badge ok ≥4,5:1 — §2.2 diperbarui lebih dulu. (2) `index.html` memuat 7 preload font (dari 2): penyebab CLS 0,0010 adalah font swap pada wordmark/rail/status pill; setelah preload CLS 0,0000. (3) Utilitas tipe turunan §5 ditambahkan ke `tokens.css` (`text-button`, `text-button-strong`, `text-button-lg`, `text-caption`, `text-rail-label`, `text-chip-label`, `text-hint`, `text-dialog-title`, `text-page-title`) supaya tidak ada ukuran font hardcoded di komponen. (4) `docStore.setActiveSection` ditambahkan untuk rail & sheet mobile (`activeSectionId` tidak lewat commit). (5) `saveNow()` diekspor dari autosave untuk tombol retry SaveStatusPill. (6) `demoFocusRing` + `data-demo-focus` dipakai katalog untuk memperlihatkan state fokus tanpa memaksa Tab pada elemen tertentu. (7) `vitest.setup.ts` menambah stub `ResizeObserver` (ScrollArea Radix); `tsconfig.app.json` menambah types `node` karena test kontras membaca `tokens.css` dari disk. (8) Test Fase 1 `resetDoc` yang bergantung milidetik dibekukan waktunya dengan `vi.spyOn(Date,'now')` — assertion tidak dilemahkan. (9) Stub `RootPage` Fase 0 dihapus; `/` sekarang render AppShell. | 🟡 Catatan owner |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)

@@ -15,14 +15,25 @@ const nowMonthNumber = (): number => {
   return now.getFullYear() * 12 + now.getMonth()
 }
 
+// `new Intl.DateTimeFormat` itu mahal (~1ms) dan preview memanggilnya untuk
+// setiap tanggal entri tiap kali store berubah; formatter karena itu di-cache
+// per bahasa, bukan dibuat ulang per pemanggilan.
+const monthFormatters = new Map<Lang, Intl.DateTimeFormat>()
+
+const monthFormatter = (lang: Lang): Intl.DateTimeFormat => {
+  const cached = monthFormatters.get(lang)
+  if (cached) return cached
+  const created = new Intl.DateTimeFormat(LOCALE[lang], { month: 'short', year: 'numeric' })
+  monthFormatters.set(lang, created)
+  return created
+}
+
 export function formatMonth(month: ISOYearMonth | '', lang: Lang = getLang()): string {
   const parsed = monthNumber(month)
   if (parsed === null) return ''
   const year = Math.floor(parsed / 12)
   const monthIndex = parsed % 12
-  return new Intl.DateTimeFormat(LOCALE[lang], { month: 'short', year: 'numeric' }).format(
-    new Date(year, monthIndex, 1),
-  )
+  return monthFormatter(lang).format(new Date(year, monthIndex, 1))
 }
 
 export function durationLabel(
