@@ -29,6 +29,7 @@ import { toast } from 'sonner'
 import { t } from '@/lib/i18n'
 import { useOpenAtsDrawer } from '@/features/ats/useAtsCheck'
 import { PdfDownloadButton } from '@/features/pdf/PdfDownloadButton'
+import { ThemeMenu, ThemeOptionList } from '@/features/theme/ThemeMenu'
 import { DocumentTitle } from './DocumentTitle'
 import { SaveStatusPill } from './SaveStatusPill'
 import { TemplateSelect } from './TemplateSelect'
@@ -97,7 +98,7 @@ function MobileMenu() {
                 }}
                 className={cn(
                   'border-rule bg-raised text-button text-ink flex h-10 items-center justify-between gap-2 rounded-md border px-3 text-left',
-                  active && 'border-cyanotype bg-cyanotype-wash text-cyanotype',
+                  active && 'border-accent-ink bg-accent-wash text-accent-ink',
                 )}
               >
                 {t(templateLabelKey(id))}
@@ -117,6 +118,9 @@ function MobileMenu() {
             <ScanSearch aria-hidden="true" className="size-[15px]" />
             {t('topbar.checkAts')}
           </Button>
+
+          <p className="text-eyebrow mt-4">{t('theme.title')}</p>
+          <ThemeOptionList />
 
           <Button
             variant="ghost"
@@ -174,8 +178,7 @@ export function TopBar() {
         aria-label={t('topbar.brandHome')}
         className="hover:opacity-85 flex shrink-0 items-center gap-2"
       >
-        <BrandMark size={20} className="md:hidden" />
-        <BrandMark className="hidden md:inline-flex" />
+        <BrandMark size={24} />
         <span className="text-brand hidden xl:inline">{t('app.name')}</span>
       </Link>
 
@@ -189,6 +192,9 @@ export function TopBar() {
 
       <div className="ml-auto flex items-center gap-2">
         <TemplateSelect className="hidden lg:inline-flex" />
+        <span className="hidden md:inline-flex">
+          <ThemeMenu />
+        </span>
         <span className="hidden lg:inline-flex">
           <CheckAtsButton />
         </span>

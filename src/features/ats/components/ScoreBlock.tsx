@@ -19,7 +19,7 @@ const TICK_COLOR: Record<AtsSeverity, string> = {
 const BAND_TEXT: Record<AtsReport['band']['colorKey'], string> = {
   'signal-bad': 'text-signal-bad',
   'signal-warn': 'text-signal-warn',
-  cyanotype: 'text-cyanotype',
+  accent: 'text-accent-ink',
   'signal-ok': 'text-signal-ok',
 }
 

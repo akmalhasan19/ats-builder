@@ -1,12 +1,28 @@
 /**
- * T8.8 (Opsi B) — generator aset PWA/SEO tanpa dependensi baru.
- * Menulis PNG murni lewat zlib bawaan Node: ikon 192/512 (BrandMark di atas
- * cyanotype) dan og-cover 1200×630 (lembar A4 + stabilo, tanpa teks).
- * Jalankan sekali: `node scripts/make-pwa-assets.mjs`. Output di-commit ke
- * `public/` karena jarang berubah dan dibutuhkan juga oleh dev server.
+ * Generator ikon PWA dari logo merek, tanpa dependensi baru.
+ *
+ * Sumber: `public/vetra-mark.png` (turunan `vetra_logo.webp` yang sudah
+ * dipangkas & diberi padding — dibuat sekali dari file logo asli).
+ * Output: `public/icon-192.png`, `public/icon-512.png`,
+ * `public/apple-touch-icon.png`. Jalankan: `node scripts/make-pwa-assets.mjs`.
+ *
+ * `public/og-cover.png` TIDAK dibuat di sini: gambar itu butuh rasterisasi teks
+ * (wordmark "Vetra") yang tidak tersedia di Node tanpa dependensi tambahan,
+ * jadi di-commit sebagai aset yang sudah jadi.
+ *
+ * PNG dibaca/ditulis langsung lewat zlib bawaan Node (IHDR + IDAT, RGBA 8-bit),
+ * supaya repo tidak menambah pustaka gambar hanya untuk tiga ikon.
  */
-import { writeFileSync } from 'node:fs'
-import { inflateSync, deflateSync } from 'node:zlib'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { deflateSync, inflateSync } from 'node:zlib'
+
+const SOURCE = 'public/vetra-mark.png'
+const TARGETS = [
+  ['public/icon-192.png', 192, 0.13],
+  ['public/icon-512.png', 512, 0.13],
+  ['public/apple-touch-icon.png', 180, 0.12],
+]
+const BACKGROUND = '#FFFFFF'
 
 const CRC_TABLE = new Uint32Array(256)
 for (let n = 0; n < 256; n += 1) {
@@ -39,14 +55,110 @@ function encodePng(width, height, rgba) {
   const ihdr = Buffer.alloc(13)
   ihdr.writeUInt32BE(width, 0)
   ihdr.writeUInt32BE(height, 4)
-  ihdr[8] = 8
-  ihdr[9] = 6
+  ihdr[8] = 8 // bit depth
+  ihdr[9] = 6 // RGBA
   return Buffer.concat([
     Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
     chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw)),
+    chunk('IDAT', deflateSync(raw, { level: 9 })),
     chunk('IEND', Buffer.alloc(0)),
   ])
+}
+
+/** Dekode PNG RGBA 8-bit non-interlaced (cukup untuk aset di repo ini). */
+function decodePng(buffer) {
+  if (buffer.readUInt32BE(0) !== 0x89504e47) throw new Error('Bukan berkas PNG')
+  let offset = 8
+  let width = 0
+  let height = 0
+  let colorType = 0
+  const idat = []
+  while (offset + 8 <= buffer.length) {
+    const length = buffer.readUInt32BE(offset)
+    const type = buffer.subarray(offset + 4, offset + 8).toString('ascii')
+    const data = buffer.subarray(offset + 8, offset + 8 + length)
+    if (type === 'IHDR') {
+      width = data.readUInt32BE(0)
+      height = data.readUInt32BE(4)
+      colorType = data[9]
+      if (data[8] !== 8 || data[12] !== 0) throw new Error('Hanya PNG 8-bit non-interlaced')
+    } else if (type === 'IDAT') {
+      idat.push(data)
+    } else if (type === 'IEND') {
+      break
+    }
+    offset += 12 + length
+  }
+  if (colorType !== 6) throw new Error(`Butuh PNG RGBA (colorType 6), dapat ${colorType}`)
+
+  const raw = inflateSync(Buffer.concat(idat))
+  const stride = width * 4
+  const pixels = Buffer.alloc(stride * height)
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[y * (stride + 1)]
+    const row = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1))
+    const out = pixels.subarray(y * stride, (y + 1) * stride)
+    const prev = y > 0 ? pixels.subarray((y - 1) * stride, y * stride) : null
+    for (let x = 0; x < stride; x += 1) {
+      const left = x >= 4 ? out[x - 4] : 0
+      const up = prev ? prev[x] : 0
+      const upLeft = prev && x >= 4 ? prev[x - 4] : 0
+      let value = row[x]
+      if (filter === 1) value += left
+      else if (filter === 2) value += up
+      else if (filter === 3) value += Math.floor((left + up) / 2)
+      else if (filter === 4) {
+        const p = left + up - upLeft
+        const pa = Math.abs(p - left)
+        const pb = Math.abs(p - up)
+        const pc = Math.abs(p - upLeft)
+        value += pa <= pb && pa <= pc ? left : pb <= pc ? up : upLeft
+      } else if (filter !== 0) {
+        throw new Error(`Filter PNG ${filter} tidak dikenal`)
+      }
+      out[x] = value & 0xff
+    }
+  }
+  return { width, height, pixels }
+}
+
+/** Box-filter downscale — cukup untuk 512 → 192/180 dan tidak butuh gamma. */
+function resize(source, targetWidth, targetHeight) {
+  const out = Buffer.alloc(targetWidth * targetHeight * 4)
+  const scaleX = source.width / targetWidth
+  const scaleY = source.height / targetHeight
+  for (let y = 0; y < targetHeight; y += 1) {
+    const y0 = Math.floor(y * scaleY)
+    const y1 = Math.max(y0 + 1, Math.floor((y + 1) * scaleY))
+    for (let x = 0; x < targetWidth; x += 1) {
+      const x0 = Math.floor(x * scaleX)
+      const x1 = Math.max(x0 + 1, Math.floor((x + 1) * scaleX))
+      let r = 0
+      let g = 0
+      let b = 0
+      let a = 0
+      let count = 0
+      for (let sy = y0; sy < y1; sy += 1) {
+        for (let sx = x0; sx < x1; sx += 1) {
+          const index = (sy * source.width + sx) * 4
+          const alpha = source.pixels[index + 3]
+          r += source.pixels[index] * alpha
+          g += source.pixels[index + 1] * alpha
+          b += source.pixels[index + 2] * alpha
+          a += alpha
+          count += 1
+        }
+      }
+      const target = (y * targetWidth + x) * 4
+      if (a > 0) {
+        out[target] = Math.round(r / a)
+        out[target + 1] = Math.round(g / a)
+        out[target + 2] = Math.round(b / a)
+      }
+      out[target + 3] = Math.round(a / count)
+    }
+  }
+  return out
 }
 
 function hexToRgb(hex) {
@@ -57,94 +169,42 @@ function hexToRgb(hex) {
   ]
 }
 
-function canvas(width, height, fill) {
-  const [r, g, b] = hexToRgb(fill)
-  const buf = Buffer.alloc(width * height * 4)
-  for (let i = 0; i < width * height; i += 1) {
-    buf[i * 4] = r
-    buf[i * 4 + 1] = g
-    buf[i * 4 + 2] = b
-    buf[i * 4 + 3] = 255
+/** Logo di atas kanvas persegi berwarna latar, dengan padding proporsional. */
+function appIcon(source, size, padRatio) {
+  const canvas = Buffer.alloc(size * size * 4)
+  const [r, g, b] = hexToRgb(BACKGROUND)
+  for (let i = 0; i < size * size; i += 1) {
+    canvas[i * 4] = r
+    canvas[i * 4 + 1] = g
+    canvas[i * 4 + 2] = b
+    canvas[i * 4 + 3] = 255
   }
-  return buf
-}
 
-function rect(buf, width, x, y, w, h, fill) {
-  const [r, g, b] = hexToRgb(fill)
-  for (let j = Math.max(0, y); j < Math.min(y + h, buf.length / (width * 4)); j += 1) {
-    for (let i = Math.max(0, x); i < Math.min(x + w, width); i += 1) {
-      const o = (j * width + i) * 4
-      buf[o] = r
-      buf[o + 1] = g
-      buf[o + 2] = b
+  const inner = Math.round(size * (1 - padRatio * 2))
+  const scale = Math.min(inner / source.width, inner / source.height)
+  const logoW = Math.max(1, Math.round(source.width * scale))
+  const logoH = Math.max(1, Math.round(source.height * scale))
+  const logo = resize(source, logoW, logoH)
+  const offsetX = Math.round((size - logoW) / 2)
+  const offsetY = Math.round((size - logoH) / 2)
+
+  for (let y = 0; y < logoH; y += 1) {
+    for (let x = 0; x < logoW; x += 1) {
+      const from = (y * logoW + x) * 4
+      const alpha = logo[from + 3] / 255
+      if (alpha === 0) continue
+      const to = ((y + offsetY) * size + (x + offsetX)) * 4
+      canvas[to] = Math.round(logo[from] * alpha + canvas[to] * (1 - alpha))
+      canvas[to + 1] = Math.round(logo[from + 1] * alpha + canvas[to + 1] * (1 - alpha))
+      canvas[to + 2] = Math.round(logo[from + 2] * alpha + canvas[to + 2] * (1 - alpha))
     }
   }
+  return encodePng(size, size, canvas)
 }
 
-/** Kertas A4 tiruan: badan putih + garis isi + satu goresan stabilo. */
-function paper(buf, width, x, y, w, h) {
-  rect(buf, width, x, y, w, h, '#FFFFFF')
-  const lineH = Math.max(2, Math.round(h * 0.022))
-  const gap = Math.round(h * 0.045)
-  let cy = y + Math.round(h * 0.12)
-  rect(buf, width, x + Math.round(w * 0.12), cy, Math.round(w * 0.5), lineH + 2, '#10161F')
-  cy += lineH + gap + 2
-  for (let l = 0; l < 3; l += 1) {
-    rect(buf, width, x + Math.round(w * 0.12), cy, Math.round(w * 0.76), lineH, '#D3D9E0')
-    cy += lineH + gap
-  }
-  rect(
-    buf,
-    width,
-    x + Math.round(w * 0.12),
-    cy,
-    Math.round(w * 0.76),
-    Math.round(h * 0.07),
-    '#F2D600',
-  )
-}
-
-function appIcon(size) {
-  const buf = canvas(size, size, '#0F5A78')
-  const m = Math.round(size * 0.2)
-  paper(buf, size, m, Math.round(size * 0.14), size - m * 2, Math.round(size * 0.72))
-  return encodePng(size, size, buf)
-}
-
-function ogCover() {
-  const W = 1200
-  const H = 630
-  const buf = canvas(W, H, '#EDF0F4')
-  rect(buf, W, 0, H - 26, W, 26, '#0F5A78')
-  paper(buf, W, 96, 60, 330, 510)
-  rect(buf, W, 500, 130, 560, 44, '#10161F')
-  for (let l = 0; l < 4; l += 1) rect(buf, W, 500, 210 + l * 40, 560 - l * 60, 16, '#B4BCC6')
-  rect(buf, W, 500, 390, 380, 34, '#F2D600')
-  for (let l = 0; l < 2; l += 1) rect(buf, W, 500, 448 + l * 40, 500 - l * 80, 16, '#B4BCC6')
-  return encodePng(W, H, buf)
-}
-
-const ASSETS = [
-  ['public/icon-192.png', appIcon(192)],
-  ['public/icon-512.png', appIcon(512)],
-  ['public/og-cover.png', ogCover()],
-]
-
-for (const [path, bytes] of ASSETS) {
+const source = decodePng(readFileSync(SOURCE))
+for (const [path, size, pad] of TARGETS) {
+  const bytes = appIcon(source, size, pad)
   writeFileSync(path, bytes)
-  const sigOk = bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71
-  // IDAT = satu chunk; kumpulkan semua chunk IDAT lalu inflate (tanpa IEND).
-  let idat = Buffer.alloc(0)
-  let off = 8
-  while (off + 8 <= bytes.length) {
-    const len = bytes.readUInt32BE(off)
-    const type = bytes.subarray(off + 4, off + 8).toString('ascii')
-    const data = bytes.subarray(off + 8, off + 8 + len)
-    if (type === 'IDAT') idat = Buffer.concat([idat, data])
-    off += 12 + len
-  }
-  const inflated = inflateSync(idat)
-  console.log(
-    `${path}: ${bytes.length} byte, signature PNG ${sigOk ? 'valid' : 'RUSAK'}, piksel utuh (${inflated.length} byte raw)`,
-  )
+  console.log(`${path}: ${size}×${size}, ${bytes.length} byte`)
 }

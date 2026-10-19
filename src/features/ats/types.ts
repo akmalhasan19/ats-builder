@@ -37,7 +37,7 @@ export type AtsBand = {
   score: number
   labelId: TranslationKey
   /** Token §2.2 — warna band tidak pernah jadi pembawa makna tunggal (aturan 3). */
-  colorKey: 'signal-bad' | 'signal-warn' | 'cyanotype' | 'signal-ok'
+  colorKey: 'signal-bad' | 'signal-warn' | 'accent' | 'signal-ok'
 }
 
 export type AtsReport = {

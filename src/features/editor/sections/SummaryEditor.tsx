@@ -46,7 +46,7 @@ export function SummaryEditor({ sectionId }: { sectionId: string }) {
           value={text}
           onChange={(event) => handleChange(event.target.value)}
           placeholder={t('summary.textPlaceholder')}
-          className="border-rule bg-raised text-input text-ink placeholder:text-ink-tertiary focus:border-cyanotype focus:shadow-[var(--shadow-focus)] min-h-[100px] w-full resize-none rounded-md border p-3 leading-[1.55] outline-none transition-colors duration-[var(--dur-fast)]"
+          className="border-rule bg-raised text-input text-ink placeholder:text-ink-tertiary focus:border-accent-ink focus:shadow-[var(--shadow-focus)] min-h-[100px] w-full resize-none rounded-md border p-3 leading-[1.55] outline-none transition-colors duration-[var(--dur-fast)]"
         />
       </Field>
 

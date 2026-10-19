@@ -171,7 +171,7 @@ describe('T6.5 — guardrail ATS di level template', () => {
       ink: 'ink',
       secondary: 'ink-secondary',
       tertiary: 'ink-tertiary',
-      accent: 'cyanotype',
+      accent: 'document-accent',
     }
     for (const id of TEMPLATE_IDS) {
       const spec = getSpec(id)

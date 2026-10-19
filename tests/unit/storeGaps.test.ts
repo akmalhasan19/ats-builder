@@ -86,7 +86,7 @@ describe('docStore — immutability & meta.updatedAt (T9.1)', () => {
     { name: 'setTitle', run: () => store().setTitle('Judul Baru') },
     { name: 'setTemplate', run: () => store().setTemplate('ledger') },
     { name: 'setPageSettings', run: () => store().setPageSettings({ marginMm: 22 }) },
-    { name: 'setThemeTokens', run: () => store().setThemeTokens({ accentHex: '#0F5A78' }) },
+    { name: 'setThemeTokens', run: () => store().setThemeTokens({ accentHex: '#FF6E00' }) },
     { name: 'setJobDescription(text)', run: () => store().setJobDescription('Lowongan baru') },
     {
       name: 'setJobDescription(null)',
@@ -567,11 +567,11 @@ describe('docStore — aksi dokumen', () => {
   })
 
   it('setThemeTokens menggabungkan accentHex dan fontScale secara terpisah', () => {
-    store().setThemeTokens({ accentHex: '#0F5A78' })
-    expect(store().doc.theme).toEqual({ accentHex: '#0F5A78', fontScale: 1 })
+    store().setThemeTokens({ accentHex: '#FF6E00' })
+    expect(store().doc.theme).toEqual({ accentHex: '#FF6E00', fontScale: 1 })
 
     store().setThemeTokens({ fontScale: 1.1 })
-    expect(store().doc.theme).toEqual({ accentHex: '#0F5A78', fontScale: 1.1 })
+    expect(store().doc.theme).toEqual({ accentHex: '#FF6E00', fontScale: 1.1 })
 
     store().setThemeTokens({ accentHex: null })
     expect(store().doc.theme).toEqual({ accentHex: null, fontScale: 1.1 })

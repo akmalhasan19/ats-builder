@@ -14,9 +14,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'text-button-primary bg-cyanotype hover:bg-cyanotype-active hover:-translate-y-px active:translate-y-0',
+          'text-button-primary bg-accent hover:bg-accent-active hover:-translate-y-px active:translate-y-0',
         secondary:
-          'text-button-strong border border-cyanotype text-cyanotype hover:bg-cyanotype-wash',
+          'text-button-strong border border-accent-ink text-accent-ink hover:bg-accent-wash',
         ghost: 'text-button text-ink-secondary hover:bg-hover hover:text-ink',
         subtle:
           'text-button border border-rule bg-surface text-ink hover:border-rule-strong hover:bg-sunken',

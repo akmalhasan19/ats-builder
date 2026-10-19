@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { cn } from 'cn'
 
-/** §5.4 — focus memakai border cyanotype + ring 3px, bukan outline ganda. */
+/** §5.4 — focus memakai border accent + ring 3px, bukan outline ganda. */
 export const fieldFocusClasses =
-  'focus-visible:border-cyanotype focus-visible:shadow-[var(--shadow-focus)] focus-visible:outline-none data-[demo-focus=true]:border-cyanotype data-[demo-focus=true]:shadow-[var(--shadow-focus)]'
+  'focus-visible:border-accent-ink focus-visible:shadow-[var(--shadow-focus)] focus-visible:outline-none data-[demo-focus=true]:border-accent-ink data-[demo-focus=true]:shadow-[var(--shadow-focus)]'
 
 export const fieldInvalidClasses =
   'aria-invalid:border-signal-bad aria-invalid:shadow-[var(--shadow-focus-bad)]'

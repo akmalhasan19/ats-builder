@@ -272,7 +272,7 @@ describe('cabang settings / theme / meta (baris 234-245, 259)', () => {
   })
 
   it('theme.accentHex: null, string kosong, dan hex 6 digit lolos; sisanya ditolak', () => {
-    for (const accent of [null, '', '#0F5A78', '#0f5a78', '#F2D600']) {
+    for (const accent of [null, '', '#FF6E00', '#ff6e00', '#F2D600']) {
       const doc = createEmptyDoc()
       doc.theme.accentHex = accent
       expect(messagesOf(doc), String(accent)).toHaveLength(0)
@@ -281,14 +281,14 @@ describe('cabang settings / theme / meta (baris 234-245, 259)', () => {
       'red',
       '#fff',
       '#0F5A7',
-      '#0F5A789',
+      '#FF6E009',
       '#0F5A7G',
-      ' 0F5A78',
-      'var(--cyanotype)',
+      ' FF6E00',
+      'var(--accent)',
     ]) {
       const doc = createEmptyDoc()
       doc.theme.accentHex = accent
-      expect(messagesOf(doc), accent).toContain('Warna harus hex 6 digit. Contoh: #0F5A78.')
+      expect(messagesOf(doc), accent).toContain('Warna harus hex 6 digit. Contoh: #FF6E00.')
     }
   })
 

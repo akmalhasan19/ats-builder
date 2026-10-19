@@ -200,7 +200,7 @@ export function TemplatesPage() {
       <div className="mx-auto max-w-[1100px]">
         <Link
           to="/"
-          className="text-button text-cyanotype hover:text-cyanotype-active inline-flex items-center gap-1.5"
+          className="text-button text-accent-ink hover:text-accent-active inline-flex items-center gap-1.5"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
           {t('templates.backToEditor')}
@@ -224,7 +224,7 @@ export function TemplatesPage() {
                 style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 360px' }}
                 className={cn(
                   'border-rule bg-raised hover:shadow-raised group flex flex-col gap-2 rounded-lg border p-3 text-left transition-[border-color,box-shadow,transform] duration-[var(--dur-fast)] hover:-translate-y-0.5',
-                  selected === id && 'ring-cyanotype ring-2',
+                  selected === id && 'ring-accent-ink ring-2',
                 )}
               >
                 <span className="bg-workbench flex justify-center rounded-sm p-2">
@@ -241,7 +241,7 @@ export function TemplatesPage() {
                 </span>
                 <span className="text-button text-ink flex items-center justify-between gap-1">
                   {t(templateLabelKey(id))}
-                  {active ? <Check aria-hidden="true" className="text-cyanotype size-4" /> : null}
+                  {active ? <Check aria-hidden="true" className="text-accent-ink size-4" /> : null}
                 </span>
                 <span className="text-body text-ink-secondary line-clamp-2">
                   {t(`template.desc.${id}`)}

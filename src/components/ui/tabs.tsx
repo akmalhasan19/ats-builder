@@ -46,7 +46,7 @@ function TabsList({
   )
 }
 
-/** §5.6 — label 13px; indikator bawah 2px cyanotype untuk varian `line`. */
+/** §5.6 — label 13px; indikator bawah 2px accent untuk varian `line`. */
 function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
@@ -54,7 +54,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
       className={cn(
         'text-button text-ink-secondary hover:text-ink relative inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded px-2 whitespace-nowrap transition-colors duration-[var(--dur-fast)] data-[state=active]:text-ink data-[state=active]:font-semibold disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
         'group-data-[variant=default]/tabs-list:data-[state=active]:bg-raised group-data-[variant=default]/tabs-list:data-[state=active]:shadow-raised',
-        'group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:after:absolute group-data-[variant=line]/tabs-list:after:inset-x-0 group-data-[variant=line]/tabs-list:after:-bottom-px group-data-[variant=line]/tabs-list:after:h-0.5 group-data-[variant=line]/tabs-list:after:bg-cyanotype group-data-[variant=line]/tabs-list:after:content-[""] group-data-[variant=line]/tabs-list:after:opacity-0 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100',
+        'group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:after:absolute group-data-[variant=line]/tabs-list:after:inset-x-0 group-data-[variant=line]/tabs-list:after:-bottom-px group-data-[variant=line]/tabs-list:after:h-0.5 group-data-[variant=line]/tabs-list:after:bg-accent group-data-[variant=line]/tabs-list:after:content-[""] group-data-[variant=line]/tabs-list:after:opacity-0 group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100',
         className,
       )}
       {...props}

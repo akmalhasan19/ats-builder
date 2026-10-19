@@ -388,7 +388,7 @@ describe('ScanSweep §5.5', () => {
     expect(sweep.className).toContain('ats-scan-sweep')
     expect(sweep.children).toHaveLength(2)
     expect(sweep.children[0]?.className).toContain('bg-gradient-to-b')
-    expect(sweep.children[1]?.className).toContain('bg-cyanotype')
+    expect(sweep.children[1]?.className).toContain('bg-accent')
   })
 
   it('hanya muncul saat pemeriksaan berjalan, di dalam pembungkus lembar', async () => {

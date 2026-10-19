@@ -1,0 +1,96 @@
+/* ==========================================================================
+   Tema warna — dipilih pengguna lewat menu tema (TopBar / menu mobile).
+   Sumber kebenaran CSS ada di sini; `src/features/theme/themes.ts` menyimpan
+   metadata yang sama (id, label, swatch) dan tests/unit/theme.test.ts menjaga
+   keduanya tidak menyimpang.
+
+   Aturan:
+   - Setiap tema HANYA menimpa aksen & warna pendamping. Netral chrome
+     (workbench/sunken/surface/raised, tinta, rule) sengaja tetap, supaya
+     kontras teks yang sudah lolos audit §2.2 tidak berubah antar tema.
+   - `accent` dipakai untuk isian tombol, border aktif, indikator, ring fokus.
+   - `accent-ink` adalah varian gelap yang aman untuk TEKS di atas surface
+     terang (AA 4.5:1). Jangan pakai `accent` untuk teks.
+   - `accent-on` adalah warna teks/ikon di atas isian `accent`.
+   - `secondary` adalah warna pendamping; dipakai sebagai surface mesin
+     (Parse Tape) supaya tiap tema punya karakter di satu surface khas.
+   ========================================================================== */
+
+/* Vetra (default) — blok `:root` tanpa atribut, jadi tema ini juga berlaku
+   bila localStorage kosong atau diblokir. */
+:root {
+  --theme-accent: #ff6e00;
+  --theme-accent-active: #e05f00;
+  --theme-accent-ink: #b34700;
+  --theme-accent-on: #1c0d00;
+  --theme-accent-wash: #fff1e6;
+
+  --theme-secondary: #0f3d4c;
+  --theme-secondary-dim: #a9bcc4;
+  --theme-secondary-wash: #e7eff2;
+}
+
+/* Cobalt — biru tenang untuk kerja panjang; pendamping navy pekat. */
+:root[data-theme='cobalt'] {
+  --theme-accent: #2563eb;
+  --theme-accent-active: #1d4ed8;
+  --theme-accent-ink: #1e40af;
+  --theme-accent-on: #ffffff;
+  --theme-accent-wash: #eaf0ff;
+
+  --theme-secondary: #131c3a;
+  --theme-secondary-dim: #a9bcc4;
+  --theme-secondary-wash: #e8ebf3;
+}
+
+/* Emerald — hijau tua yang terbaca, pendamping hijau-hitam. */
+:root[data-theme='emerald'] {
+  --theme-accent: #059669;
+  --theme-accent-active: #047857;
+  --theme-accent-ink: #046c4e;
+  --theme-accent-on: #031c14;
+  --theme-accent-wash: #e7f8f1;
+
+  --theme-secondary: #0c3b31;
+  --theme-secondary-dim: #a9bcc4;
+  --theme-secondary-wash: #e6f1ee;
+}
+
+/* Violet — aksen kreatif, tetap satu kolom & netral di kertas. */
+:root[data-theme='violet'] {
+  --theme-accent: #7c3aed;
+  --theme-accent-active: #6d28d9;
+  --theme-accent-ink: #5b21b6;
+  --theme-accent-on: #ffffff;
+  --theme-accent-wash: #f3ecff;
+
+  --theme-secondary: #2a1a4a;
+  --theme-secondary-dim: #b3a8c6;
+  --theme-secondary-wash: #ebe7f3;
+}
+
+/* Rose — hangat dan tegas; pendamping marun gelap. */
+:root[data-theme='rose'] {
+  --theme-accent: #e11d48;
+  --theme-accent-active: #be123c;
+  --theme-accent-ink: #9f1239;
+  --theme-accent-on: #ffffff;
+  --theme-accent-wash: #ffe8ee;
+
+  --theme-secondary: #3b1220;
+  --theme-secondary-dim: #bfa8b0;
+  --theme-secondary-wash: #f5e9ed;
+}
+
+/* Graphite — tanpa warna merek; untuk yang ingin tampilan paling netral. */
+:root[data-theme='graphite'] {
+  --theme-accent: #475569;
+  --theme-accent-active: #334155;
+  --theme-accent-ink: #334155;
+  --theme-accent-on: #ffffff;
+  --theme-accent-wash: #eef2f6;
+
+  --theme-secondary: #0f172a;
+  --theme-secondary-dim: #a9b4c4;
+  --theme-secondary-wash: #e9edf2;
+}

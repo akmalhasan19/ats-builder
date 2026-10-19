@@ -3,18 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Resume Studio — Pembuat CV ATS Gratis</title>
+    <title>Vetra — Pembuat CV ATS Gratis</title>
     <meta
       name="description"
-      content="Resume Studio: pembuat CV satu kolom gratis dengan Indeks Struktur & Keterbacaan. Data tersimpan di perangkat, PDF siap unduh tanpa akun."
+      content="Vetra: pembuat CV satu kolom gratis dengan Indeks Struktur & Keterbacaan. Data tersimpan di perangkat, PDF siap unduh tanpa akun."
     />
     <link rel="canonical" href="https://resume-studio.vercel.app/" />
     <link rel="alternate" hreflang="id" href="https://resume-studio.vercel.app/" />
     <link rel="alternate" hreflang="en" href="https://resume-studio.vercel.app/" />
     <link rel="alternate" hreflang="x-default" href="https://resume-studio.vercel.app/" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Resume Studio" />
-    <meta property="og:title" content="Resume Studio — Pembuat CV ATS Gratis" />
+    <meta property="og:site_name" content="Vetra" />
+    <meta property="og:title" content="Vetra — Pembuat CV ATS Gratis" />
     <meta
       property="og:description"
       content="Susun CV satu kolom, periksa strukturnya, dan unduh PDF tanpa akun. Data tersimpan di perangkat kamu."
@@ -24,23 +24,35 @@
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Resume Studio — Pembuat CV ATS Gratis" />
+    <meta name="twitter:title" content="Vetra — Pembuat CV ATS Gratis" />
     <meta
       name="twitter:description"
       content="Susun CV satu kolom, periksa strukturnya, dan unduh PDF tanpa akun. Data tersimpan di perangkat kamu."
     />
     <meta name="twitter:image" content="https://resume-studio.vercel.app/og-cover.png" />
-    <meta name="theme-color" content="#f7f8fa" />
+    <meta name="theme-color" content="#FF6E00" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      // Tema dibaca sebelum paint pertama supaya tidak ada kedipan warna.
+      // Kunci & nilai valid dijaga di src/features/theme/themes.ts.
+      try {
+        var theme = localStorage.getItem('vetra:theme')
+        if (theme && /^[a-z]{3,12}$/.test(theme)) {
+          document.documentElement.dataset.theme = theme
+        }
+      } catch (error) {
+        // localStorage diblokir: tema default dari CSS tetap dipakai.
+      }
+    </script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "Resume Studio",
+        "name": "Vetra",
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Web",
         "url": "https://resume-studio.vercel.app/",

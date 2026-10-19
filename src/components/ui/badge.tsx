@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { cn } from 'cn'
 
 const badgeVariants = {
-  neutral: 'bg-cyanotype-wash text-cyanotype border-transparent',
+  neutral: 'bg-accent-wash text-accent-ink border-transparent',
   ok: 'bg-ok-wash text-signal-ok border-transparent',
   warn: 'bg-warn-wash text-signal-warn border-transparent',
   bad: 'bg-bad-wash text-signal-bad border-transparent',

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router'
+import { BrandMark } from '@/app/BrandMark'
 import { t, type TranslationKey } from '@/lib/i18n'
 
 const NAV: { to: string; labelKey: TranslationKey }[] = [
@@ -34,7 +35,8 @@ export function DevPageShell({
       </a>
 
       <header className="sticky top-0 z-30 flex min-h-14 flex-wrap items-center gap-x-3 gap-y-2 border-b border-rule bg-raised px-4 py-2">
-        <Link to="/" className="text-brand hover:opacity-85">
+        <Link to="/" className="text-brand hover:opacity-85 flex items-center gap-2">
+          <BrandMark size={22} />
           {t('app.name')}
         </Link>
         <span className="text-data rounded-full border border-rule bg-surface px-2 py-0.5 text-ink-tertiary uppercase">
@@ -52,7 +54,7 @@ export function DevPageShell({
                 [
                   'text-button rounded-md px-3 py-1.5',
                   isActive
-                    ? 'bg-cyanotype-wash text-cyanotype'
+                    ? 'bg-accent-wash text-accent-ink'
                     : 'text-ink-secondary hover:bg-sunken hover:text-ink',
                 ].join(' ')
               }

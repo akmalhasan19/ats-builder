@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
-import { Eyebrow } from '@/components/ui/eyebrow'
+import { BrandMark } from '@/app/BrandMark'
 import { t } from '@/lib/i18n'
 
 export function LegalPage({ page }: { page: 'privacy' | 'terms' }) {
@@ -12,12 +12,15 @@ export function LegalPage({ page }: { page: 'privacy' | 'terms' }) {
       <div className="mx-auto max-w-[760px]">
         <Link
           to="/"
-          className="text-button text-cyanotype hover:text-cyanotype-active inline-flex items-center gap-1.5"
+          className="text-button text-accent-ink hover:text-accent-active inline-flex items-center gap-1.5"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
           {t('legal.backToEditor')}
         </Link>
-        <Eyebrow className="mt-8">{t('app.name')}</Eyebrow>
+        <div className="mt-8 flex items-center gap-2.5">
+          <BrandMark size={30} />
+          <span className="text-brand">{t('app.name')}</span>
+        </div>
         <h1 className="text-page-title mt-2">{title}</h1>
         <p className="text-caption text-ink-tertiary mt-1">{t('legal.updated')}</p>
         <p className="body-lg mt-4">{intro}</p>

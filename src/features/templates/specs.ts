@@ -21,8 +21,12 @@ export const TEMPLATE_FONTS: Record<TemplateFontKey, string> = {
   sourceSerif: "'Source Serif 4', Georgia, serif",
 }
 
-/** Aksen opsional (T6.1) — satu-satunya hex aksen; setara token --cyanotype §2.2. */
-export const ACCENT_HEX = '#0F5A78'
+/**
+ * Aksen opsional (T6.1) — satu-satunya hex aksen dokumen. Sengaja tidak ikut
+ * tema UI: preview layar memakai `--color-document-accent` dengan nilai yang
+ * sama, jadi layar dan PDF tidak pernah berbeda warna.
+ */
+export const ACCENT_HEX = '#FF6E00'
 
 /** Label keluarga font untuk panel data spec (nama diri, bukan string UI). */
 export const TEMPLATE_FONT_LABELS: Record<TemplateFontKey, string> = {
@@ -48,7 +52,7 @@ export const SPEC_COLOR_VAR: Record<SpecColorKey, string> = {
   secondary: 'var(--color-ink-secondary)',
   tertiary: 'var(--color-ink-tertiary)',
   rule: 'var(--color-rule)',
-  accent: 'var(--color-cyanotype)',
+  accent: 'var(--color-document-accent)',
   paper: 'var(--color-raised)',
 }
 
@@ -196,7 +200,7 @@ const ledger: TemplateSpec = {
     body: role('plexSans', 10, 400, 1.42),
   },
   // Rule ledger adalah satu-satunya slot aksen: default hitam (accentHex null),
-  // cyanotype hanya saat pengguna menyalakan aksen (T6.1).
+  // accent hanya saat pengguna menyalakan aksen (T6.1).
   headingStyle: { transform: 'uppercase', rule: { kind: 'solid', widthPt: 2, color: 'accent' } },
   nameAlign: 'left',
   contactStyle: { separator: ' · ', align: 'left' },

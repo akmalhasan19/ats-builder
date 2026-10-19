@@ -78,7 +78,7 @@ const COLOR_GROUPS: ColorGroup[] = [
   {
     titleKey: 'tokens.section.accent',
     noteKey: 'tokens.note.accent',
-    names: ['cyanotype', 'cyanotype-active', 'cyanotype-wash'],
+    names: ['accent', 'accent-active', 'accent-ink', 'accent-on', 'accent-wash'],
   },
   {
     titleKey: 'tokens.section.highlighter',
@@ -112,7 +112,7 @@ const TYPE_CHROME: TypeSample[] = [
   { utility: 'text-label', sampleKey: 'tokens.sample' },
   { utility: 'text-input', sampleKey: 'tokens.sample' },
   { utility: 'text-body', sampleKey: 'tokens.sample' },
-  { utility: 'text-button-primary', sampleKey: 'tokens.sample', stageClass: 'bg-cyanotype' },
+  { utility: 'text-button-primary', sampleKey: 'tokens.sample', stageClass: 'bg-accent' },
   { utility: 'text-data', sampleKey: 'tokens.sample.mono' },
   { utility: 'text-tape', sampleKey: 'tokens.sample.mono', stageClass: 'bg-machine' },
 ]
@@ -228,7 +228,7 @@ const METRIC_KEYS = [
 function TypeSampleRow({ sample, metrics }: { sample: TypeSample; metrics?: TypeMetrics }) {
   return (
     <div className="grid grid-cols-1 gap-3 border-t border-rule py-3 md:grid-cols-[200px_minmax(0,1fr)_minmax(280px,auto)]">
-      <code className="text-data text-cyanotype">{sample.utility}</code>
+      <code className="text-data text-accent-ink">{sample.utility}</code>
       <div className={`rounded-md px-3 py-2 ${sample.stageClass ?? 'bg-raised'}`}>
         <span data-type-token={sample.utility} className={sample.utility}>
           {t(sample.sampleKey)}

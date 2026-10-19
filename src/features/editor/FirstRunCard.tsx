@@ -68,12 +68,12 @@ export function FirstRunCard() {
               className={cn(
                 'flex w-full items-center gap-3 rounded-md border p-3 text-left transition-all duration-[var(--dur-fast)]',
                 isSelected
-                  ? 'border-cyanotype bg-cyanotype-wash border-2'
+                  ? 'border-accent-ink bg-accent-wash border-2'
                   : 'border-rule bg-raised hover:bg-hover',
               )}
             >
               {isSelected ? (
-                <CheckCircle2 className="text-cyanotype size-5 shrink-0" aria-hidden="true" />
+                <CheckCircle2 className="text-accent-ink size-5 shrink-0" aria-hidden="true" />
               ) : (
                 <Circle className="text-ink-tertiary size-5 shrink-0" aria-hidden="true" />
               )}

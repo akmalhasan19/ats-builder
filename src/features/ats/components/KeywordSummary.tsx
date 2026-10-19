@@ -42,7 +42,7 @@ export function KeywordSummary({ keywords, onPickMissing }: KeywordSummaryProps)
                 type="button"
                 data-probe="ats-keyword-missing"
                 onClick={() => onPickMissing(term)}
-                className="bg-cyanotype-wash text-chip-label text-cyanotype hover:bg-cyanotype-wash/70 inline-flex h-6 items-center rounded px-2"
+                className="bg-accent-wash text-chip-label text-accent-ink hover:bg-accent-wash/70 inline-flex h-6 items-center rounded px-2"
               >
                 {term}
               </button>

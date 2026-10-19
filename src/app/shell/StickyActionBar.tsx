@@ -38,7 +38,7 @@ function CompletenessDots({ dots }: { dots: 0 | 1 | 2 | 3 }) {
               isOk
                 ? 'bg-signal-ok'
                 : filled
-                  ? 'bg-cyanotype'
+                  ? 'bg-accent'
                   : 'border-rule-strong border bg-transparent',
             )}
           />
@@ -103,7 +103,7 @@ export function StickyActionBar() {
                   key={section.id}
                   className={cn(
                     'border-rule bg-raised flex h-12 items-center gap-2 rounded-md border px-3',
-                    active && 'border-cyanotype bg-cyanotype-wash',
+                    active && 'border-accent-ink bg-accent-wash',
                   )}
                 >
                   <button
@@ -115,7 +115,7 @@ export function StickyActionBar() {
                     className={cn(
                       'flex size-5 shrink-0 items-center justify-center rounded border transition-colors',
                       section.visible
-                        ? 'border-cyanotype bg-cyanotype text-raised'
+                        ? 'border-accent-ink bg-accent text-accent-on'
                         : 'border-rule-strong bg-raised text-transparent',
                     )}
                   >
@@ -136,7 +136,7 @@ export function StickyActionBar() {
                       aria-hidden="true"
                       className={cn(
                         'size-4 shrink-0',
-                        active ? 'text-cyanotype' : 'text-ink-tertiary',
+                        active ? 'text-accent-ink' : 'text-ink-tertiary',
                       )}
                     />
                     <span
@@ -180,7 +180,7 @@ export function StickyActionBar() {
             <button
               type="button"
               onClick={() => setCatalogOpen(true)}
-              className="border-rule-strong text-button text-ink-secondary hover:border-cyanotype hover:text-cyanotype hover:bg-cyanotype-wash flex h-10 w-full items-center justify-center gap-1.5 rounded-md border border-dashed transition-colors"
+              className="border-rule-strong text-button text-ink-secondary hover:border-accent-ink hover:text-accent-ink hover:bg-accent-wash flex h-10 w-full items-center justify-center gap-1.5 rounded-md border border-dashed transition-colors"
             >
               <Plus className="size-4" aria-hidden="true" />
               <span>{t('rail.addSection')}</span>
@@ -212,7 +212,7 @@ export function StickyActionBar() {
                     className="border-rule bg-raised flex items-center justify-between gap-3 rounded-md border p-3"
                   >
                     <div className="flex min-w-0 items-start gap-2.5">
-                      <div className="bg-cyanotype-wash text-cyanotype mt-0.5 flex size-8 shrink-0 items-center justify-center rounded">
+                      <div className="bg-accent-wash text-accent-ink mt-0.5 flex size-8 shrink-0 items-center justify-center rounded">
                         <Icon className="size-4" aria-hidden="true" />
                       </div>
                       <div className="min-w-0">

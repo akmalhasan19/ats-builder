@@ -18,10 +18,18 @@
   --color-rule: #d3d9e0;
   --color-rule-strong: #b4bcc6;
 
-  /* Aksen */
-  --color-cyanotype: #0f5a78;
-  --color-cyanotype-active: #1279a3;
-  --color-cyanotype-wash: #e4eef3;
+  /* Aksen — nilainya datang dari tema aktif (src/styles/themes.css).
+     `accent` untuk isian/border, `accent-ink` untuk teks, `accent-on` untuk
+     teks di atas isian accent. */
+  --color-accent: var(--theme-accent);
+  --color-accent-active: var(--theme-accent-active);
+  --color-accent-ink: var(--theme-accent-ink);
+  --color-accent-on: var(--theme-accent-on);
+  --color-accent-wash: var(--theme-accent-wash);
+
+  /* Aksen dokumen (CV) — sengaja TIDAK ikut tema UI supaya preview layar dan
+     PDF selalu identik. Nilainya sama dengan ACCENT_HEX di specs.ts. */
+  --color-document-accent: #ff6e00;
 
   /* Stabilo — hanya untuk teks di atas kertas & Parse Tape (§2.2 aturan 1) */
   --color-highlighter: #f2d600;
@@ -31,10 +39,11 @@
   --color-signal-warn: #8a5e10;
   --color-signal-bad: #b03a2b;
 
-  /* Satu-satunya surface gelap: readout mesin / Parse Tape (§2.2 aturan 2) */
-  --color-machine: #10161f;
+  /* Satu-satunya surface gelap: readout mesin / Parse Tape (§2.2 aturan 2).
+     Warnanya ikut tema sebagai warna pendamping (secondary). */
+  --color-machine: var(--theme-secondary);
   --color-machine-text: #e8edf4;
-  --color-machine-dim: #7c8b9c;
+  --color-machine-dim: var(--theme-secondary-dim);
 
   /* Keluarga font (§2.3) */
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
@@ -59,19 +68,20 @@
   --color-hover: rgba(16, 22, 31, 0.04);
   --color-scrim: rgba(16, 22, 31, 0.2);
   --color-scrim-strong: rgba(16, 22, 31, 0.42);
-  --color-focus-wash: rgba(15, 90, 120, 0.16);
+  /* Fokus ikut aksen tema; 16% cukup terlihat tanpa mengalahkan isi. */
+  --color-focus-wash: color-mix(in srgb, var(--theme-accent) 16%, transparent);
   --color-bad-wash: rgba(176, 58, 43, 0.12);
   --color-warn-wash: rgba(138, 94, 16, 0.14);
   --color-ok-wash: rgba(46, 122, 80, 0.1);
   --color-toolbar-glass: rgba(255, 255, 255, 0.86);
   /* Stabilo di atas kertas (§5.5): 34% — teks tetap `--ink`. */
   --color-highlighter-wash: color-mix(in srgb, var(--color-highlighter) 34%, transparent);
-  /* Hairline margin guide & tick penggaris (§5.5): cyanotype 25%. */
-  --color-margin-guide: color-mix(in srgb, var(--color-cyanotype) 25%, transparent);
+  /* Hairline margin guide & tick penggaris (§5.5): aksen tema 25%. */
+  --color-margin-guide: color-mix(in srgb, var(--theme-accent) 25%, transparent);
 
   --shadow-focus: 0 0 0 3px var(--color-focus-wash);
   --shadow-focus-bad: 0 0 0 3px var(--color-bad-wash);
-  --shadow-active-bar: inset 2px 0 0 var(--color-cyanotype);
+  --shadow-active-bar: inset 2px 0 0 var(--theme-accent);
 }
 
 /* Nama token persis seperti tertulis di §2.2, supaya spesifikasi UI (§5) bisa
@@ -88,9 +98,11 @@
   --rule: var(--color-rule);
   --rule-strong: var(--color-rule-strong);
 
-  --cyanotype: var(--color-cyanotype);
-  --cyanotype-active: var(--color-cyanotype-active);
-  --cyanotype-wash: var(--color-cyanotype-wash);
+  --accent: var(--color-accent);
+  --accent-active: var(--color-accent-active);
+  --accent-ink: var(--color-accent-ink);
+  --accent-on: var(--color-accent-on);
+  --accent-wash: var(--color-accent-wash);
 
   --highlighter: var(--color-highlighter);
 
@@ -124,18 +136,16 @@
   --color-card-foreground: var(--color-ink);
   --color-popover: var(--color-raised);
   --color-popover-foreground: var(--color-ink);
-  --color-primary: var(--color-cyanotype);
-  --color-primary-foreground: var(--color-raised);
+  --color-primary: var(--color-accent);
+  --color-primary-foreground: var(--color-accent-on);
   --color-secondary: var(--color-sunken);
   --color-secondary-foreground: var(--color-ink);
   --color-muted: var(--color-sunken);
   --color-muted-foreground: var(--color-ink-tertiary);
-  --color-accent: var(--color-cyanotype-wash);
-  --color-accent-foreground: var(--color-cyanotype);
   --color-destructive: var(--color-signal-bad);
   --color-destructive-foreground: var(--color-raised);
   --color-border: var(--color-rule);
-  --color-ring: var(--color-cyanotype);
+  --color-ring: var(--color-accent-ink);
 }
 
 /* ---- Skala tipe: chrome aplikasi (§2.3) ---------------------------------- */
@@ -192,7 +202,7 @@
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-raised);
+  color: var(--color-accent-on);
 }
 
 @utility text-data {
@@ -384,8 +394,10 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Fokus memakai accent-ink (bukan accent) supaya cincin tetap ≥3:1 di atas
+     surface terang — aksen merek #FF6E00 hanya 2,8:1 di atas putih. */
   :focus-visible {
-    outline: 2px solid var(--color-cyanotype);
+    outline: 2px solid var(--color-accent-ink);
     outline-offset: 2px;
   }
 }
@@ -546,7 +558,7 @@
 /* §5.6 — kilatan wash 600ms setelah tombol `Perbaiki →` memfokuskan field. */
 @keyframes ats-field-flash {
   from {
-    background-color: var(--color-cyanotype-wash);
+    background-color: var(--color-accent-wash);
   }
 }
 

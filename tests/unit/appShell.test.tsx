@@ -22,6 +22,7 @@ import { useDocStore } from '@/store/docStore'
 import { useErrorStore } from '@/store/errorStore'
 import { usePdfExportStore } from '@/store/pdfExportStore'
 import { useSyncStore } from '@/store/syncStore'
+import { useThemeStore } from '@/store/themeStore'
 import { useUiStore } from '@/store/uiStore'
 import { sampleResume } from '../fixtures/sampleResume'
 import { paginationDoc } from '../fixtures/docs'
@@ -216,7 +217,10 @@ describe('BrandMark & SkipToContent', () => {
 
     expect(mark).toHaveAttribute('aria-hidden', 'true')
     expect(mark).toHaveStyle({ width: '22px', height: '22px' })
-    expect(container.querySelectorAll('svg rect')).toHaveLength(5)
+    // Logo merek sekarang berkas gambar, bukan SVG inline.
+    expect(mark.tagName).toBe('IMG')
+    expect(mark).toHaveAttribute('src', '/vetra-mark.webp')
+    expect(mark).toHaveAttribute('alt', '')
 
     rerender(<BrandMark size={20} className="hidden" />)
     expect(container.firstElementChild).toHaveStyle({ width: '20px' })
@@ -328,6 +332,26 @@ describe('TopBar', () => {
     expect(probe('check-ats')).not.toBeNull()
     expect(probe('download-pdf')).not.toBeNull()
     expect(screen.getByRole('button', { name: t('topbar.download') })).toBeInTheDocument()
+  })
+
+  it('menu tema mengganti tema aktif dan menyimpannya untuk sesi berikutnya', async () => {
+    const user = userEvent.setup()
+    useThemeStore.getState().setThemeId('vetra')
+    window.localStorage.clear()
+
+    render(
+      <MemoryRouter>
+        <TopBar />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: t('theme.open') }))
+    await user.click(
+      await screen.findByRole('menuitemradio', { name: new RegExp(t('theme.cobalt')) }),
+    )
+
+    expect(useThemeStore.getState().themeId).toBe('cobalt')
+    expect(window.localStorage.getItem('vetra:theme')).toBe('cobalt')
   })
 
   it('Check ATS membuka drawer ATS dan menandai pernah dibuka', async () => {

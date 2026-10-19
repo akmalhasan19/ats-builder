@@ -48,7 +48,7 @@ describe('registerGlobalErrorHandlers (T9.6)', () => {
     window.dispatchEvent(new ErrorEvent('error', { message: 'boom', error: boom }))
 
     expect(useErrorStore.getState().banner).toBe('runtime')
-    expect(errorSpy).toHaveBeenCalledWith('[resume-studio] galat runtime', boom)
+    expect(errorSpy).toHaveBeenCalledWith('[vetra] galat runtime', boom)
   })
 
   it('promise ditolak tanpa penanganan → banner `runtime` juga', () => {
@@ -66,10 +66,7 @@ describe('registerGlobalErrorHandlers (T9.6)', () => {
     window.dispatchEvent(event)
 
     expect(useErrorStore.getState().banner).toBe('runtime')
-    expect(errorSpy).toHaveBeenCalledWith(
-      '[resume-studio] promise ditolak tanpa penanganan',
-      reason,
-    )
+    expect(errorSpy).toHaveBeenCalledWith('[vetra] promise ditolak tanpa penanganan', reason)
   })
 
   it('detail teknis tidak bocor ke UI: banner hanya berisi teks kamus', () => {

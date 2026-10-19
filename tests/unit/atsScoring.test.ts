@@ -13,7 +13,7 @@ describe('scoring.ts', () => {
     expect(scoreOf([])).toBe(100)
     expect(bandOf(100)).toMatchObject({ labelId: 'ats.band.excellent', colorKey: 'signal-ok' })
     expect(bandOf(90)).toMatchObject({ labelId: 'ats.band.excellent' })
-    expect(bandOf(89)).toMatchObject({ labelId: 'ats.band.good', colorKey: 'cyanotype' })
+    expect(bandOf(89)).toMatchObject({ labelId: 'ats.band.good', colorKey: 'accent' })
     expect(bandOf(75)).toMatchObject({ labelId: 'ats.band.good' })
     expect(bandOf(74)).toMatchObject({ labelId: 'ats.band.fair', colorKey: 'signal-warn' })
     expect(bandOf(50)).toMatchObject({ labelId: 'ats.band.fair' })

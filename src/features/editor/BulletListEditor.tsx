@@ -280,7 +280,7 @@ export function BulletListEditor({ idPrefix, bullets, onChange, label }: BulletL
           type="button"
           onClick={handleAdd}
           disabled={bulletsAtLimit}
-          className="text-button text-cyanotype hover:bg-cyanotype-wash inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 transition-colors disabled:text-ink-tertiary disabled:hover:bg-transparent"
+          className="text-button text-accent-ink hover:bg-accent-wash inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 transition-colors disabled:text-ink-tertiary disabled:hover:bg-transparent"
         >
           <Plus className="size-3.5" aria-hidden="true" />
           <span>{t('bullet.add')}</span>

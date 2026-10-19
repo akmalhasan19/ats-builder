@@ -72,7 +72,7 @@ function TemplateCard({ templateId }: { templateId: (typeof TEMPLATE_IDS)[number
       <TemplateThumb templateId={templateId} />
       <span className="text-button text-ink flex items-center justify-between gap-1">
         {t(templateLabelKey(templateId))}
-        <span className="text-hint text-cyanotype opacity-0 transition-opacity duration-[var(--dur-fast)] group-hover:opacity-100 group-focus-visible:opacity-100">
+        <span className="text-hint text-accent-ink opacity-0 transition-opacity duration-[var(--dur-fast)] group-hover:opacity-100 group-focus-visible:opacity-100">
           {t('home.section.templates.useThis')}
         </span>
       </span>
@@ -99,7 +99,7 @@ export function TemplateGallery() {
         </div>
         <Link
           to="/templates"
-          className="text-button text-cyanotype hover:text-cyanotype-active mt-6 inline-flex items-center gap-1.5"
+          className="text-button text-accent-ink hover:text-accent-active mt-6 inline-flex items-center gap-1.5"
         >
           {t('home.section.templates.viewAll')}
           <ArrowRight aria-hidden="true" className="size-4" />

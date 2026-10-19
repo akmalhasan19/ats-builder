@@ -239,7 +239,7 @@ export const resumeDocSchema = z.object({
     accentHex: z
       .union([
         z.literal(''),
-        z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Warna harus hex 6 digit. Contoh: #0F5A78.'),
+        z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Warna harus hex 6 digit. Contoh: #FF6E00.'),
       ])
       .nullable(),
     fontScale: z.union([

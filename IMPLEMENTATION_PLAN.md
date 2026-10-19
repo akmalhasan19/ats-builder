@@ -1,7 +1,25 @@
-# IMPLEMENTATION PLAN — ATS Resume Studio
+# IMPLEMENTATION PLAN — Vetra
 
 > Dokumen turunan dari [`plan.md`](./plan.md). Berisi **design direction final** (hasil proses skill `frontend-design`)
 > dan **actionable steps** berbentuk Fase → Task → Sub-task dengan checkbox untuk tracking progress.
+
+> **Revisi branding & tema (19 Okt 2026).** Produk berganti nama dari *Resume Studio*
+> menjadi **Vetra** dengan logo `public/vetra_logo.webp`. Konsekuensi teknis:
+>
+> - Token aksen `--color-cyanotype` / `--cyanotype` **diganti** menjadi
+>   `--color-accent` / `--accent`, ditambah `--color-accent-ink` (teks),
+>   `--color-accent-on` (teks di atas isian aksen), dan `--color-accent-wash`.
+>   Nilainya tidak lagi ditulis di §2.2, melainkan berasal dari tema aktif di
+>   `src/styles/themes.css`.
+> - Aksen dokumen/CV memakai `--color-document-accent` (#FF6E00) yang **tidak**
+>   ikut tema UI, supaya preview layar dan PDF selalu identik.
+> - Pengguna dapat memilih enam tema (Vetra default, Cobalt, Emerald, Violet,
+>   Rose, Graphite). Tema hanya menimpa aksen + warna pendamping; netral chrome
+>   tetap agar audit kontras §2.2 tidak berubah. Katalog & kontras dijaga
+>   `tests/unit/theme.test.ts`.
+>
+> Rujukan "cyanotype" di §2.2 dan sekitarnya adalah nilai historis; nilai yang
+> berlaku ada di `themes.css`.
 
 ---
 

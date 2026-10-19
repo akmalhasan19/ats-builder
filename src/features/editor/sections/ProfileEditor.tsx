@@ -125,7 +125,7 @@ export function ProfileEditor({ sectionId }: { sectionId: string }) {
             variant="ghost"
             size="sm"
             onClick={handleAddLink}
-            className="text-cyanotype hover:bg-cyanotype-wash h-8 gap-1"
+            className="text-accent-ink hover:bg-accent-wash h-8 gap-1"
           >
             <Plus className="size-3.5" aria-hidden="true" />
             {t('profile.addLink')}

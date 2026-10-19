@@ -79,7 +79,7 @@ export function AppShell() {
               href="#home-templates"
               aria-label={t('home.anchor.templates')}
               data-probe="home-anchor"
-              className="bg-raised/90 border-rule text-ink-secondary hover:text-cyanotype hover:border-cyanotype absolute right-3 bottom-20 z-10 flex size-9 items-center justify-center rounded-full border shadow-[var(--shadow-raised)] backdrop-blur-sm transition-colors md:right-6 md:bottom-6"
+              className="bg-raised/90 border-rule text-ink-secondary hover:text-accent-ink hover:border-accent-ink absolute right-3 bottom-20 z-10 flex size-9 items-center justify-center rounded-full border shadow-[var(--shadow-raised)] backdrop-blur-sm transition-colors md:right-6 md:bottom-6"
             >
               <ChevronDown aria-hidden="true" className="size-4" />
             </a>

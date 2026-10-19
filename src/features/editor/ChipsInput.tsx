@@ -61,7 +61,7 @@ export function ChipsInput({
 
       <div
         className={cn(
-          'border-rule bg-raised focus-within:border-cyanotype focus-within:shadow-[var(--shadow-focus)] flex min-h-[38px] flex-wrap items-center gap-1.5 rounded-md border px-2 py-1.5 transition-colors duration-[var(--dur-fast)]',
+          'border-rule bg-raised focus-within:border-accent-ink focus-within:shadow-[var(--shadow-focus)] flex min-h-[38px] flex-wrap items-center gap-1.5 rounded-md border px-2 py-1.5 transition-colors duration-[var(--dur-fast)]',
           error &&
             'border-signal-bad focus-within:border-signal-bad focus-within:shadow-[var(--shadow-focus-bad)]',
         )}
@@ -69,7 +69,7 @@ export function ChipsInput({
         {chips.map((chip, idx) => (
           <span
             key={`${chip}-${idx}`}
-            className="bg-cyanotype-wash text-cyanotype text-chip-label inline-flex h-6 items-center gap-1 rounded px-2 font-medium"
+            className="bg-accent-wash text-accent-ink text-chip-label inline-flex h-6 items-center gap-1 rounded px-2 font-medium"
           >
             <span>{chip}</span>
             <button

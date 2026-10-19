@@ -27,7 +27,7 @@ test('seluruh token warna §2.2 tampil di /dev/tokens', async ({ page }) => {
   await page.goto('/dev/tokens')
   const swatches = page.locator('[data-probe="swatch"]')
   await expect(swatches).toHaveCount(COLOR_TOKEN_COUNT)
-  await expect(page.getByText('--color-cyanotype', { exact: true })).toBeVisible()
+  await expect(page.getByText('--color-accent', { exact: true })).toBeVisible()
   await expect(page.getByText('--color-highlighter', { exact: true })).toBeVisible()
   // nilai hex dibaca dari CSS yang aktif, bukan ditulis ulang di komponen
   for (let i = 0; i < COLOR_TOKEN_COUNT; i += 1) {
@@ -121,7 +121,7 @@ test('navigasi keyboard penuh tanpa mouse', async ({ page }) => {
   expect(visited.has('BUTTON'), 'Tab harus menjangkau tombol').toBe(true)
   expect(reachedInput, 'Tab harus menjangkau input').toBe(true)
 
-  // §5.4 — fokus input memakai ring/border cyanotype, terlihat tanpa mouse
+  // §5.4 — fokus input memakai ring/border aksen, terlihat tanpa mouse
   await expect(page.locator('#tokens-input-default')).toHaveCSS('border-color', /15, 90, 120/)
 })
 

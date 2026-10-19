@@ -84,7 +84,7 @@ describe('getSpec — lima template + fallback', () => {
       ['technician', false],
     ])
     for (const id of TEMPLATE_IDS) expect(getSpec(id).accentHex).toBeNull()
-    expect(ACCENT_HEX).toBe('#0F5A78')
+    expect(ACCENT_HEX).toBe('#FF6E00')
   })
 })
 
@@ -163,7 +163,7 @@ describe('resolveSpec — aksen warna (slot heading ikut berganti)', () => {
     const resolved = resolveSpec('ledger', { accentHex: ACCENT_HEX }, page(16))
     expect(resolved.accentHex).toBe(ACCENT_HEX)
     expect(resolved.headingStyle.rule.color).toBe('accent')
-    expect(SPEC_COLOR_VAR[resolved.headingStyle.rule.color]).toBe('var(--color-cyanotype)')
+    expect(SPEC_COLOR_VAR[resolved.headingStyle.rule.color]).toBe('var(--color-document-accent)')
     expect(resolved.headingStyle.transform).toBe('uppercase')
     expect(resolved.colors.heading).toBe('ink')
   })

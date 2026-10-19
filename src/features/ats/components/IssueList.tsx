@@ -23,7 +23,7 @@ const GROUPS: readonly {
 const GLYPH: Record<AtsSeverity, { icon: typeof Check; wash: string; color: string }> = {
   bad: { icon: AlertOctagon, wash: 'bg-bad-wash', color: 'text-signal-bad' },
   warn: { icon: AlertTriangle, wash: 'bg-warn-wash', color: 'text-signal-warn' },
-  info: { icon: Info, wash: 'bg-cyanotype-wash', color: 'text-cyanotype' },
+  info: { icon: Info, wash: 'bg-accent-wash', color: 'text-accent-ink' },
   ok: { icon: Check, wash: 'bg-ok-wash', color: 'text-signal-ok' },
 }
 
@@ -103,7 +103,7 @@ export function IssueList({ issues, onFix }: IssueListProps) {
                             type="button"
                             data-probe="ats-fix"
                             onClick={() => onFix(issue.target)}
-                            className="text-caption text-cyanotype hover:bg-cyanotype-wash mt-1.5 inline-flex rounded px-1 py-0.5 font-semibold"
+                            className="text-caption text-accent-ink hover:bg-accent-wash mt-1.5 inline-flex rounded px-1 py-0.5 font-semibold"
                           >
                             {t('ats.fix')}
                           </button>

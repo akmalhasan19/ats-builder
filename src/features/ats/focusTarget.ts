@@ -3,7 +3,7 @@ import type { AtsTarget } from './types'
 /**
  * T7.4 — aksi `Perbaiki →`. Urutannya: tutup drawer bila ia menutupi layar,
  * buka bagian yang benar di rail, pindah ke tab form bila sedang di pratinjau,
- * lalu gulir + fokus field dan kilatkan `--cyanotype-wash` 600ms (§5.6).
+ * lalu gulir + fokus field dan kilatkan `--accent-wash` 600ms (§5.6).
  */
 
 export type FocusDeps = {

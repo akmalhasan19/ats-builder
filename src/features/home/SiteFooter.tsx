@@ -15,12 +15,12 @@ export function SiteFooter() {
           <p className="text-eyebrow text-ink-tertiary">{t('home.footer.product')}</p>
           <ul className="text-body mt-3 space-y-2">
             <li>
-              <Link to="/templates" className="text-ink-secondary hover:text-cyanotype">
+              <Link to="/templates" className="text-ink-secondary hover:text-accent-ink">
                 {t('home.footer.templates')}
               </Link>
             </li>
             <li>
-              <a href="#home-templates" className="text-ink-secondary hover:text-cyanotype">
+              <a href="#home-templates" className="text-ink-secondary hover:text-accent-ink">
                 {t('home.footer.backToEditor')}
               </a>
             </li>
@@ -31,7 +31,7 @@ export function SiteFooter() {
           <ul className="text-body mt-3 space-y-2">
             {TEMPLATE_IDS.map((id) => (
               <li key={id}>
-                <Link to="/templates" className="text-ink-secondary hover:text-cyanotype">
+                <Link to="/templates" className="text-ink-secondary hover:text-accent-ink">
                   {t(templateLabelKey(id))}
                 </Link>
               </li>
@@ -42,17 +42,17 @@ export function SiteFooter() {
           <p className="text-eyebrow text-ink-tertiary">{t('home.footer.resources')}</p>
           <ul className="text-body mt-3 space-y-2">
             <li>
-              <a href="#home-guide" className="text-ink-secondary hover:text-cyanotype">
+              <a href="#home-guide" className="text-ink-secondary hover:text-accent-ink">
                 {t('home.footer.guide')}
               </a>
             </li>
             <li>
-              <a href="#home-steps" className="text-ink-secondary hover:text-cyanotype">
+              <a href="#home-steps" className="text-ink-secondary hover:text-accent-ink">
                 {t('home.footer.howTo')}
               </a>
             </li>
             <li>
-              <a href="#home-faq" className="text-ink-secondary hover:text-cyanotype">
+              <a href="#home-faq" className="text-ink-secondary hover:text-accent-ink">
                 {t('home.footer.faqShort')}
               </a>
             </li>
@@ -62,12 +62,12 @@ export function SiteFooter() {
           <p className="text-eyebrow text-ink-tertiary">{t('home.footer.legal')}</p>
           <ul className="text-body mt-3 space-y-2">
             <li>
-              <Link to="/privacy" className="text-ink-secondary hover:text-cyanotype">
+              <Link to="/privacy" className="text-ink-secondary hover:text-accent-ink">
                 {t('home.footer.privacy')}
               </Link>
             </li>
             <li>
-              <Link to="/terms" className="text-ink-secondary hover:text-cyanotype">
+              <Link to="/terms" className="text-ink-secondary hover:text-accent-ink">
                 {t('home.footer.terms')}
               </Link>
             </li>

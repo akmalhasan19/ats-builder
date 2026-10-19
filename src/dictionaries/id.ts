@@ -4,7 +4,7 @@
  * Fase 1 (T1.4) melengkapi kamus ini untuk seluruh editor.
  */
 export const id = {
-  'app.name': 'Resume Studio',
+  'app.name': 'Vetra',
   'app.tagline': 'Pembuat CV berbasis struktur',
 
   'home.title': 'Fondasi Fase 0 selesai',
@@ -77,7 +77,8 @@ export const id = {
   'tokens.note.machine': '§2.2 aturan 2: satu-satunya surface gelap, hanya untuk Parse Tape.',
   'tokens.note.signal':
     '§2.2 aturan 3: warna sinyal tidak pernah jadi satu-satunya pembawa makna — selalu disertai ikon dan teks.',
-  'tokens.note.accent': '§2.2 aturan 4: cyanotype untuk satu aksi primer per layar.',
+  'tokens.note.accent':
+    '§2.2 aturan 4: accent untuk satu aksi primer per layar. Nilainya mengikuti tema aktif; accent-ink untuk teks, accent-on untuk teks di atas isian.',
   'tokens.computed.family': 'family',
   'tokens.computed.size': 'size',
   'tokens.computed.weight': 'weight',
@@ -174,7 +175,7 @@ export const id = {
   'common.close': 'Tutup',
   'common.cancel': 'Batal',
 
-  'topbar.brandHome': 'Resume Studio — kembali ke editor',
+  'topbar.brandHome': 'Vetra — kembali ke editor',
   'topbar.titleLabel': 'Judul dokumen',
   'topbar.titleEdit': 'Ubah judul CV',
   'topbar.titleEmpty': 'Judul tidak boleh kosong. Judul sebelumnya dipakai lagi.',
@@ -190,6 +191,17 @@ export const id = {
   'topbar.menu': 'Menu',
   'topbar.menuTitle': 'Dokumen',
   'topbar.menuPending': 'Ukuran kertas, margin, dan bahasa dibuka bersama form editor di Fase 3.',
+
+  'theme.open': 'Tema warna',
+  'theme.title': 'Tema warna',
+  'theme.description':
+    'Hanya tampilan aplikasi yang berubah. Isi CV dan berkas PDF tetap memakai aksen merek.',
+  'theme.vetra': 'Vetra',
+  'theme.cobalt': 'Cobalt',
+  'theme.emerald': 'Emerald',
+  'theme.violet': 'Violet',
+  'theme.rose': 'Rose',
+  'theme.graphite': 'Graphite',
 
   'template.classic-ats': 'Classic ATS',
   'template.ledger': 'Ledger',
@@ -286,7 +298,7 @@ export const id = {
   'legal.updated': 'Terakhir diperbarui: 19 Oktober 2026',
   'legal.privacy.title': 'Kebijakan Privasi',
   'legal.privacy.intro':
-    'Resume Studio menyimpan dokumen CV kamu di perangkat kamu sendiri (IndexedDB), bukan di server kami. Kebijakan ini menjelaskan data apa yang ada dan apa yang tidak kami kumpulkan.',
+    'Vetra menyimpan dokumen CV kamu di perangkat kamu sendiri (IndexedDB), bukan di server kami. Kebijakan ini menjelaskan data apa yang ada dan apa yang tidak kami kumpulkan.',
   'legal.privacy.storedTitle': 'Data yang tersimpan di perangkat kamu',
   'legal.privacy.stored.1':
     'Isi CV: nama, kontak, pengalaman, pendidikan, dan bagian lain yang kamu ketik.',
@@ -303,7 +315,7 @@ export const id = {
     'Bila ada pertanyaan soal privasi, hubungi pemilik repositori ini melalui halaman isu publik proyek.',
   'legal.terms.title': 'Ketentuan Penggunaan',
   'legal.terms.intro':
-    'Resume Studio adalah alat gratis untuk menyusun CV satu kolom dan mengunduhnya sebagai PDF. Dengan memakai aplikasi ini kamu menyetujui ketentuan berikut.',
+    'Vetra adalah alat gratis untuk menyusun CV satu kolom dan mengunduhnya sebagai PDF. Dengan memakai aplikasi ini kamu menyetujui ketentuan berikut.',
   'legal.terms.useTitle': 'Penggunaan yang wajar',
   'legal.terms.use.1':
     'Gunakan aplikasi untuk CV milikmu sendiri; jangan memasukkan data orang lain tanpa izin.',
@@ -851,7 +863,7 @@ export const id = {
   'home.step.3.body': 'Unduh PDF berbasis teks yang bisa disalin, tanpa watermark dan tanpa akun.',
   'home.section.faq.eyebrow': 'PERTANYAAN UMUM',
   'home.section.faq.title': 'Yang sering ditanyakan.',
-  'home.faq.1.q': 'Apakah Resume Studio gratis?',
+  'home.faq.1.q': 'Apakah Vetra gratis?',
   'home.faq.1.a':
     'Ya. Editor, template, pemeriksaan struktur, dan unduh PDF gratis tanpa akun. Akun hanya opsional untuk sinkronisasi cloud nanti.',
   'home.faq.2.q': 'Apakah data CV saya dikirim ke server?',
@@ -920,7 +932,7 @@ export const id = {
   'home.footer.privacy': 'Privasi',
   'home.footer.terms': 'Ketentuan',
   'home.footer.backToEditor': 'Mulai dari template',
-  'home.footer.rights': '© 2026 Resume Studio. Dokumen kamu milik kamu.',
+  'home.footer.rights': '© 2026 Vetra. Dokumen kamu milik kamu.',
 } as const
 
 export type TranslationKey = keyof typeof id

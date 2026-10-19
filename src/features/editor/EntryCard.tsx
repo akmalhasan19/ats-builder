@@ -154,7 +154,7 @@ export function EntryCard({
               type="button"
               aria-label={t('rail.dragHandle')}
               onClick={(event) => event.stopPropagation()}
-              className="text-ink-tertiary hover:text-cyanotype opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex size-6 cursor-grab items-center justify-center transition-opacity active:cursor-grabbing touch-none"
+              className="text-ink-tertiary hover:text-accent-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex size-6 cursor-grab items-center justify-center transition-opacity active:cursor-grabbing touch-none"
               {...attributes}
               {...listeners}
             >
@@ -168,7 +168,7 @@ export function EntryCard({
                 event.stopPropagation()
                 onDuplicate()
               }}
-              className="text-ink-tertiary hover:text-cyanotype opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex size-7 items-center justify-center rounded transition-opacity"
+              className="text-ink-tertiary hover:text-accent-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex size-7 items-center justify-center rounded transition-opacity"
             >
               <Copy className="size-3.5" aria-hidden="true" />
             </button>

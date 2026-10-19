@@ -37,7 +37,7 @@ export function scoreOf(issues: readonly AtsIssue[]): number {
 export function bandOf(score: number): AtsBand {
   if (score <= 49) return { score, labelId: 'ats.band.low', colorKey: 'signal-bad' }
   if (score <= 74) return { score, labelId: 'ats.band.fair', colorKey: 'signal-warn' }
-  if (score <= 89) return { score, labelId: 'ats.band.good', colorKey: 'cyanotype' }
+  if (score <= 89) return { score, labelId: 'ats.band.good', colorKey: 'accent' }
   return { score, labelId: 'ats.band.excellent', colorKey: 'signal-ok' }
 }
 

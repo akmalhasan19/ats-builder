@@ -32,7 +32,7 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          'text-rail-label text-ink flex flex-1 items-center justify-between gap-4 rounded-md py-3 text-left font-semibold transition-colors duration-[var(--dur-fast)] outline-none hover:text-cyanotype disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
+          'text-rail-label text-ink flex flex-1 items-center justify-between gap-4 rounded-md py-3 text-left font-semibold transition-colors duration-[var(--dur-fast)] outline-none hover:text-accent-ink disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180',
           className,
         )}
         {...props}
@@ -40,7 +40,7 @@ function AccordionTrigger({
         {children}
         <ChevronDownIcon
           aria-hidden="true"
-          className="text-cyanotype pointer-events-none size-4 shrink-0 transition-transform duration-[var(--dur-base)]"
+          className="text-accent-ink pointer-events-none size-4 shrink-0 transition-transform duration-[var(--dur-base)]"
         />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>

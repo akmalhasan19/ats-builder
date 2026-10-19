@@ -75,7 +75,7 @@ function CompletenessDots({ dots }: { dots: 0 | 1 | 2 | 3 }) {
               isOk
                 ? 'bg-signal-ok'
                 : filled
-                  ? 'bg-cyanotype'
+                  ? 'bg-accent'
                   : 'border-rule-strong border bg-transparent',
             )}
           />
@@ -138,7 +138,7 @@ function SectionItem({
   if (isDragging) {
     return (
       <div ref={setNodeRef} style={style} className="flex h-10 items-center px-2">
-        <div className="bg-cyanotype h-0.5 w-full rounded-full" aria-hidden="true" />
+        <div className="bg-accent h-0.5 w-full rounded-full" aria-hidden="true" />
       </div>
     )
   }
@@ -155,7 +155,7 @@ function SectionItem({
               'hover:bg-hover flex h-10 w-full flex-col items-center justify-center gap-1 rounded-md transition-colors duration-[var(--dur-fast)]',
               !section.visible && 'opacity-55',
               active
-                ? 'bg-cyanotype-wash text-cyanotype shadow-[var(--shadow-active-bar)]'
+                ? 'bg-accent-wash text-accent-ink shadow-[var(--shadow-active-bar)]'
                 : 'text-ink',
             )}
           >
@@ -163,7 +163,7 @@ function SectionItem({
               aria-hidden="true"
               className={cn(
                 'size-[18px] shrink-0',
-                active ? 'text-cyanotype' : 'text-ink-tertiary',
+                active ? 'text-accent-ink' : 'text-ink-tertiary',
               )}
             />
             <CompletenessDots dots={completeness.dots} />
@@ -186,7 +186,7 @@ function SectionItem({
       className={cn(
         'group relative flex h-10 items-center gap-2 rounded-md px-2 text-left transition-colors duration-[var(--dur-fast)]',
         active
-          ? 'bg-cyanotype-wash text-ink font-semibold shadow-[var(--shadow-active-bar)]'
+          ? 'bg-accent-wash text-ink font-semibold shadow-[var(--shadow-active-bar)]'
           : 'text-ink hover:bg-hover',
       )}
     >
@@ -202,7 +202,7 @@ function SectionItem({
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded border transition-colors',
           section.visible
-            ? 'border-cyanotype bg-cyanotype text-raised'
+            ? 'border-accent-ink bg-accent text-accent-on'
             : 'border-rule-strong bg-raised text-transparent',
         )}
       >
@@ -217,7 +217,7 @@ function SectionItem({
       >
         <Icon
           aria-hidden="true"
-          className={cn('size-[15px] shrink-0', active ? 'text-cyanotype' : 'text-ink-tertiary')}
+          className={cn('size-[15px] shrink-0', active ? 'text-accent-ink' : 'text-ink-tertiary')}
         />
         <span className={cn('text-rail-label truncate', !section.visible && 'text-ink-tertiary')}>
           {label}
@@ -488,7 +488,7 @@ export function Rail() {
               <button
                 type="button"
                 onClick={() => setCatalogOpen(true)}
-                className="border-rule-strong text-button text-ink-secondary hover:border-cyanotype hover:text-cyanotype hover:bg-cyanotype-wash flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-dashed transition-colors"
+                className="border-rule-strong text-button text-ink-secondary hover:border-accent-ink hover:text-accent-ink hover:bg-accent-wash flex h-9 w-full items-center justify-center gap-1.5 rounded-md border border-dashed transition-colors"
               >
                 <Plus className="size-4" aria-hidden="true" />
                 <span>{t('rail.addSection')}</span>
@@ -510,7 +510,7 @@ export function Rail() {
               </div>
               <div className="bg-rule mt-1.5 h-1 w-full overflow-hidden rounded-full">
                 <div
-                  className="bg-cyanotype h-full transition-all duration-[var(--dur-base)]"
+                  className="bg-accent h-full transition-all duration-[var(--dur-base)]"
                   style={{ width: `${totalCompleteness}%` }}
                 />
               </div>
@@ -542,7 +542,7 @@ export function Rail() {
                     className="border-rule bg-raised flex items-center justify-between gap-3 rounded-md border p-3"
                   >
                     <div className="flex min-w-0 items-start gap-2.5">
-                      <div className="bg-cyanotype-wash text-cyanotype mt-0.5 flex size-8 shrink-0 items-center justify-center rounded">
+                      <div className="bg-accent-wash text-accent-ink mt-0.5 flex size-8 shrink-0 items-center justify-center rounded">
                         <Icon className="size-4" aria-hidden="true" />
                       </div>
                       <div className="min-w-0">

@@ -175,7 +175,7 @@ for (const width of BREAKPOINTS) {
   const faqInView = await faqHeading.isVisible()
   record('D3 anchor FAQ via footer (keyboard)', String(faqInView), faqInView)
 
-  const firstQuestion = page.getByRole('button', { name: 'Apakah Resume Studio gratis?' })
+  const firstQuestion = page.getByRole('button', { name: 'Apakah Vetra gratis?' })
   await firstQuestion.focus()
   await page.keyboard.press('Enter')
   // Di-scope ke section React — snapshot prerender #home-static memuat teks yang

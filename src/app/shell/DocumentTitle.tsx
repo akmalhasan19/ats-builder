@@ -59,7 +59,7 @@ export function DocumentTitle() {
             cancel()
           }
         }}
-        className="text-input border-cyanotype focus-visible:shadow-focus h-8 w-full min-w-0 max-w-[240px] border-0 border-b bg-transparent px-0 outline-none"
+        className="text-input border-accent-ink focus-visible:shadow-focus h-8 w-full min-w-0 max-w-[240px] border-0 border-b bg-transparent px-0 outline-none"
       />
     )
   }
@@ -74,7 +74,7 @@ export function DocumentTitle() {
       <span className="truncate">{display}</span>
       <Pencil
         aria-hidden="true"
-        className="text-ink-tertiary group-hover:text-cyanotype size-3 shrink-0 opacity-0 transition-opacity duration-[var(--dur-fast)] group-hover:opacity-100 group-focus-visible:opacity-100"
+        className="text-ink-tertiary group-hover:text-accent-ink size-3 shrink-0 opacity-0 transition-opacity duration-[var(--dur-fast)] group-hover:opacity-100 group-focus-visible:opacity-100"
       />
       <span className="sr-only">{t('topbar.titleEdit')}</span>
     </button>

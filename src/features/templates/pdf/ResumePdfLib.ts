@@ -631,7 +631,7 @@ export async function buildResumePdf(
   pdf.setTitle(headline ? `${fullName} — ${headline}` : fullName)
   pdf.setAuthor(fullName)
   pdf.setSubject('Resume')
-  pdf.setCreator('Resume Studio')
+  pdf.setCreator('Vetra')
 
   const fonts = await embedFonts(pdf, spec, loadFontFile)
   for (const pageBlocks of plan.pages) {

@@ -42,7 +42,7 @@ export function HowItWorks() {
                 ) : null}
                 <span
                   aria-hidden="true"
-                  className="bg-cyanotype-wash text-step-number flex size-16 shrink-0 items-center justify-center rounded-full"
+                  className="bg-accent-wash text-step-number flex size-16 shrink-0 items-center justify-center rounded-full"
                 >
                   {index + 1}
                 </span>

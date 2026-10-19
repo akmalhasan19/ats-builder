@@ -249,7 +249,7 @@ export default function PreviewSpikePage() {
               step={0.05}
               value={overlayOpacity}
               onChange={(event) => setOverlayOpacity(Number(event.target.value))}
-              className="w-48 accent-cyanotype"
+              className="w-48 accent-accent"
             />
             <span className="text-data text-ink-secondary">
               {Math.round(overlayOpacity * 100)}%

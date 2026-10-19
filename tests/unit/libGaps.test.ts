@@ -5,6 +5,7 @@ import { contrastRatio, parseHex, relativeLuminance } from '@/lib/contrast'
 import { durationLabel, formatMonth, hasGapOver, isReverseChronological } from '@/lib/dates'
 import { getLang, setLang, t, type TranslationKey } from '@/lib/i18n'
 import { id } from '@/dictionaries/id'
+import { DEFAULT_PALETTE } from '../fixtures/themePalettes'
 import {
   charLen,
   containsMetric,
@@ -131,11 +132,10 @@ describe('contrast.ts — contrastRatio (§2.2, T7.1)', () => {
     expect(asRatio(WHITE, hexToken('ink'))).toBeCloseTo(18.157, 2)
   })
 
-  it('`--ink-tertiary`, `--signal-warn`, `--cyanotype` di atas putih lolos AA 4.5:1', () => {
+  it('`--ink-tertiary`, `--signal-warn`, `--accent-ink` di atas putih lolos AA 4.5:1', () => {
     for (const name of [
       'ink-tertiary',
       'signal-warn',
-      'cyanotype',
       'ink-secondary',
       'signal-ok',
       'signal-bad',
@@ -149,7 +149,8 @@ describe('contrast.ts — contrastRatio (§2.2, T7.1)', () => {
     // Nilai presisi untuk dua pasangan yang disebut tugas.
     expect(asRatio(WHITE, hexToken('ink-tertiary'))).toBeCloseTo(5.505, 2)
     expect(asRatio(WHITE, hexToken('signal-warn'))).toBeCloseTo(5.692, 2)
-    expect(asRatio(WHITE, hexToken('cyanotype'))).toBeCloseTo(7.625, 2)
+    // Aksen default (Vetra) dibaca dari themes.css, bukan tokens.css.
+    expect(asRatio(WHITE, DEFAULT_PALETTE.accentInk)).toBeCloseTo(5.5, 1)
   })
 
   it('stabilo #F2D600 di atas putih hanya dekoratif: rasionya jauh di bawah 3:1', () => {
@@ -168,7 +169,7 @@ describe('contrast.ts — contrastRatio (§2.2, T7.1)', () => {
   })
 
   it('rasio simetris dan 1 untuk warna sama', () => {
-    const a = hexToken('cyanotype')
+    const a = DEFAULT_PALETTE.accentInk
     expect(contrastRatio(a, WHITE)).toBeCloseTo(asRatio(WHITE, a), 12)
     expect(contrastRatio(a, a)).toBeCloseTo(1, 12)
     expect(asRatio('#000000', '#ffffff')).toBeCloseTo(21, 5)
@@ -195,7 +196,7 @@ describe('i18n.ts — getLang / setLang', () => {
 
 describe('i18n.ts — t()', () => {
   it('memakai kamus aktif untuk kunci yang punya terjemahan en', () => {
-    expect(t('app.name')).toBe('Resume Studio')
+    expect(t('app.name')).toBe('Vetra')
     setLang('en')
     expect(t('app.tagline')).toBe('Structured resume builder')
     expect(t('doc.untitled')).toBe('Untitled CV')

@@ -107,7 +107,7 @@ export function TemplateSelect({ className }: TemplateSelectProps) {
                 }}
                 className={cn(
                   'group border-rule bg-raised hover:border-rule-strong hover:shadow-raised flex flex-col items-stretch gap-1.5 rounded-lg border p-2 text-left transition-[border-color,box-shadow,transform] duration-[var(--dur-fast)] hover:-translate-y-0.5',
-                  active && 'ring-cyanotype bg-cyanotype-wash ring-2',
+                  active && 'ring-accent-ink bg-accent-wash ring-2',
                 )}
               >
                 <span className="bg-workbench flex justify-center rounded-sm p-1">
@@ -115,13 +115,15 @@ export function TemplateSelect({ className }: TemplateSelectProps) {
                 </span>
                 <span className="text-button text-ink flex w-full items-center justify-between gap-1">
                   {t(templateLabelKey(id))}
-                  {active ? <Check aria-hidden="true" className="text-cyanotype size-3.5" /> : null}
+                  {active ? (
+                    <Check aria-hidden="true" className="text-accent-ink size-3.5" />
+                  ) : null}
                 </span>
                 <span className="text-body text-ink-secondary line-clamp-2">
                   {t(`template.desc.${id}`)}
                 </span>
                 {active ? (
-                  <span className="text-hint text-cyanotype uppercase">
+                  <span className="text-hint text-accent-ink uppercase">
                     {t('topbar.templateActive')}
                   </span>
                 ) : null}

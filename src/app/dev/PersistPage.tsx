@@ -13,7 +13,7 @@ const STATUS_LABELS: Record<SaveStatus, TranslationKey> = {
 }
 
 const INPUT_CLASS =
-  'text-input h-10 w-full rounded-md border border-rule bg-raised px-3 hover:border-rule-strong focus:border-cyanotype focus-visible:outline-2 focus-visible:outline-cyanotype'
+  'text-input h-10 w-full rounded-md border border-rule bg-raised px-3 hover:border-rule-strong focus:border-accent-ink focus-visible:outline-2 focus-visible:outline-accent-ink'
 
 type ProfileSection = Extract<SectionInstance, { kind: 'profile' }>
 

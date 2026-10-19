@@ -179,7 +179,7 @@ export function PreviewWell({ className }: { className?: string }) {
                     'w-full justify-between',
                     !fitMode &&
                       zoomPercent === Math.round(preset * 100) &&
-                      'bg-cyanotype-wash text-cyanotype',
+                      'bg-accent-wash text-accent-ink',
                   )}
                   onClick={() => applyZoom(preset)}
                 >
@@ -192,7 +192,7 @@ export function PreviewWell({ className }: { className?: string }) {
                 size="sm"
                 className={cn(
                   'w-full justify-between',
-                  fitMode && 'bg-cyanotype-wash text-cyanotype',
+                  fitMode && 'bg-accent-wash text-accent-ink',
                 )}
                 onClick={toggleFit}
               >
@@ -227,7 +227,7 @@ export function PreviewWell({ className }: { className?: string }) {
             size="sm"
             label={t('preview.ruler')}
             aria-pressed={showMarginGuides}
-            className={cn('rounded', showMarginGuides && 'bg-cyanotype-wash text-cyanotype')}
+            className={cn('rounded', showMarginGuides && 'bg-accent-wash text-accent-ink')}
             onClick={() => setShowMarginGuides(!showMarginGuides)}
           >
             <Ruler className="size-3.5" aria-hidden="true" />
@@ -241,7 +241,7 @@ export function PreviewWell({ className }: { className?: string }) {
                   aria-pressed={showKeywordMarks}
                   data-probe="preview-highlighter"
                   disabled={keywords.length === 0}
-                  className={cn('rounded', showKeywordMarks && 'bg-cyanotype-wash text-cyanotype')}
+                  className={cn('rounded', showKeywordMarks && 'bg-accent-wash text-accent-ink')}
                   onClick={() => setShowKeywordMarks(!showKeywordMarks)}
                 >
                   <Highlighter className="size-3.5" aria-hidden="true" />

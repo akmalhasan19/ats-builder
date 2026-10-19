@@ -26,7 +26,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       closeButton={false}
       icons={{
         success: <CircleCheckIcon className="text-signal-ok size-4" />,
-        info: <InfoIcon className="text-cyanotype size-4" />,
+        info: <InfoIcon className="text-accent-ink size-4" />,
         warning: <TriangleAlertIcon className="text-signal-warn size-4" />,
         error: <OctagonXIcon className="text-signal-bad size-4" />,
         loading: <Loader2Icon className="size-4 animate-spin" />,
@@ -36,7 +36,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast:
             'bg-machine text-machine-text border-0 rounded-lg px-3.5 py-2.5 text-button items-start gap-2 shadow-[var(--shadow-dialog)]',
           description: 'text-machine-dim',
-          actionButton: 'bg-cyanotype text-machine-text',
+          actionButton: 'bg-accent text-accent-on',
           cancelButton: 'bg-machine-dim text-machine-text',
         },
       }}

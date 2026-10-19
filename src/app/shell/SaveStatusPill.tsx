@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<SaveStatus, TranslationKey> = {
 
 const STATUS_DOT: Record<SaveStatus, string> = {
   'saved-local': 'bg-ink-tertiary',
-  saving: 'bg-cyanotype animate-dot-pulse',
+  saving: 'bg-accent animate-dot-pulse',
   'saved-cloud': 'bg-signal-ok',
   offline: 'bg-signal-warn',
   error: 'bg-signal-bad',

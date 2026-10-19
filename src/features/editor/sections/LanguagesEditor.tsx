@@ -97,7 +97,7 @@ export function LanguagesEditor({ sectionId }: { sectionId: string }) {
                       proficiency: event.target.value as LanguageEntry['proficiency'],
                     }))
                   }
-                  className="border-rule bg-raised text-input text-ink focus:border-cyanotype focus:shadow-[var(--shadow-focus)] h-[38px] w-full rounded-md border px-3 outline-none transition-colors duration-[var(--dur-fast)]"
+                  className="border-rule bg-raised text-input text-ink focus:border-accent-ink focus:shadow-[var(--shadow-focus)] h-[38px] w-full rounded-md border px-3 outline-none transition-colors duration-[var(--dur-fast)]"
                 >
                   {PROFICIENCY_OPTIONS.map((opt) => (
                     <option key={opt} value={opt}>

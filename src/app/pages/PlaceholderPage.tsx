@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { BrandMark } from '@/app/BrandMark'
 import { Button } from '@/components/ui/button'
 import { Eyebrow } from '@/components/ui/eyebrow'
 import { t, type TranslationKey } from '@/lib/i18n'
@@ -11,6 +12,7 @@ export type PlaceholderPageProps = {
 export function PlaceholderPage({ titleKey }: PlaceholderPageProps) {
   return (
     <main className="bg-surface flex min-h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
+      <BrandMark size={44} />
       <Eyebrow>{t('app.name')}</Eyebrow>
       <h1 className="text-page-title">{t(titleKey)}</h1>
       <p className="text-body max-w-[44ch]">{t('route.pending')}</p>

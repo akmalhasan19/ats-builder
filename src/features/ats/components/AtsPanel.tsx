@@ -127,7 +127,7 @@ export function AtsPanel({ onClose, showClose }: AtsPanelProps) {
               data-probe="ats-marks-in-pdf"
               checked={includeMarksInPdf}
               onChange={(event) => setIncludeMarksInPdf(event.target.checked)}
-              className="accent-cyanotype size-4"
+              className="accent-accent size-4"
             />
             <span className="text-label text-ink-secondary">{t('ats.marksInPdf')}</span>
           </label>

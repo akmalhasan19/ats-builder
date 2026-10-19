@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_PALETTE } from '../fixtures/themePalettes'
 
 // Sumber kebenaran warna tetap tokens.css, bukan salinan di test.
 const css = readFileSync(path.join(process.cwd(), 'src/styles/tokens.css'), 'utf8')
@@ -70,7 +71,10 @@ const raised = hexFor('raised')
 const surface = hexFor('surface')
 const sunken = hexFor('sunken')
 const highlighter = hexFor('highlighter')
-const machine = hexFor('machine')
+// `--color-machine` & `--color-accent` sekarang menunjuk ke variabel tema,
+// jadi nilainya dibaca dari themes.css lewat fixtures/themePalettes.
+const machine = DEFAULT_PALETTE.secondary
+const accentInk = DEFAULT_PALETTE.accentInk
 
 const chromeBases = [
   { name: 'raised', hex: raised },
@@ -97,14 +101,20 @@ const pairs: Pair[] = [
     min: 4.5,
     role: `eyebrow/caption/hint di ${base.name}`,
   })),
-  { text: hexFor('cyanotype'), background: raised, min: 4.5, role: 'aksen cyanotype di kertas' },
-  { text: hexFor('cyanotype'), background: surface, min: 4.5, role: 'aksen cyanotype di pane' },
-  { text: hexFor('cyanotype'), background: sunken, min: 4.5, role: 'aksen cyanotype di rail' },
+  { text: accentInk, background: raised, min: 4.5, role: 'teks aksen di kertas' },
+  { text: accentInk, background: surface, min: 4.5, role: 'teks aksen di pane' },
+  { text: accentInk, background: sunken, min: 4.5, role: 'teks aksen di rail' },
   {
-    text: hexFor('cyanotype'),
-    background: blendOver('cyanotype-wash', raised),
+    text: accentInk,
+    background: DEFAULT_PALETTE.accentWash,
     min: 4.5,
     role: 'teks aktif di atas wash',
+  },
+  {
+    text: DEFAULT_PALETTE.accentOn,
+    background: DEFAULT_PALETTE.accent,
+    min: 4.5,
+    role: 'teks tombol primer di atas isian aksen',
   },
   { text: hexFor('signal-ok'), background: raised, min: 4.5, role: 'sinyal ok di kertas' },
   {
@@ -128,9 +138,9 @@ const pairs: Pair[] = [
     role: 'badge bad',
   },
   { text: hexFor('machine-text'), background: machine, min: 4.5, role: 'Parse Tape' },
-  { text: hexFor('machine-dim'), background: machine, min: 4.5, role: 'tag Parse Tape' },
+  { text: DEFAULT_PALETTE.secondaryDim, background: machine, min: 4.5, role: 'tag Parse Tape' },
   { text: hexFor('ink'), background: highlighter, min: 4.5, role: 'teks di atas stabilo' },
-  { text: hexFor('cyanotype'), background: raised, min: 3, role: 'ring fokus' },
+  { text: DEFAULT_PALETTE.accentInk, background: raised, min: 3, role: 'ring fokus' },
   { text: hexFor('ink-tertiary'), background: raised, min: 3, role: 'ikon redup' },
 ]
 
@@ -143,7 +153,7 @@ describe('audit kontras token (§2.2, T2.5)', () => {
   }
 
   it('setiap token dasar yang dipakai komponen benar-benar ada di tokens.css', () => {
-    expect(hexTokens.size).toBeGreaterThanOrEqual(19)
+    expect(hexTokens.size).toBeGreaterThanOrEqual(15)
     expect(rgbaTokens.size).toBeGreaterThanOrEqual(4)
   })
 })

@@ -410,7 +410,7 @@ async function verifyTemplate(templateId: TemplateId): Promise<void> {
       'Désirée Núñez-Łukasz van Ångström dengan Nama Sangat Panjang — Principal Software Engineer — Platform Reliability' &&
       metadata.Author === 'Désirée Núñez-Łukasz van Ångström dengan Nama Sangat Panjang' &&
       metadata.Subject === 'Resume' &&
-      metadata.Creator === 'Resume Studio',
+      metadata.Creator === 'Vetra',
     `${String(metadata.Title)} | ${String(metadata.Author)} | ${String(metadata.Subject)} | ${String(metadata.Creator)}`,
   )
   const pieces = expectedPieces(rendered.doc, rendered.spec)

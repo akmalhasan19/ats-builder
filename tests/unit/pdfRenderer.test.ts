@@ -350,14 +350,14 @@ describe('buildResumePdf — gaya spec', () => {
   it('accentHex aktif mewarnai rule ledger; null kembali ke hitam', async () => {
     const plain = await renderDoc(shortDoc({ templateId: 'ledger' }))
     const accented = await renderDoc(
-      shortDoc({ templateId: 'ledger', theme: { accentHex: '#0F5A78', fontScale: 1 } }),
+      shortDoc({ templateId: 'ledger', theme: { accentHex: '#FF6E00', fontScale: 1 } }),
     )
     expect(plain.spec.headingStyle.rule.color).toBe('ink')
     expect(accented.spec.headingStyle.rule.color).toBe('accent')
     const plainProbe = await probe(plain.result)
     const accentProbe = await probe(accented.result)
-    expect(accentProbe.fillColors).toContain('#0f5a78')
-    expect(plainProbe.fillColors).not.toContain('#0f5a78')
+    expect(accentProbe.fillColors).toContain('#ff6e00')
+    expect(plainProbe.fillColors).not.toContain('#ff6e00')
     expect(plainProbe.fillColors).toContain('#10161f')
     expect(accented.result.pageCount).toBe(plain.result.pageCount)
   }, 30000)

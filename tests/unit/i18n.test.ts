@@ -9,7 +9,7 @@ describe('t()', () => {
   it('memakai Bahasa Indonesia sebagai default', () => {
     expect(getLang()).toBe('id')
     expect(t('doc.untitled')).toBe('CV tanpa judul')
-    expect(t('app.name')).toBe('Resume Studio')
+    expect(t('app.name')).toBe('Vetra')
   })
 
   it('menampilkan teks en bila bahasa dipindah', () => {

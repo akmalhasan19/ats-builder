@@ -8,7 +8,7 @@
  * meski URL-nya sama persis. */
 
 const SW_VERSION = '__SW_VERSION__'
-const CACHE_NAME = `resume-studio-${SW_VERSION}`
+const CACHE_NAME = `vetra-${SW_VERSION}`
 const PRECACHE_URLS = __PRECACHE_URLS__
 
 const MATCH_OPTS = { ignoreVary: true }

@@ -62,7 +62,7 @@ export function DateRangeField({
           <div className="flex items-center justify-between gap-2">
             <Label htmlFor={endId}>{resolvedEndLabel}</Label>
             {current ? (
-              <span className="text-chip-label bg-cyanotype-wash text-cyanotype rounded px-1.5 py-0.5 font-mono font-medium">
+              <span className="text-chip-label bg-accent-wash text-accent-ink rounded px-1.5 py-0.5 font-mono font-medium">
                 {t('experience.presentChip')}
               </span>
             ) : null}
