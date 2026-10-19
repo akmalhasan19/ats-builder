@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-const COLOR_TOKEN_COUNT = 19
+// Token warna §2.2 + blok aksen tema (branding Vetra menambah
+// `--color-accent-active` dan `--color-accent-wash`).
+const COLOR_TOKEN_COUNT = 21
 const FONT_FACE_COUNT = 13
 
 const CHROME_TYPE_TOKENS = [
@@ -64,14 +66,14 @@ test('katalog primitif T2.1 lengkap di /dev/tokens', async ({ page }) => {
   // State hover nyata, bukan hanya kelas di markup (§5.2).
   const primary = page.locator('[data-catalog="buttons"] button').first()
   await primary.hover()
-  await expect(primary).toHaveCSS('background-color', 'rgb(18, 121, 163)')
+  await expect(primary).toHaveCSS('background-color', 'rgb(224, 95, 0)')
 
   // Tooltip harus memakai surface mesin dengan teks terang (§5.11).
   await page.getByRole('button', { name: 'Arahkan kursor ke sini' }).hover()
   const tooltip = page.locator('[data-slot="tooltip-content"]')
   await expect(tooltip).toBeVisible()
   await expect(tooltip).toHaveCSS('color', 'rgb(232, 237, 244)')
-  await expect(tooltip).toHaveCSS('background-color', 'rgb(16, 22, 31)')
+  await expect(tooltip).toHaveCSS('background-color', 'rgb(15, 61, 76)')
 })
 
 test('seluruh skala tipe §2.3 tampil beserta metrik terukurnya', async ({ page }) => {
@@ -122,7 +124,7 @@ test('navigasi keyboard penuh tanpa mouse', async ({ page }) => {
   expect(reachedInput, 'Tab harus menjangkau input').toBe(true)
 
   // §5.4 — fokus input memakai ring/border aksen, terlihat tanpa mouse
-  await expect(page.locator('#tokens-input-default')).toHaveCSS('border-color', /15, 90, 120/)
+  await expect(page.locator('#tokens-input-default')).toHaveCSS('border-color', /179, 71, 0/)
 })
 
 test('screenshot /dev/tokens pada 4 breakpoint tanpa horizontal scroll', async ({ page }) => {

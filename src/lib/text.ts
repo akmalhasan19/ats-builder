@@ -117,13 +117,21 @@ export function tokenize(text: string): string[] {
     .filter((token) => token.length > 0)
 }
 
-export function slugify(value: string): string {
-  const slug = stripDiacritics(value)
+/**
+ * Slug tanpa nilai cadangan: string yang tidak menyisakan karakter ASCII
+ * (mis. judul non-Latin) menghasilkan string kosong, supaya pemanggil bisa
+ * memakai sumber lain sebagai gantinya alih-alih diam-diam memakai "resume".
+ */
+export function slugifyOrEmpty(value: string): string {
+  return stripDiacritics(value)
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-  return slug || 'resume'
+}
+
+export function slugify(value: string): string {
+  return slugifyOrEmpty(value) || 'resume'
 }
 
 const URL_SCHEME = /^[a-zA-Z][a-zA-Z\d+.-]*:/

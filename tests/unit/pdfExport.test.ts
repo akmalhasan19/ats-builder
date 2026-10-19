@@ -41,6 +41,25 @@ describe('pdfFilename', () => {
     expect(pdfFilename(doc)).toBe('cv-ku-ledger.pdf')
   })
 
+  it('memakai judul dokumen, bukan nama lengkap profil', () => {
+    const doc = createSampleDoc()
+    doc.title = 'CV Produk Unggulan'
+    expect(pdfFilename(doc)).toBe('cv-produk-unggulan-classic-ats.pdf')
+    expect(pdfFilename(doc)).not.toContain('alex-morgan')
+  })
+
+  it('judul kosong/spasi tetap memakai nama lengkap profil', () => {
+    const doc = createSampleDoc()
+    doc.title = '   '
+    expect(pdfFilename(doc)).toBe('alex-morgan-classic-ats.pdf')
+  })
+
+  it('judul tanpa slug ASCII jatuh ke nama lengkap, bukan "resume"', () => {
+    const doc = createSampleDoc()
+    doc.title = '年報'
+    expect(pdfFilename(doc)).toBe('alex-morgan-classic-ats.pdf')
+  })
+
   it('tetap menghasilkan nama berkas walau dokumen benar-benar kosong', () => {
     const doc: ResumeDoc = { ...createEmptyDoc(), templateId: 'technician' }
     expect(pdfFilename(doc)).toBe('resume-technician.pdf')

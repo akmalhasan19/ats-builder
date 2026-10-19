@@ -184,64 +184,94 @@ function SectionItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative flex h-10 items-center gap-2 rounded-md px-2 text-left transition-[padding] duration-[var(--dur-fast)] group-hover:pr-32 group-focus-within:pr-32',
+        'group relative flex h-10 items-center rounded-md px-2 text-left',
         active
           ? 'bg-accent-wash text-ink font-semibold shadow-[var(--shadow-active-bar)]'
           : 'text-ink hover:bg-hover',
       )}
     >
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={section.visible}
-        aria-label={`${t('rail.toggleVisibility')}: ${label}`}
-        onClick={(event) => {
-          event.stopPropagation()
-          onToggleVisible()
-        }}
-        className={cn(
-          'flex size-4 shrink-0 items-center justify-center rounded border transition-colors',
-          section.visible
-            ? 'border-accent-ink bg-accent text-accent-on'
-            : 'border-rule-strong bg-raised text-transparent',
-        )}
-      >
-        <Check className="size-3 stroke-[2.5]" aria-hidden="true" />
-      </button>
+      {/*
+        Isi baris dibungkus sendiri supaya `group-hover:` bisa dipakai pada
+        elemen anak. Varian `group-*` hanya berlaku untuk turunan elemen
+        `group`; memakai `group-hover:` pada elemen `group` itu sendiri tidak
+        pernah cocok — ruang untuk tombol aksi pun tidak pernah dibuka.
+      */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 pr-0 transition-[padding] duration-[var(--dur-fast)] group-hover:pr-[120px] group-focus-within:pr-[120px]">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={section.visible}
+          aria-label={`${t('rail.toggleVisibility')}: ${label}`}
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggleVisible()
+          }}
+          className={cn(
+            'flex size-4 shrink-0 items-center justify-center rounded border transition-colors',
+            section.visible
+              ? 'border-accent-ink bg-accent text-accent-on'
+              : 'border-rule-strong bg-raised text-transparent',
+          )}
+        >
+          <Check className="size-3 stroke-[2.5]" aria-hidden="true" />
+        </button>
 
-      <button
-        type="button"
-        aria-current={active ? 'true' : undefined}
-        onClick={onSelect}
-        className="flex min-w-0 flex-1 items-center gap-2 truncate py-1 text-left"
-      >
-        <Icon
-          aria-hidden="true"
-          className={cn('size-[15px] shrink-0', active ? 'text-accent-ink' : 'text-ink-tertiary')}
-        />
-        <span className={cn('text-rail-label truncate', !section.visible && 'text-ink-tertiary')}>
-          {label}
-        </span>
-      </button>
+        <button
+          type="button"
+          aria-current={active ? 'true' : undefined}
+          onClick={onSelect}
+          className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left"
+        >
+          <Icon
+            aria-hidden="true"
+            className={cn('size-[15px] shrink-0', active ? 'text-accent-ink' : 'text-ink-tertiary')}
+          />
+          {/*
+            Nama bagian memudar saat baris disorot: tombol aksi punya ruang
+            sendiri di kanan, jadi nama panjang tidak pernah menutupi ikon.
+          */}
+          <span
+            className={cn(
+              'text-rail-label min-w-0 truncate transition-opacity duration-[var(--dur-fast)] group-hover:opacity-0',
+              !section.visible && 'text-ink-tertiary',
+            )}
+          >
+            {label}
+          </span>
+        </button>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="py-1 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
-            <CompletenessDots dots={completeness.dots} />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="right">
-          <span className="text-hint">{tooltipText}</span>
-        </TooltipContent>
-      </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="py-1 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
+              <CompletenessDots dots={completeness.dots} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            <span className="text-hint">{tooltipText}</span>
+          </TooltipContent>
+        </Tooltip>
 
-      {issueCount > 0 ? (
-        <span className="text-hint text-signal-warn bg-bad-wash rounded px-1 font-mono transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
-          {t('rail.issuesBadge', { count: issueCount })}
-        </span>
-      ) : null}
+        {issueCount > 0 ? (
+          <span className="text-hint text-signal-warn bg-bad-wash rounded px-1 font-mono transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
+            {t('rail.issuesBadge', { count: issueCount })}
+          </span>
+        ) : null}
+      </div>
 
-      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+      {/*
+        Tombol aksi muncul saat baris disorot atau saat salah satunya difokuskan
+        (pintu keyboard). `focus-within` di sini, bukan `group-focus-within`,
+        supaya tab ke tombol section tidak memunculkan aksi yang belum difokuskan.
+
+        `pointer-events-none` saat tersembunyi penting: overlay ini melayang di
+        atas nama bagian, jadi kalau tombol yang tak terlihat tetap menerima
+        klik, klik di tengah nama jatuh ke tombol "pindah naik" — bukan memilih
+        bagian itu. Gagang seret dan menu "Tindakan bagian" dikecualikan
+        (kelasnya sendiri): keduanya letaknya di luar kotak nama, jadi tidak
+        pernah menelan klik nama, dan tetap bisa dipakai di layar sentuh
+        yang tidak punya hover.
+      */}
+      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -272,7 +302,7 @@ function SectionItem({
         <button
           type="button"
           aria-label={t('rail.dragHandle')}
-          className="text-ink-tertiary hover:text-ink flex size-6 cursor-grab items-center justify-center transition-opacity active:cursor-grabbing touch-none"
+          className="text-ink-tertiary hover:text-ink pointer-events-auto flex size-6 cursor-grab items-center justify-center transition-opacity active:cursor-grabbing touch-none"
           {...attributes}
           {...listeners}
         >
@@ -284,7 +314,7 @@ function SectionItem({
             <button
               type="button"
               aria-label={t('rail.moreActions')}
-              className="text-ink-tertiary hover:text-ink flex size-6 items-center justify-center rounded transition-opacity"
+              className="text-ink-tertiary hover:text-ink pointer-events-auto flex size-6 items-center justify-center rounded transition-opacity"
             >
               <MoreVertical className="size-3.5" aria-hidden="true" />
             </button>

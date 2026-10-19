@@ -90,4 +90,35 @@ test.describe('download-pdf — Gate Fase 5', () => {
     )
     expect(relevantErrors, `Error konsol: ${relevantErrors.join(', ')}`).toHaveLength(0)
   })
+
+  test('nama berkas mengikuti judul di top bar (ketik lalu langsung unduh)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await expect(page.locator('#pane-preview [data-probe="page-sheet"]').first()).toBeVisible({
+      timeout: 10_000,
+    })
+
+    const lanjut = page.getByRole('button', { name: 'Lanjut' })
+    if (await lanjut.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await lanjut.click()
+    }
+
+    // Alur nyata: judul diketik di top bar lalu tombol Unduh diklik langsung
+    // (tanpa Enter). Judul harus tersimpan saat input kehilangan fokus, dan
+    // nama berkas harus mengikuti judul itu — bukan nama lengkap profil.
+    await page.getByRole('button', { name: /Ubah judul CV/ }).click()
+    await page.getByLabel('Judul dokumen').fill('CV Produk Unggulan')
+
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 60_000 }),
+      page.locator('[data-probe="download-pdf"]:visible').last().click(),
+    ])
+
+    expect(download.suggestedFilename()).toMatch(/^cv-produk-unggulan-[a-z0-9-]+\.pdf$/)
+    expect(download.suggestedFilename()).not.toContain('alex-morgan')
+
+    // Nama berkas ikut ditampilkan di toast supaya hubungannya dengan judul terlihat.
+    await expect(page.getByText('PDF terunduh')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(download.suggestedFilename())).toBeVisible({ timeout: 10_000 })
+  })
 })

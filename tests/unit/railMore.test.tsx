@@ -357,6 +357,62 @@ describe('Rail — katalog bagian baru', () => {
   })
 })
 
+describe('Rail — ruang tombol aksi vs nama bagian', () => {
+  it('ruang untuk tombol aksi dibuka lewat varian group pada elemen anak', () => {
+    const { container } = render(<Rail />)
+    const row = container.querySelector('nav > div.group') as HTMLElement
+
+    // Varian `group-*` hanya berlaku untuk turunan elemen `group`. Kalau
+    // `group-hover:pr-*` dipakai pada elemen `group` itu sendiri, aturannya
+    // tidak pernah cocok — ruang tombol aksi pun tidak pernah dibuka dan
+    // nama bagian menutupi ikon aksi.
+    const spacer = [...row.querySelectorAll<HTMLElement>('div')].find((node) =>
+      node.className.includes('group-hover:pr-'),
+    )
+    expect(spacer, 'baris harus punya elemen anak yang membuka ruang aksi').toBeDefined()
+    expect(spacer!.className).toContain('group-focus-within:pr-')
+  })
+
+  it('nama bagian memudar saat baris disorot', () => {
+    render(<Rail />)
+    const name = within(rowOf(railLabel('experience'))).getByText(railLabel('experience'))
+
+    expect(name.className).toContain('truncate')
+    expect(name.className).toContain('group-hover:opacity-0')
+  })
+
+  it('tombol aksi muncul saat baris disorot atau saat tombolnya difokuskan', () => {
+    const { container } = render(<Rail />)
+    const row = container.querySelector('nav > div.group') as HTMLElement
+    const actions = row.querySelector<HTMLElement>('[aria-label="Tindakan bagian"]')
+    const overlay = actions?.closest('div') as HTMLElement
+
+    expect(overlay.className).toContain('group-hover:opacity-100')
+    // `focus-within` (bukan `group-focus-within`) supaya tab ke tombol section
+    // tidak memunculkan aksi yang belum difokuskan.
+    expect(overlay.className).toContain('focus-within:opacity-100')
+  })
+
+  it('overlay tombol aksi yang tersembunyi tidak menerima klik', () => {
+    const { container } = render(<Rail />)
+    const row = container.querySelector('nav > div.group') as HTMLElement
+    const actions = row.querySelector<HTMLElement>('[aria-label="Tindakan bagian"]')
+    const overlay = actions?.closest('div') as HTMLElement
+
+    // Overlay melayang di atas nama bagian. Kalau tombol yang tersembunyi
+    // tetap menerima klik, klik di tengah nama jatuh ke tombol "pindah naik"
+    // alih-alih memilih bagian itu.
+    expect(overlay.className).toContain('pointer-events-none')
+    expect(overlay.className).toContain('group-hover:pointer-events-auto')
+
+    // Gagang seret & menu "Tindakan bagian" tetap bisa dipakai tanpa hover
+    // (layar sentuh tidak punya hover) dan letaknya di luar kotak nama.
+    const grip = row.querySelector<HTMLElement>('[aria-label="Tarik untuk mengubah urutan"]')
+    expect(grip?.className).toContain('pointer-events-auto')
+    expect(actions?.className).toContain('pointer-events-auto')
+  })
+})
+
 describe('Rail — pengukur kelengkapan', () => {
   it('menampilkan persen kelengkapan dan klik membuka drawer ATS', async () => {
     const user = userEvent.setup()

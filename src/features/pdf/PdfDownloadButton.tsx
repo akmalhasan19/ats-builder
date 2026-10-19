@@ -56,6 +56,9 @@ export function PdfDownloadButton({ className }: PdfDownloadButtonProps) {
       )
       downloadPdfBlob(result.blob, result.filename)
       toast(t('pdf.success.downloaded'), {
+        // Nama berkas ikut ditampilkan supaya hubungan antara judul di top bar
+        // dan nama berkas hasil unduhan terlihat jelas.
+        description: result.filename,
         action: {
           label: t('pdf.action.open'),
           onClick: () => openPdfBlob(result.blob),

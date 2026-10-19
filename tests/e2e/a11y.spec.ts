@@ -202,6 +202,8 @@ test.describe('a11y — T9.5', () => {
     // semuanya, jadi satu bagian kosong (Penghargaan) dihapus lebih dulu.
     const awardsRow = railNav.locator(':scope > div').filter({ hasText: 'Penghargaan' })
     await expect(awardsRow).toHaveCount(1)
+    // Tombol aksi di rail baru bisa diklik setelah baris disorot.
+    await awardsRow.hover()
     await awardsRow.getByRole('button', { name: 'Tindakan bagian' }).click()
     await page.getByRole('menuitem', { name: 'Hapus bagian' }).click()
     const rowsBefore = await railRows.count()

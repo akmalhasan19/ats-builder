@@ -1,5 +1,5 @@
 import type { TranslationKey } from '@/lib/i18n'
-import { slugify } from '@/lib/text'
+import { slugifyOrEmpty } from '@/lib/text'
 import type { PagePlan } from '@/features/preview/pagination'
 import type { ResumeDoc } from '@/types/resume'
 
@@ -11,11 +11,21 @@ export type ExportPdfResult = {
   pageCount: number
 }
 
+/**
+ * Nama berkas PDF mengikuti judul dokumen yang diketik di top bar.
+ *
+ * Urutan sumber: judul dokumen → nama lengkap di profil → "resume".
+ * Judul dibaca dari dokumen yang sedang aktif saat tombol ditekan, jadi
+ * berkas selalu memakai isi form terbaru. Judul yang tidak menyisakan slug
+ * (mis. hanya huruf non-Latin) tidak langsung memakai "resume": ia jatuh ke
+ * nama lengkap lebih dulu.
+ */
 export function pdfFilename(doc: ResumeDoc): string {
   const profile = doc.sections.find((section) => section.kind === 'profile')
   const fullName = profile?.kind === 'profile' ? profile.data.fullName : ''
   const title = (doc.title ?? '').trim()
-  return `${slugify(title || fullName)}-${doc.templateId}.pdf`
+  const base = slugifyOrEmpty(title) || slugifyOrEmpty(fullName.trim()) || 'resume'
+  return `${base}-${doc.templateId}.pdf`
 }
 
 const MIN_EXPORT_INTERVAL_MS = 500

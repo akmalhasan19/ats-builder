@@ -206,7 +206,9 @@ test.describe('rail & form — Gate Fase 3', () => {
     // Penghargaan di dokumen contoh belum terisi → hapus langsung tanpa dialog
     const awardsRow = railNav.locator(':scope > div').filter({ hasText: 'Penghargaan' })
     await expect(awardsRow).toHaveCount(1)
-    await awardsRow.getByRole('button', { name: 'Tindakan bagian' }).hover()
+    // Tombol aksi di rail muncul saat baris disorot; sebelum itu tombolnya
+    // tidak menerima klik (overlay-nya pointer-events-none).
+    await awardsRow.hover()
     await awardsRow.getByRole('button', { name: 'Tindakan bagian' }).click()
     await page.getByRole('menuitem', { name: 'Hapus bagian' }).click()
 
@@ -215,6 +217,7 @@ test.describe('rail & form — Gate Fase 3', () => {
 
     // Profil berisi data → dialog konfirmasi muncul; batalkan dulu lalu konfirmasi
     const profileRow = railNav.locator(':scope > div').filter({ hasText: 'Profil' })
+    await profileRow.hover()
     await profileRow.getByRole('button', { name: 'Tindakan bagian' }).click()
     await page.getByRole('menuitem', { name: 'Hapus bagian' }).click()
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 3000 })
