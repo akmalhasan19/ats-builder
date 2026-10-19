@@ -35,6 +35,12 @@ const HomeSections = lazy(() =>
  * T8.1 — konten homepage (section 2–6) mengalir di bawah workspace dalam satu
  * halaman scroll. Workspace dibatasi tingginya sendiri supaya alur isi →
  * preview → unduh tidak ikut tergulung beranda.
+ *
+ * Tinggi workspace = `100dvh` dikurangi chrome di atasnya pada tiap breakpoint
+ * (TopBar 52/56 + tab mobile 44), bukan hanya di `lg`: `min-height` yang lebih
+ * besar dari sisa viewport membuat panel kelengkapan & anchor bawah terpotong
+ * di jendela yang pendek, jadi tingginya dipatok presisi dan ruangnya di-scroll
+ * internal lewat `overflow-hidden`.
  */
 export function AppShell() {
   usePanelMode()
@@ -57,7 +63,7 @@ export function AppShell() {
         >
           <div
             className={cn(
-              'relative grid min-h-0 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0 lg:h-[calc(100dvh-56px)] lg:min-h-[640px] lg:overflow-hidden lg:grid-cols-[56px_minmax(360px,1fr)_1fr]',
+              'relative grid min-h-0 h-[calc(100dvh-96px)] overflow-hidden pb-[calc(64px+env(safe-area-inset-bottom))] md:h-[calc(100dvh-100px)] md:pb-0 lg:h-[calc(100dvh-56px)] lg:grid-cols-[56px_minmax(360px,1fr)_1fr]',
               !atsDocked && 'xl:grid-cols-[248px_minmax(380px,520px)_1fr]',
             )}
             // Kolom ke-4 hanya ada saat drawer di-dock (≥1600px). Ditulis sebagai

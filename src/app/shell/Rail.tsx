@@ -498,7 +498,7 @@ export function Rail() {
         </ScrollArea>
 
         {!iconOnly && (
-          <div className="border-rule border-t px-2.5 pt-2.5 pb-3">
+          <div data-probe="rail-completeness" className="border-rule border-t px-2.5 pt-2.5 pb-3">
             <button
               type="button"
               onClick={() => setAtsDrawerOpen(true)}

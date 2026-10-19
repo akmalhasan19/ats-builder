@@ -143,3 +143,74 @@ test.describe('responsive — 360/390/768/1024/1440/1920', () => {
     }
   })
 })
+
+/**
+ * Regresi "satu jendela Chrome 100%" — tinggi ruang kerja tidak boleh melebihi
+ * viewport. Sebelumnya grid hanya dibatasi di `lg` dengan `min-h-[640px]`, jadi
+ * di jendela pendek (viewport ±678px) panel kelengkapan & anchor bawah
+ * terpotong, dan di bawah `lg` seluruh workspace tumbuh melewati layar.
+ */
+const SHORT_WINDOWS: { width: number; height: number; completeness: boolean; tabs: boolean }[] = [
+  { width: 1287, height: 678, completeness: true, tabs: false },
+  { width: 1280, height: 720, completeness: true, tabs: false },
+  { width: 1024, height: 640, completeness: false, tabs: false },
+  { width: 768, height: 680, completeness: false, tabs: true },
+  { width: 390, height: 700, completeness: false, tabs: true },
+  { width: 360, height: 640, completeness: false, tabs: true },
+]
+
+const bottomOf = (page: Page, selector: string): Promise<number | null> =>
+  page.evaluate((sel) => {
+    const box = document.querySelector(sel)?.getBoundingClientRect()
+    return box && box.height > 0 ? Math.round(box.bottom) : null
+  }, selector)
+
+test.describe('responsive — workspace dalam satu jendela pendek', () => {
+  for (const win of SHORT_WINDOWS) {
+    test(`${win.width}×${win.height}: chrome bawah tidak lewat lipatan & pane menggulung internal`, async ({
+      page,
+    }) => {
+      await prepare(page, win.width, win.height)
+      const fold = await page.evaluate(() => window.innerHeight)
+
+      const chrome = ['#workspace-main > div', '[data-probe="home-anchor"]']
+      if (win.completeness) chrome.push('[data-probe="rail-completeness"]')
+      if (win.tabs) chrome.push('[role="tablist"]')
+
+      for (const selector of chrome) {
+        const bottom = await bottomOf(page, selector)
+        expect(bottom, `${selector} tidak terukur di ${win.width}×${win.height}`).not.toBeNull()
+        expect(bottom!, `${selector} terpotong di ${win.width}×${win.height}`).toBeLessThanOrEqual(
+          fold,
+        )
+      }
+
+      // Batas bawah workspace tepat pada lipatan: tidak ada yang tersembunyi
+      // di baliknya, jadi dokumen tidak perlu digulung untuk memakai tool.
+      expect(await bottomOf(page, '#workspace-main > div')).toBe(fold)
+
+      // Konten panjang tetap terbaca — gulirnya pindah ke dalam pane, dokumen
+      // tidak pernah bergerak dari puncak.
+      const form = page.locator('#pane-form')
+      expect(
+        await form.evaluate((el) => /(auto|scroll)/.test(getComputedStyle(el).overflowY)),
+        'pane isi data bukan wadah gulir internal',
+      ).toBe(true)
+      expect(await bottomOf(page, '#pane-form')).toBeLessThanOrEqual(fold)
+      await form.evaluate((el) => el.scrollTo(0, el.scrollHeight))
+      expect(await page.evaluate(() => window.scrollY)).toBe(0)
+      await form.evaluate((el) => el.scrollTo(0, 0))
+
+      if (win.tabs) {
+        await page.getByRole('tab', { name: 'Pratinjau' }).click()
+        await expect(page.locator('#pane-preview')).toBeVisible()
+      }
+      expect(await bottomOf(page, '#pane-preview')).toBeLessThanOrEqual(fold)
+      expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0)
+
+      await page.screenshot({
+        path: `artifacts/fase9/responsive-short-${win.width}x${win.height}.png`,
+      })
+    })
+  }
+})
