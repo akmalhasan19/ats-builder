@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { buildReport } from '@/features/ats/engine'
+import { createSampleDoc } from '@/schema/resume'
 import { useAtsStore } from '@/store/atsStore'
 import { useSyncStore } from '@/store/syncStore'
 import { useUiStore } from '@/store/uiStore'
@@ -54,23 +56,28 @@ describe('uiStore', () => {
 })
 
 describe('atsStore', () => {
-  it('default kosong — bentuk laporan menyusul Fase 7', () => {
+  it('default kosong sebelum pemeriksaan pertama dijalankan', () => {
     const state = useAtsStore.getState()
     expect(state.report).toBeNull()
     expect(state.isChecking).toBe(false)
+    expect(state.hasOpened).toBe(false)
     expect(state.lastCheckedAt).toBeNull()
     expect(state.keywords).toEqual([])
   })
 
   it('setter mengubah state', () => {
-    useAtsStore.getState().setReport({ score: 80 })
+    const report = buildReport(createSampleDoc(), 2, 123)
+    useAtsStore.getState().setReport(report)
     useAtsStore.getState().setChecking(true)
+    useAtsStore.getState().setHasOpened(true)
     useAtsStore.getState().setLastCheckedAt(123)
     useAtsStore.getState().setKeywords(['typescript', 'react'])
 
     const state = useAtsStore.getState()
-    expect(state.report).toEqual({ score: 80 })
+    expect(state.report).toBe(report)
+    expect(state.report?.score).toBe(report.score)
     expect(state.isChecking).toBe(true)
+    expect(state.hasOpened).toBe(true)
     expect(state.lastCheckedAt).toBe(123)
     expect(state.keywords).toEqual(['typescript', 'react'])
   })

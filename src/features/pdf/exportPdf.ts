@@ -17,9 +17,13 @@ export function pdfFilename(doc: ResumeDoc): string {
   return `${slugify(fullName || doc.title)}-${doc.templateId}.pdf`
 }
 
-export async function exportPdf(doc: ResumeDoc, plan: PagePlan): Promise<ExportPdfResult> {
+export async function exportPdf(
+  doc: ResumeDoc,
+  plan: PagePlan,
+  options: { keywords?: readonly string[] } = {},
+): Promise<ExportPdfResult> {
   const { renderResumePdfToBlob } = await import('./renderResumePdf')
-  const result = await renderResumePdfToBlob(doc, plan)
+  const result = await renderResumePdfToBlob(doc, plan, options)
   return { ...result, filename: pdfFilename(doc) }
 }
 

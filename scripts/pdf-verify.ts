@@ -13,6 +13,7 @@ import fontkit from '@pdf-lib/fontkit'
 import { createPagePlan } from '@/features/preview/createPagePlan'
 import { buildResumePdf, PDF_FONT_FAMILY } from '@/features/templates/pdf/ResumePdfLib'
 import { FONT_SOURCES, fontFileFor } from '@/features/pdf/fonts'
+import { simulateParseOrder, tapeText } from '@/features/ats/parseTape'
 import {
   entriesOf,
   entryContentOf,
@@ -31,6 +32,7 @@ import { tokenize } from '@/lib/text'
 import { createSampleDoc } from '@/schema/resume'
 import type { ResumeDoc, SectionInstance, TemplateId } from '@/types/resume'
 import { paginationDoc, type PaginationFixtureName } from '../tests/fixtures/docs'
+import { sampleResume } from '../tests/fixtures/sampleResume'
 
 const ARTIFACT_DIR = path.resolve(process.cwd(), 'artifacts', 'fase5')
 const TEMPLATE_IDS: readonly TemplateId[] = [
@@ -321,6 +323,43 @@ function assertTextQuality(label: string, extracted: string, expected: readonly 
   )
 }
 
+function verifyTapeAgainstPdf(
+  label: string,
+  doc: ResumeDoc,
+  spec: TemplateSpec,
+  plan: ReturnType<typeof createPagePlan>,
+  layout: string,
+): void {
+  const { lines } = simulateParseOrder(doc, spec, plan)
+  const tapeTokens = tokenize(tapeText(lines))
+  const pdfTokens = tokenize(collapseLetterSpacing(layout))
+  if (tapeTokens.length === 0) return
+
+  // Urutan, bukan nilai: setiap kata tape harus muncul di PDF sesudah kata
+  // sebelumnya. PDF boleh punya token tambahan (halaman, glif) dan berlebih
+  // ditoleransi — yang tidak boleh adalah tape yang keluar dari barisan.
+  let cursor = 0
+  const outOfOrder: string[] = []
+  for (const token of tapeTokens) {
+    const at = pdfTokens.indexOf(token, cursor)
+    if (at === -1) {
+      outOfOrder.push(token)
+      continue
+    }
+    cursor = at + 1
+  }
+  const missing = outOfOrder.length
+  const coverage = Math.round(((tapeTokens.length - missing) / tapeTokens.length) * 1000) / 10
+
+  check(
+    `${label}: urutan Parse Tape == urutan pdftotext`,
+    missing === 0,
+    missing === 0
+      ? `${tapeTokens.length} token tape semuanya berurutan di ${pdfTokens.length} token PDF`
+      : `${missing}/${tapeTokens.length} token di luar barisan (${coverage}% berurutan): ${outOfOrder.slice(0, 8).join(' ')}`,
+  )
+}
+
 async function verifyTemplate(templateId: TemplateId): Promise<void> {
   const rendered = await render(qualityDoc(), templateId)
   const name = `${templateId}-quality`
@@ -364,6 +403,25 @@ async function verifyTemplate(templateId: TemplateId): Promise<void> {
   if (layout !== null) {
     await writeFile(path.join(ARTIFACT_DIR, `${name}.pdftotext-layout.txt`), layout)
     assertTextQuality(`${templateId} [pdftotext -layout]`, layout, pieces)
+    // Gate Fase 7: Parse Tape untuk sampleResume + ledger harus cocok dengan
+    // urutan `pdftotext` PDF-nya. Fixture `sedang` memang memakai sampleResume.
+    if (templateId === 'ledger') {
+      // Gate Fase 7 meminta Parse Tape untuk `sampleResume` + `ledger`; fixture
+      // `sedang` memakai `createSampleDoc()` (id acak), jadi salinan deterministik
+      // dibuat di sini agar tape bisa diuji silang.
+      const doc = sampleResume()
+      const spec = resolveSpec('ledger', doc.theme, doc.settings.page)
+      const plan = createPagePlan(doc, spec)
+      const bytes = await buildResumePdf(doc, spec, plan, (file) =>
+        Promise.resolve(
+          new Uint8Array(readFileSync(path.resolve(process.cwd(), 'public/fonts', file))),
+        ),
+      )
+      const samplePath = path.join(ARTIFACT_DIR, 'ledger-sample-resume.pdf')
+      await writeFile(samplePath, bytes.bytes)
+      const layout = extractWithPdftotext(samplePath)
+      if (layout !== null) verifyTapeAgainstPdf('sampleResume × ledger', doc, spec, plan, layout)
+    }
   }
 }
 

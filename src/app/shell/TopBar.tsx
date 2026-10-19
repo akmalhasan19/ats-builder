@@ -21,31 +21,43 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { createEmptyDoc, createSampleDoc } from '@/schema/resume'
+import { useAtsStore } from '@/store/atsStore'
 import { useDocStore } from '@/store/docStore'
 import { usePdfExportStore } from '@/store/pdfExportStore'
 import { toast } from 'sonner'
 import { t } from '@/lib/i18n'
+import { useOpenAtsDrawer } from '@/features/ats/useAtsCheck'
 import { PdfDownloadButton } from '@/features/pdf/PdfDownloadButton'
 import { DocumentTitle } from './DocumentTitle'
 import { SaveStatusPill } from './SaveStatusPill'
 import { TemplateSelect } from './TemplateSelect'
 import { applyTemplate, TEMPLATE_IDS, templateLabelKey } from './templateList'
 
+/** T7.6 — titik `--signal-bad` muncul bila ada isu yang wajib diperbaiki. */
 function CheckAtsButton() {
+  const openAtsDrawer = useOpenAtsDrawer()
+  const hasBlocking = useAtsStore((state) =>
+    state.report === null ? false : state.report.issues.some((issue) => issue.severity === 'bad'),
+  )
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex">
-          <Button variant="secondary" disabled className="gap-1.5 px-3">
-            <ScanSearch aria-hidden="true" className="size-[15px]" />
-            {t('topbar.checkAts')}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{t('topbar.checkAtsPending')}</TooltipContent>
-    </Tooltip>
+    <Button
+      variant="secondary"
+      data-probe="check-ats"
+      className="relative gap-1.5 px-3"
+      onClick={openAtsDrawer}
+    >
+      <ScanSearch aria-hidden="true" className="size-[15px]" />
+      {t('topbar.checkAts')}
+      {hasBlocking ? (
+        <span
+          aria-hidden="true"
+          data-probe="check-ats-badge"
+          className="bg-signal-bad absolute -top-0.5 -right-0.5 size-1.5 rounded-full"
+        />
+      ) : null}
+    </Button>
   )
 }
 
@@ -56,6 +68,7 @@ function MobileMenu() {
   const activeId = useDocStore((state) => state.doc.templateId)
   const resetDoc = useDocStore((state) => state.resetDoc)
   const isGenerating = usePdfExportStore((state) => state.isGenerating)
+  const openAtsDrawer = useOpenAtsDrawer()
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -92,7 +105,15 @@ function MobileMenu() {
               </button>
             )
           })}
-          <Button variant="secondary" disabled className="mt-2 justify-start gap-2">
+          <Button
+            variant="secondary"
+            data-probe="check-ats-mobile"
+            className="mt-2 justify-start gap-2"
+            onClick={() => {
+              openAtsDrawer()
+              setOpen(false)
+            }}
+          >
             <ScanSearch aria-hidden="true" className="size-[15px]" />
             {t('topbar.checkAts')}
           </Button>

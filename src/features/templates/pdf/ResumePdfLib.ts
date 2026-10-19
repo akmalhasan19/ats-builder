@@ -46,6 +46,15 @@ export type ResumePdfResult = {
   pageCount: number
 }
 
+/** Stabilo — setara `--highlighter` §2.2, dipakai 22% opacity seperti tape. */
+const HIGHLIGHT = rgb(0xf2 / 255, 0xd6 / 255, 0)
+const HIGHLIGHT_OPACITY = 0.22
+
+export type BuildPdfOptions = {
+  /** Kata kunci yang distabilo di PDF. Default kosong: berkas unduhan netral. */
+  keywords?: readonly string[]
+}
+
 export class PdfExportError extends Error {
   readonly code: 'font' | 'content' | 'blob'
 
@@ -139,6 +148,13 @@ const hyphenatedPieces = (
   return pieces
 }
 
+/**
+ * Kata tanpa tanda baca tepi ("TypeScript," → "TypeScript") supaya daftar
+ * bertanda koma dan kalimat bertanda titik tetap cocok. Lebar yang digambar
+ * tetap memakai kata utuh, jadi kotak stabilo jatuh persis di tempatnya.
+ */
+const wordCore = (word: string): string => word.replace(/^\p{P}+|\p{P}+$/gu, '').toLowerCase()
+
 /** Membungkus di spasi; kata >12 karakter diberi hyphen bila harus dipecah. */
 export function wrapPdfLines(
   text: string,
@@ -174,12 +190,19 @@ class PageWriter {
   private readonly page: PDFPage
   private readonly fonts: Map<string, PDFFont>
   private readonly spec: TemplateSpec
+  private readonly keywords: readonly string[]
   private readonly trackedKeys = new Map<PDFFont, PDFName>()
 
-  constructor(page: PDFPage, fonts: Map<string, PDFFont>, spec: TemplateSpec) {
+  constructor(
+    page: PDFPage,
+    fonts: Map<string, PDFFont>,
+    spec: TemplateSpec,
+    keywords: readonly string[] = [],
+  ) {
     this.page = page
     this.fonts = fonts
     this.spec = spec
+    this.keywords = keywords
     const marginPt = mmToPt(spec.marginMm)
     this.contentWidthPt = A4_PT.w - marginPt * 2
     this.cursorY = A4_PT.h - marginPt
@@ -207,6 +230,46 @@ class PageWriter {
     const key = this.page.node.newFontDictionary(font.name, font.ref)
     this.trackedKeys.set(font, key)
     return key
+  }
+
+  /**
+   * Stabilo kata kunci (T7.5) — kotak di belakang tiap kata yang cocok, lalu
+   * teksnya digambar di atasnya. Lebar diukur dengan font & ukuran yang sama,
+   * jadi rect-nya jatuh persis di atas kata; frasa multi-kata dicocokkan utuh
+   * demi cocok dengan `MarkedText` di renderer layar.
+   */
+  private markKeywords(
+    line: string,
+    x: number,
+    baseline: number,
+    style: TextStyle,
+    font: PDFFont,
+    measure: (text: string) => number,
+  ): void {
+    if (this.keywords.length === 0 || line.trim() === '') return
+    const usable = this.keywords.filter(
+      (keyword) => keyword.trim() !== '' && !keyword.includes(' '),
+    )
+    if (usable.length === 0) return
+    const lowered = new Set(usable.map((keyword) => keyword.toLowerCase()))
+    let cursor = 0
+    for (const word of line.split(/\s+/u).filter(Boolean)) {
+      const from = line.indexOf(word, cursor)
+      cursor = from + word.length
+      if (from < 0 || !lowered.has(wordCore(word))) continue
+      const left = x + measure(line.slice(0, from))
+      const width = measure(word)
+      if (width <= 0) continue
+      const ascent = font.heightAtSize(style.role.sizePt, { descender: false })
+      this.page.drawRectangle({
+        x: left,
+        y: baseline - ascent * 0.18,
+        width,
+        height: Math.max(ascent * 0.9, style.role.sizePt * 0.85),
+        color: HIGHLIGHT,
+        opacity: HIGHLIGHT_OPACITY,
+      })
+    }
   }
 
   private drawTracked(text: string, x: number, y: number, style: TextStyle, font: PDFFont): void {
@@ -278,6 +341,14 @@ class PageWriter {
       const x =
         this.marginPt + indentPt + (align === 'center' ? Math.max(0, (maxWidth - width) / 2) : 0)
       const baseline = this.cursorY - baselineOffset(font, style.role.sizePt, lineHeight)
+      this.markKeywords(
+        line,
+        x,
+        baseline,
+        style,
+        font,
+        measure ?? ((value: string) => font.widthOfTextAtSize(value, style.role.sizePt)),
+      )
       if (options.smallCaps) this.drawSmallCapsLine(line, x, baseline, style, font)
       else this.drawTracked(line, x, baseline, style, font)
       this.cursorY -= lineHeight
@@ -317,7 +388,10 @@ class PageWriter {
           baselineOffset(titleFont, titleStyle.role.sizePt, rowLH),
           baselineOffset(dateFont, dateStyle.role.sizePt, rowLH),
         )
-      if (hasTitle)
+      if (hasTitle) {
+        this.markKeywords(title, this.marginPt, baseline, titleStyle, titleFont, (value) =>
+          titleFont.widthOfTextAtSize(value, titleStyle.role.sizePt),
+        )
         this.page.drawText(title, {
           x: this.marginPt,
           y: baseline,
@@ -325,6 +399,7 @@ class PageWriter {
           font: titleFont,
           color: titleStyle.color,
         })
+      }
       if (hasDates)
         this.page.drawText(dates, {
           x: this.marginPt + this.contentWidthPt - datesWidth,
@@ -350,6 +425,9 @@ class PageWriter {
     lines.forEach((line, index) => {
       const baseline = this.cursorY - baselineOffset(font, style.role.sizePt, lineHeight)
       if (index === 0) {
+        this.markKeywords(line, this.marginPt + indentPt, baseline, style, font, (value) =>
+          font.widthOfTextAtSize(value, style.role.sizePt),
+        )
         this.page.drawText(this.spec.bulletGlyph, {
           x: this.marginPt,
           y: baseline,
@@ -543,6 +621,7 @@ export async function buildResumePdf(
   spec: TemplateSpec,
   plan: PagePlan,
   loadFontFile: PdfFontLoader,
+  options: BuildPdfOptions = {},
 ): Promise<ResumePdfResult> {
   const pdf = await PDFDocument.create()
   pdf.registerFontkit(fontkit)
@@ -557,7 +636,7 @@ export async function buildResumePdf(
   const fonts = await embedFonts(pdf, spec, loadFontFile)
   for (const pageBlocks of plan.pages) {
     const page = pdf.addPage([A4_PT.w, A4_PT.h])
-    const writer = new PageWriter(page, fonts, spec)
+    const writer = new PageWriter(page, fonts, spec, options.keywords ?? [])
     for (const block of pageBlocks) drawBlock(writer, doc, block, spec)
   }
 

@@ -1,4 +1,4 @@
-const ACTION_VERBS = new Set([
+export const ACTION_VERBS = new Set([
   'achieved',
   'achieve',
   'analyzed',

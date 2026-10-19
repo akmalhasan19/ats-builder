@@ -880,57 +880,57 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
-### ☐ FASE 7 — ATS Checker, Parse Tape, dan Highlighter
+### ☑ FASE 7 — ATS Checker, Parse Tape, dan Highlighter *(2026-10-19 — semua sub-task & Gate hijau)*
 
-- [ ] **T7.1 Mesin aturan** (`features/ats/rules/`)
-  - [ ] `contact.ts`: email ada & valid; telepon ada & ≥ 8 digit setelah normalisasi; lokasi ada; ≥ 1 tautan profil (advisory)
-  - [ ] `sections.ts`: kehadiran `summary`, `experience`, `education`, `skills`; heading cocok dengan sinonim kanonis (daftar `headings.ts`: Experience/Work History/Employment/Pengalaman Kerja…)
-  - [ ] `bullets.ts`: panjang 40–180 char (bad bila < 25 atau > 220); diawali action verb (daftar `verbs.ts` id+en, ±180 kata); ada angka/metrik (advisory); tidak diawali kata kerja pasif ("Bertugas untuk…")
-  - [ ] `dates.ts`: semua tanggal terisi & parseable; urutan reverse-chronological; gap > 6 bulan tanpa entri lain (advisory); `current` hanya pada entri terbaru
-  - [ ] `length.ts`: 1 halaman untuk < 3 thn pengalaman, maks 2 halaman untuk ≥ 3 thn; > 3 halaman = warn
-  - [ ] `forbidden.ts`: `photoEnabled` true, `accentHex` dengan kontras < 4.5:1, template non-ATS (tidak ada saat ini, tapi guard untuk masa depan), skill level numerik
-  - [ ] `keywords.ts`: tokenisasi `doc.jobDescription` (stopword id+en) → frekuensi → bandingkan dengan token di `summary`+`experience`+`skills`; hasil = `{ matched[], missing[], density }`
-  - [ ] `consistency.ts`: format tanggal seragam antar entri; kapitalisasi heading seragam; bullet diakhiri tanda baca seragam
-  - [ ] Tiap aturan mengembalikan `AtsIssue = { id, ruleId, severity:'bad'|'warn'|'ok'|'info', titleId, detailId, points:number, target?: {sectionId, entryId?, field?} , fixHintId? }`
-- [ ] **T7.2 Skoring** (`scoring.ts`)
-  - [ ] Basis 100; `bad` −12 (maks −48); `warn` −4 (maks −24); `info` −1 (maks −6); floor 0
-  - [ ] Band: 0–49 `Perlu perbaikan` (`--signal-bad`) · 50–74 `Cukup` (`--signal-warn`) · 75–89 `Baik` (`--cyanotype`) · 90–100 `Sangat baik` (`--signal-ok`)
-  - [ ] Label wajib: **`INDEKS STRUKTUR`**, bukan "ATS Score"
-  - [ ] Disclaimer permanen di UI (P5) dan **tidak pernah** dihapus oleh state apa pun
-- [ ] **T7.3 Parse Tape** (`parseTape.ts`)
-  - [ ] `simulateParseOrder(doc, templateId)` → `TapeLine[] = { tag:'NAME'|'HEADLINE'|'EMAIL'|'PHONE'|'LOCATION'|'LINK'|'HEADING'|'ENTRY_TITLE'|'ORG'|'DATE'|'BULLET'|'META'|'UNCLAIMED', text:string, sourceRef?:{sectionId,entryId} }`
-  - [ ] Urutan **harus** mengikuti urutan render template (konsumsi `usePagination`/blok dari Fase 4) — bukan urutan form
-  - [ ] Tandai `UNCLAIMED` untuk teks yang tidak terpetakan (mis. karakter aneh, bullet kosong)
-  - [ ] Statistik footer: jumlah karakter, kata, halaman
-  - [ ] Tombol `Salin teks` → clipboard (dengan toast `Teks tersalin`) — berguna untuk ditempel ke ATS sungguhan
-- [ ] **T7.4 Drawer ATS** — §5.6
-  - [ ] Drawer kanan w400 (≥1600 dock kolom ke-4; mobile full-sheet) + scrim + Esc/focus-trap
-  - [ ] `ScoreBlock`: angka Archivo Expanded 56px + bar 20 tick + band + disclaimer + meta mono
-  - [ ] Tabs `Masalah (n)` / `Parse tape`
-  - [ ] `IssueList` terkelompok: `Wajib diperbaiki` → `Sebaiknya` → `Sudah baik` (collapsible)
-  - [ ] `IssueRow` + aksi `Perbaiki →`: tutup drawer (< 1280px) → scroll → focus field → flash `--cyanotype-wash` 600ms
-  - [ ] `ParseTape` di atas `--machine`, tag 74px uppercase, kata kunci distabilo
-  - [ ] Sapuan scan 700ms pada sheet saat check dijalankan (hormati reduced-motion)
-  - [ ] State kosong: "Belum ada yang diperiksa" + tombol `Periksa sekarang`; state tanpa isu: "Tidak ada masalah struktur yang terdeteksi" + tetap tampilkan tape
-- [ ] **T7.5 Highlighter di preview**
-  - [ ] Input `Deskripsi lowongan` (TextArea di drawer ATS tab `Masalah`, paling atas, collapsible) disimpan ke `doc.jobDescription`
-  - [ ] `tokenize` → `Set<string>` kata kunci (bobot ≥ 2 kemunculan atau istilah multi-kata)
-  - [ ] `KeywordMark` membungkus kecocokan di renderer screen **dan** di renderer PDF (opsional untuk PDF: default OFF, toggle `Sertakan stabilo di PDF` — default mati supaya PDF tetap netral)
-  - [ ] Toggle `Highlighter` di PreviewToolbar; disabled + tooltip sebelum ada JD
-  - [ ] Panel ringkasan: `12 cocok · 7 belum ada` + daftar kata yang belum ada sebagai chip yang bisa diklik (klik → focus field skills)
-- [ ] **T7.6 Jalankan & otomasi**
-  - [ ] `runCheck()` async dengan `isChecking`; hasil di-cache di `atsStore` + `meta.lastCheckedAt`
-  - [ ] Re-check otomatis **debounce 1.5s** setelah perubahan dokumen, hanya bila drawer pernah dibuka (hemat CPU, tidak mengganggu)
-  - [ ] Badge titik `--signal-bad` di `CheckAtsButton` bila ada isu `bad`
-  - [ ] `aria-live` untuk perubahan skor saat drawer terbuka
+- [x] **T7.1 Mesin aturan** (`features/ats/rules/`)
+  - [x] `contact.ts`: email ada & valid; telepon ada & ≥ 8 digit setelah normalisasi; lokasi ada; ≥ 1 tautan profil (advisory) — *`phoneDigits()` diekspor karena dipakai aturan & test; email kosong dan email salah format dibedakan dua isu*
+  - [x] `sections.ts`: kehadiran `summary`, `experience`, `education`, `skills`; heading cocok dengan sinonim kanonis (daftar `headings.ts`: Experience/Work History/Employment/Pengalaman Kerja…) — *label datang dari registry, bukan dari data, jadi di aplikasi ini judul selalu seragam; kekanonisan dijaga lewat `isCanonicalHeading()` untuk label custom dari impor (Fase 11)*
+  - [x] `bullets.ts`: panjang 40–180 char (bad bila < 25 atau > 220); diawali action verb (daftar `verbs.ts` id+en, ±180 kata); ada angka/metrik (advisory); tidak diawali kata kerja pasif ("Bertugas untuk…") — *daftar inti tetap di `lib/text.ts` (dipakai hint editor) dan diekspor supaya tidak bercabang*
+  - [x] `dates.ts`: semua tanggal terisi & parseable; urutan reverse-chronological; gap > 6 bulan tanpa entri lain (advisory); `current` hanya pada entri terbaru — *bagian bertanggal tunggal (proyek, sertifikasi, penghargaan) tidak wajib tanggal selesai; bahasa & bagian lain tanpa tanggal tidak ikut diperiksa*
+  - [x] `length.ts`: 1 halaman untuk < 3 thn pengalaman, maks 2 halaman untuk ≥ 3 thn; > 3 halaman = warn — *jumlah halaman datang dari `PagePlan` terukur (`usePagination`), bukan perkiraan*
+  - [x] `forbidden.ts`: `photoEnabled` true, `accentHex` dengan kontras < 4.5:1, template non-ATS (tidak ada saat ini, tapi guard untuk masa depan), skill level numerik — *rasio kontras dihitung `src/lib/contrast.ts` (WCAG), bukan nilai statis*
+  - [x] `keywords.ts`: tokenisasi `doc.jobDescription` (stopword id+en) → frekuensi → bandingkan dengan token di `summary`+`experience`+`skills`; hasil = `{ matched[], missing[], density }` — *istilah dibatasi 20 teratas supaya panel bisa dipindai; frasa multi-kata ("code review") ikut terhitung sebagai satu istilah*
+  - [x] `consistency.ts`: format tanggal seragam antar entri; kapitalisasi heading seragam; bullet diakhiri tanda baca seragam
+  - [x] Tiap aturan mengembalikan `AtsIssue = { id, ruleId, severity:'bad'|'warn'|'ok'|'info', titleId, detailId, points:number, target?: {sectionId, entryId?, field?} , fixHintId? }` — *ditambah `params` (nilai untuk `t()`), karena seluruh teks UI wajib lewat dictionary (P7)*
+- [x] **T7.2 Skoring** (`scoring.ts`)
+  - [x] Basis 100; `bad` −12 (maks −48); `warn` −4 (maks −24); `info` −1 (maks −6); floor 0
+  - [x] Band: 0–49 `Perlu perbaikan` (`--signal-bad`) · 50–74 `Cukup` (`--signal-warn`) · 75–89 `Baik` (`--cyanotype`) · 90–100 `Sangat baik` (`--signal-ok`)
+  - [x] Label wajib: **`INDEKS STRUKTUR`**, bukan "ATS Score"
+  - [x] Disclaimer permanen di UI (P5) dan **tidak pernah** dihapus oleh state apa pun — *dirender di luar blok skor, jadi tetap ada sebelum pemeriksaan pertama, saat tanpa isu, dan saat skor tinggi*
+- [x] **T7.3 Parse Tape** (`parseTape.ts`)
+  - [x] `simulateParseOrder(doc, templateId)` → `TapeLine[] = { tag:'NAME'|'HEADLINE'|'EMAIL'|'PHONE'|'LOCATION'|'LINK'|'HEADING'|'ENTRY_TITLE'|'ORG'|'DATE'|'BULLET'|'META'|'UNCLAIMED', text:string, sourceRef?:{sectionId,entryId} }` — *tanda tangannya `simulateParseOrder(doc, spec, plan)`: `PagePlan` harus datang dari hook yang sama dengan pratinjau, bukan dihitung ulang*
+  - [x] Urutan **harus** mengikuti urutan render template (konsumsi `usePagination`/blok dari Fase 4) — bukan urutan form
+  - [x] Tandai `UNCLAIMED` untuk teks yang tidak terpetakan (mis. karakter aneh, bullet kosong) — *karakter diperiksa lewat `isMachineLegible()`; emoji & glif hias jadi UNCLAIMED*
+  - [x] Statistik footer: jumlah karakter, kata, halaman
+  - [x] Tombol `Salin teks` → clipboard (dengan toast `Teks tersalin`) — berguna untuk ditempel ke ATS sungguhan
+- [x] **T7.4 Drawer ATS** — §5.6
+  - [x] Drawer kanan w400 (≥1600 dock kolom ke-4; mobile full-sheet) + scrim + Esc/focus-trap — *di mode 3 kolom (1280–1599px) drawer dibuat non-modal supaya fokus bisa keluar ke field form saat `Perbaiki →` dipakai, tanpa drawer ikut tertutup*
+  - [x] `ScoreBlock`: angka Archivo Expanded 56px + bar 20 tick + band + disclaimer + meta mono
+  - [x] Tabs `Masalah (n)` / `Parse tape`
+  - [x] `IssueList` terkelompok: `Wajib diperbaiki` → `Sebaiknya` → `Sudah baik` (collapsible) — *`info` masuk kelompok Sebaiknya: keduanya advisori, bukan penolak*
+  - [x] `IssueRow` + aksi `Perbaiki →`: tutup drawer (< 1280px) → scroll → focus field → flash `--cyanotype-wash` 600ms
+  - [x] `ParseTape` di atas `--machine`, tag 74px uppercase, kata kunci distabilo
+  - [x] Sapuan scan 700ms pada sheet saat check dijalankan (hormati reduced-motion)
+  - [x] State kosong: "Belum ada yang diperiksa" + tombol `Periksa sekarang`; state tanpa isu: "Tidak ada masalah struktur yang terdeteksi" + tetap tampilkan tape
+- [x] **T7.5 Highlighter di preview**
+  - [x] Input `Deskripsi lowongan` (TextArea di drawer ATS tab `Masalah`, paling atas, collapsible) disimpan ke `doc.jobDescription`
+  - [x] `tokenize` → `Set<string>` kata kunci (bobot ≥ 2 kemunculan atau istilah multi-kata)
+  - [x] `KeywordMark` membungkus kecocokan di renderer screen **dan** di renderer PDF (opsional untuk PDF: default OFF, toggle `Sertakan stabilo di PDF` — default mati supaya PDF tetap netral) — *kotak stabilo digambar di balik teks sebelum teksnya di-draw; text layer tetap berurutan (diuji), dan kata yang memakai tanda baca tepi tetap cocok ("TypeScript," dalam daftar skills)*
+  - [x] Toggle `Highlighter` di PreviewToolbar; disabled + tooltip sebelum ada JD
+  - [x] Panel ringkasan: `12 cocok · 7 belum ada` + daftar kata yang belum ada sebagai chip yang bisa diklik (klik → focus field skills)
+- [x] **T7.6 Jalankan & otomasi**
+  - [x] `runCheck()` async dengan `isChecking`; hasil di-cache di `atsStore` + `meta.lastCheckedAt` — *`docSignature()` sengaja mengabaikan seluruh `meta` supaya menulis `lastCheckedAt` tidak memicu pemeriksaan berikutnya tanpa henti*
+  - [x] Re-check otomatis **debounce 1.5s** setelah perubahan dokumen, hanya bila drawer pernah dibuka (hemat CPU, tidak mengganggu)
+  - [x] Badge titik `--signal-bad` di `CheckAtsButton` bila ada isu `bad`
+  - [x] `aria-live` untuk perubahan skor saat drawer terbuka
 
 **Gate Fase 7**
-- [ ] Unit test tiap aturan: minimal 3 kasus (lolos / advisory / blocking) — total ≥ 40 test
-- [ ] Skor deterministik: dokumen sama → skor sama (snapshot test)
-- [ ] Parse Tape untuk `sampleResume` + `ledger` menghasilkan urutan yang cocok dengan `pdftotext` PDF-nya (uji silang otomatis di `pdf:verify`)
-- [ ] `Perbaiki →` benar-benar memfokuskan field yang tepat (E2E Playwright)
-- [ ] Disclaimer terlihat di semua breakpoint; kata "lolos ATS" / "100%" tidak muncul di mana pun (grep)
-- [ ] Highlighter tidak merusak layout sheet (tidak ada reflow/CLS)
+- [x] Unit test tiap aturan: minimal 3 kasus (lolos / advisory / blocking) — total ≥ 40 test — *68 test baru: `atsRules` 31, `atsScoring` 13, `parseTape` 10, `atsDrawer` 14; total suite 264 test / 27 berkas*
+- [x] Skor deterministik: dokumen sama → skor sama (snapshot test) — *snapshot 96/96/92 untuk 1/2/3 halaman + E2E memuat halaman dua kali*
+- [x] Parse Tape untuk `sampleResume` + `ledger` menghasilkan urutan yang cocok dengan `pdftotext` PDF-nya (uji silang otomatis di `pdf:verify`) — *`pdf:verify` 159/159, termaut baru: 242/242 token tape berurutan sama dengan `pdftotext -layout`*
+- [x] `Perbaiki →` benar-benar memfokuskan field yang tepat (E2E Playwright) — *`ats-checker.spec.ts`: `document.activeElement.id === 'profile-email'`, ikut berpindah ke bagian Profil*
+- [x] Disclaimer terlihat di semua breakpoint; kata "lolos ATS" / "100%" tidak muncul di mana pun (grep) — *grep `lolos ATS` = 0; `100%` hanya muncul sebagai aritmetika CSS (`calc(100%…)`, `text-size-adjust`) yang sudah ada sebelum fase ini — bukan teks UI; `scripts/evidence-fase7.mjs` PASS D memfoto drawer + disclaimer di 360/768/1024/1440*
+- [x] Highlighter tidak merusak layout sheet (tidak ada reflow/CLS) — *CLS 0,0090 saat stabilo dinyalakan/dimatikan (terukur `evidence-fase7.mjs` PASS C)*
 
 ---
 
@@ -1206,6 +1206,9 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | 2026-10-18 | 5 | :no_entry: satu item Gate tidak bisa dibuktikan di mesin ini | Gate Fase 5 baris 2 minta PDF dibuka di **Chrome, Adobe Reader, dan Google Drive Viewer**. Yang terbukti: Chrome (viewer bawaan Chrome terdeteksi + screenshot). Yang **tidak** terbukti: **Adobe Reader tidak terpasang** di mesin ini (`AcroRd32.exe`/`Acrobat.exe` tidak ada) dan **Google Drive Viewer butuh unggah berkas** ke akun. Bukti pengganti yang ada: (a) dua extractor independen membaca 100% teks dalam urutan benar; (b) setiap karakter yang digambar dicocokkan ke cmap font (0 tanpa glyph) — akar risiko "glyph hilang" sudah diperiksa di level font, bukan di level viewer; (c) Adobe/Drive tidak memakai mesin yang sama dengan pdfjs/poppler, jadi bukti (b) tidak menjamin tampilan visual mereka. Opsi untuk owner: **(A)** nyatakan item ini diterima dengan bukti pengganti di atas (risiko sisa: render Adobe/Drive tidak pernah dilihat mata); **(B)** owner memasang Adobe Reader / mengunggah ke Drive lalu memeriksa manual (5 menit, tidak ada perubahan kode); **(C)** tambahkan Playwright Firefox (pdf.js, ±90 MB unduhan) sebagai viewer ketiga otomatis — mesin render berbeda, tapi tetap bukan Adobe. Saya berhenti di sini dan menunggu keputusan; tidak ada sub-task lain yang tersisa. | ⛔ Menunggu owner |
 | 2026-10-19 | 6 | T6.1–T6.5 + Gate Fase 6 | `pnpm lint` (0 warning) · `pnpm typecheck` · `pnpm test` **191 test** (22 file; +14 baru `tests/unit/templates.test.ts`) · `pnpm build` exit 0 · `pnpm test:e2e` **28/28** · `pnpm pdf:verify` **158/158** (5 template × dokumen kualitas + **5 template × 3 fixture** + glyph cmap per role + performa). Bukti visual: `scripts/evidence-fase6.mjs` **19/19** — Δ kiri/baseline-atas preview vs halaman-1 PDF: classic-ats 0/0, ledger 0/0, executive 0,33/0, minimal 0/0, technician 0/0 mm (baseline kedua sisi dihitung dari metrik **hhea TTF yang sama** via fontkit; screenshot berdampingan `artifacts/fase6/compare-*.png`); popover thumbnail nyata + ganti template keyboard-saja (toast, font pratinjau berganti); breakpoint 360/768/1024/1440 overflow 0; `/templates` 5 kartu render nyata + aksen ledger + peringatan; offline: `/templates` + `Pakai template` + pratinjau tetap jalan. Lighthouse a11y **100** di `/` dan `/templates`. | ✅ Selesai & terverifikasi |
 | 2026-10-19 | 6 | Keputusan & temuan dalam fase | **(1) Font §2.3:** TTF Source Serif 4 yang ter-commit ternyata potongan 245-glyph (gagal Gate "tanpa glyph hilang") → `subset-fonts.mjs` kini meng-instance font variabel (`wght=400/700`, `opsz=20`) + italic, dan sekaligus menghasilkan WOFF2 layar untuk wajah baru; ditambah Plex Sans Light 300 (nama minimal) → budget font PDF 400→**600 KB** (terukur 500,7 KB; §10 dibawa ke Gate Fase 8/9). **(2) Small-caps executive:** pdf-lib tak punya fitur OpenType → sintesis per-run 0,8× (`SMALL_CAPS_RATIO`) di PDF + `font-variant: small-caps` di layar; teks tetap utuh di text layer ("PENGALAMAN KERJA"). **(3) Tanggal-kanan:** `EntryContent` + `dates`/`metaNoDates`, `gapMm.titleToDate`, `entryHeadRow()` PDF dengan fallback wrap yang sama dengan `flex-wrap` layar. **(4) Bug nyata dari Lighthouse:** tw-merge mengelompokkan `text-button-lg` & `text-button-primary` sebagai konflik font → warna putih tombol sticky-bar mobile hilang (kontras 2,38:1); diperbaiki dengan menghapus konflik di `StickyActionBar` (font kini dari varian primary, 13px — deviasi 1px dari §5.7). **(5) Verifier:** pdftotext -layout mencetak kolom kanan tanggal-kanan satu baris di atas judulnya (artefak kisi poppler; baseline PDF benar per pdfjs) → pemeriksa urutan diberi toleransi jendela-mundur terbatas; **(6)** `FONT_FACE_COUNT` katalog 9→13; selector e2e `page-sheet` di-scope `#pane-preview` karena thumbnail kini juga punya probe yang sama; bundle awal (index+specs chunk eager) ≈ 257,4 KB gzip (Fase 5: 243,62; batas 220 tetap Gate Fase 8/9). **(7)** Item Gate Fase 5 yang ⛔ (viewer Adobe/Drive) **belum terselesaikan** — menunggu keputusan owner, tidak menghalangi Fase 6. | 🟡 Catatan owner |
+| 2026-10-19 | 7 | T7.1–T7.6 + Gate Fase 7 | `pnpm lint` (0 warning) · `pnpm typecheck` · `pnpm test` **264 test** (27 berkas; **+68 baru**: `atsRules` 31, `atsScoring` 13, `parseTape` 10, `atsDrawer` 14) · `pnpm build` exit 0 · `pnpm test:e2e` **33/33** (`ats-checker.spec.ts` 5 baru) · `pnpm pdf:verify` **159/159** — termaut baru "sampleResume × ledger: urutan Parse Tape == urutan pdftotext", **242/242 token berurutan**. `node scripts/evidence-fase7.mjs` **33/33**: skor 92 (Sangat baik) + 20 tick + disclaimer; sapuan scan muncul saat memeriksa; tape NAME/HEADING + footer `2345 karakter · 304 kata · 2 halaman`; `Perbaiki →` fokus `#profile-email` (bagian ikut pindah ke Profil); highlighter `0 → 8` mark di lembar A4, toggle nyala/mati 8/0, **CLS 0,0090**; drawer 400px di 768/1024/1440 dan penuh di 360, disclaimer terlihat di keempatnya, overflow 0; **1920px: drawer jadi `<aside>` kolom ke-4, tanpa scrim**; keyboard: Enter buka drawer, Enter jalankan periksa, tab Parse tape, Esc menutup. Grep `lolos ATS` = **0 hasil**; `100%` hanya aritmetika CSS lama (`calc(100%…)`, `text-size-adjust`) — tidak ada teks UI. Screenshot: `artifacts/fase7/fase7-{drawer,tape,fix-focus,highlighter}-1440.png`, `fase7-breakpoint-{360,768,1024,1440}.png`, `fase7-dock-1920.png`, `fase7-keyboard-only.png`. | ✅ Selesai & terverifikasi |
+| 2026-10-19 | 7 | Bug nyata yang ditemukan & diperbaiki dalam fase | Semuanya ditemukan pengukuran, bukan dikira: **(1) Tanggal palsu pada bagian tanpa tanggal** — `dates.ts` versi pertama membaca `holder['']` untuk `languages` sehingga tiap entri bahasa jadi isu `bad` (skor dokumen contoh jatuh dari 96 ke 72); kini hanya bagian yang punya tanggal yang diperiksa. **(2) Tanggal selesai diwajibkan pada proyek** — proyek yang masih berjalan sah tanpa tanggal selesai; kewajiban itu kini hanya untuk bagian ber-`current` (pengalaman, relawan, pendidikan). **(3) Urutan tape salah untuk sertifikasi** — meta `Penerbit · Nov 2023 · ID` dipecah sebagai META+DATE tetapi tanggalnya diletakkan di akhir, jadi 2 token keluar barisan saat disilangkan dengan `pdftotext`; kini meta dipecah **sesuai urutan gambarnya**. **(4) Stabilo PDF tidak pernah tergambar** — pencocokan kata memakai kata utuh sehingga `TypeScript,` (bertanda koma dalam daftar skills) tidak cocok; kini tanda baca tepi dibuang untuk pencocokan, lebar kotak tetap dari kata utuh. **(5) Fokus `Perbaiki →` gagal** — dua sebab: `focusTarget` mencari field satu frame setelah setState (React belum menulis DOM) → kini dicoba ulang sampai 20 frame; dan Radix Dialog modal menahan fokus di dalam drawer → drawer dibuat non-modal di mode 3 kolom + `onFocusOutside`/`onPointerDownOutside` dicegah agar tidak ikut tertutup. **(6) Disclaimer hilang saat belum diperiksa** — dipindah keluar blok skor supaya permanen di semua state (P5). **(7) Drawer dock ≥1600px tidak menjadi kolom ke-4** — dua utility `grid-cols` (`xl:` dan `min-[1600px]:`) hidup berdampingan dan urutan CSS-nya tidak bisa diandalkan, sehingga drawer membungkus ke baris kedua; kini template kolom ditulis inline saat di-dock (terbukti di screenshot 1920px: `<aside>` selebar 400px, scrim 0). **(8) Sapuan scan 700ms tidak pernah terlihat** — `runCheck` selesai dalam satu tick, jadi `isChecking` hanya benar satu frame; status kini ditahan sampai animasi selesai (dilewati saat `prefers-reduced-motion`). | 🟡 Catatan owner |
+| 2026-10-19 | 7 | Deviasi & keputusan yang perlu diketahui owner | **(1) `AtsIssue.params`** ditambahkan di luar daftar field T7.1: tanpa itu teks dinamis ("bulan {end} lebih awal dari {start}") harus dirangkai di komponen, melanggar P7. **(2) `simulateParseOrder(doc, spec, plan)`** menerima `PagePlan`, bukan `templateId` seperti tertulis di T7.3 — kalau tape menghitung paginasi sendiri, urutannya bisa berbeda dari yang benar-benar dirender (dan uji silang `pdftotext` jadi tidak bermakna). **(3) Drawer non-modal di 1280–1599px** — §5.6 meminta drawer tetap terbuka saat `Perbaiki →`, sedangkan focus-trap Radix membuat itu mustahil; alternatifnya menutup drawer di semua lebar (kehilangan konteks isu). Scrim 20% tetap ada. **(4) `ACTION_VERBS` di `lib/text.ts` dijadikan `export`** (satu kata) supaya `rules/verbs.ts` menambah daftar tanpa menduplikasi 85 kata yang sudah dipakai hint editor. **(5) `PAPER_HEX = '#FFFFFF'` di `rules/forbidden.ts`** — aturan kontras butuh nilai warna acuan di luar CSS runtime; ini satu-satunya hex baru di luar renderer template dan hanya dipakai untuk menghitung rasio. **(6) Istilah kata kunci dibatasi 20 teratas** dan frasa multi-kata ikut dihitung walau muncul sekali; tanpa batas itu panel ringkasan berisi ~40 frasa dan tidak terbaca. **(7) Tombol `Periksa ATS` di menu mobile** kini membuka drawer lalu menutup sheet menu; tombol rail "Kelengkapan CV" yang sejak Fase 3 memanggil `setAtsDrawerOpen` sekarang benar-benar berfungsi. | 🟡 Keputusan owner |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 

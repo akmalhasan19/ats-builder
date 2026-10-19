@@ -592,6 +592,196 @@ export const id = {
   'common.delete': 'Hapus',
   'common.confirm': 'Lanjutkan',
   'common.optional': 'opsional',
+
+  /* ---- Fase 7: ATS Checker, Parse Tape, Highlighter (T7.1–T7.6) ---- */
+  'ats.drawer.title': 'Periksa ATS',
+  'ats.drawer.close': 'Tutup panel pemeriksaan',
+  'ats.tab.issues': 'Masalah ({count})',
+  'ats.tab.tape': 'Parse tape',
+  'ats.score.label': 'INDEKS STRUKTUR',
+  'ats.disclaimer':
+    'Memeriksa struktur & keterbacaan. Setiap ATS punya parser berbeda, jadi tidak ada jaminan apa pun.',
+  'ats.meta.checked': 'DIPERIKSA {time}',
+  'ats.meta.template': 'TEMPLATE {template}',
+  'ats.meta.pages': '{count} HAL',
+  'ats.notChecked.title': 'Belum ada yang diperiksa',
+  'ats.notChecked.body':
+    'Jalankan pemeriksaan untuk melihat struktur dokumen ini sebagaimana dibaca parser.',
+  'ats.notChecked.action': 'Periksa sekarang',
+  'ats.checking': 'Memeriksa…',
+  'ats.noIssues.title': 'Tidak ada masalah struktur yang terdeteksi',
+  'ats.noIssues.body':
+    'Parse tape di bawah tetap menunjukkan urutan bacaan dokumen — periksa sendiri bila ada baris yang tidak terduga.',
+  'ats.group.bad': 'Wajib diperbaiki',
+  'ats.group.warn': 'Sebaiknya',
+  'ats.group.ok': 'Sudah baik',
+  'ats.group.count': '{count}',
+  'ats.fix': 'Perbaiki →',
+  'ats.aria.score': 'Indeks struktur {score}. {band}',
+
+  'ats.contact.emailMissing.title': 'Email belum diisi',
+  'ats.contact.emailMissing.detail':
+    'Tanpa email, rekruter tidak punya jalur balasan. Isi email aktif di bagian Profil.',
+  'ats.contact.emailInvalid.title': 'Format email tidak dikenali',
+  'ats.contact.emailInvalid.detail':
+    'Nilai “{value}” tidak berbentuk alamat email. Gunakan pola nama@domain.com.',
+  'ats.contact.emailOk.title': 'Email terbaca',
+  'ats.contact.emailOk.detail': 'Email ada dan berbentuk alamat yang bisa dipetakan parser.',
+  'ats.contact.phoneBad.title': 'Nomor telepon tidak lengkap',
+  'ats.contact.phoneBad.detail':
+    'Ditemukan {digits} digit, minimal {min}. Tulis nomor yang bisa dihubungi lengkap dengan kode negara.',
+  'ats.contact.phoneOk.title': 'Nomor telepon terbaca',
+  'ats.contact.phoneOk.detail': '{digits} digit — cukup panjang untuk dipetakan sebagai nomor.',
+  'ats.contact.locationWarn.title': 'Lokasi belum diisi',
+  'ats.contact.locationWarn.detail':
+    'Banyak lowongan menyaring berdasarkan domisili. Tambahkan kota tempat kamu bekerja.',
+  'ats.contact.locationOk.title': 'Lokasi terisi',
+  'ats.contact.locationOk.detail': 'Kota domisili ikut terbaca di baris kontak.',
+  'ats.contact.linksInfo.title': 'Belum ada tautan profil',
+  'ats.contact.linksInfo.detail':
+    'LinkedIn, GitHub, atau portofolio memperkuat verifikasi pengalaman. Satu tautan sudah cukup.',
+  'ats.contact.linksOk.title': 'Tautan profil ada',
+  'ats.contact.linksOk.detail': '{count} tautan terbaca di baris kontak.',
+
+  'ats.sections.presentOk.title': 'Bagian {section} ada',
+  'ats.sections.presentOk.detail': 'Bagian ini ikut ter-render, jadi terbaca parser.',
+  'ats.sections.missingBad.title': 'Bagian {section} tidak ada',
+  'ats.sections.missingBad.detail':
+    'Tanpa bagian {section}, dokumen kehilangan satu blok yang hampir selalu dicari ATS.',
+  'ats.sections.missingWarn.title': 'Bagian {section} tidak ikut terbit',
+  'ats.sections.missingWarn.detail':
+    'Bagian {section} ada datanya tapi tidak terlihat, jadi ikut tidak terbaca parser.',
+  'ats.sections.headingWarn.title': 'Judul “{section}” bukan judul baku',
+  'ats.sections.headingWarn.detail':
+    'Parser lama mencari bagian lewat judul kanonis seperti “Pengalaman Kerja” atau “Experience”. Judul kreatif membuatnya terlewat.',
+
+  'ats.bullets.tooShortBad.title': 'Bullet terlalu pendek ({length} karakter)',
+  'ats.bullets.tooShortBad.detail':
+    'Di bawah {min} karakter, kalimat ini tidak memberi cukup konteks. Tulis aksi beserta hasilnya.',
+  'ats.bullets.tooShortWarn.title': 'Bullet agak pendek ({length} karakter)',
+  'ats.bullets.tooShortWarn.detail':
+    'Target {min} karakter. Tambahkan dampak yang terukur supaya barisnya bernilai.',
+  'ats.bullets.tooLongBad.title': 'Bullet terlalu panjang ({length} karakter)',
+  'ats.bullets.tooLongBad.detail':
+    'Di atas {max} karakter, baris ini sulit dipindai. Pecah jadi dua bullet.',
+  'ats.bullets.tooLongWarn.title': 'Bullet agak panjang ({length} karakter)',
+  'ats.bullets.tooLongWarn.detail':
+    'Target maksimal {max} karakter. Satu bullet sebaiknya satu pencapaian.',
+  'ats.bullets.passiveWarn.title': 'Bullet diawali kalimat pasif',
+  'ats.bullets.passiveWarn.detail':
+    'Frasa seperti “Bertugas untuk” tidak memberi tahu apa yang kamu capai. Mulai dengan kata kerja aksi.',
+  'ats.bullets.verbWarn.title': 'Bullet tidak diawali kata kerja aksi',
+  'ats.bullets.verbWarn.detail':
+    'Awali dengan kata kerja seperti Membangun, Meningkatkan, atau Memimpin supaya pencapaianmu terbaca langsung.',
+  'ats.bullets.metricInfo.title': 'Bullet tanpa angka',
+  'ats.bullets.metricInfo.detail':
+    'Angka membuat dampakmu terukur. Tambahkan metrik bila ada: persen, jumlah pengguna, atau durasi.',
+  'ats.bullets.summaryOk.title': '{ideal} dari {total} bullet dalam rentang ideal',
+  'ats.bullets.summaryOk.detail':
+    'Rentang ideal 40–180 karakter. Terlalu pendek {badShort} · terlalu panjang {badLong}.',
+
+  'ats.dates.startBad.title': 'Tanggal mulai belum diisi',
+  'ats.dates.startBad.detail':
+    'Parser membaca rentang waktu dari tanggal mulai. Isi bulan mulai entri ini.',
+  'ats.dates.endBad.title': 'Tanggal selesai belum diisi',
+  'ats.dates.endBad.detail':
+    'Entri yang tidak ditandai “masih bekerja” butuh tanggal selesai agar rentangnya utuh.',
+  'ats.dates.invertedBad.title': 'Rentang tanggal terbalik',
+  'ats.dates.invertedBad.detail':
+    'Tanggal selesai {end} lebih awal dari tanggal mulai {start}. Perbaiki urutannya.',
+  'ats.dates.orderWarn.title': 'Urutan pengalaman bukan yang terbaru dulu',
+  'ats.dates.orderWarn.detail':
+    'ATS dan rekruter membaca dari yang terbaru. Pindahkan pekerjaan terakhir ke posisi atas.',
+  'ats.dates.gapInfo.title': 'Ada celah lebih dari {months} bulan',
+  'ats.dates.gapInfo.detail':
+    'Celah panjang tidak salah, tapi sebaiknya dijelaskan — misal lewat bagian proyek atau relawan.',
+  'ats.dates.currentWarn.title': 'Lebih dari satu entri ditandai berjalan',
+  'ats.dates.currentWarn.detail':
+    '{count} entri ditandai masih berjalan. Tandai hanya pekerjaan yang benar-benar aktif sekarang.',
+  'ats.dates.currentPositionWarn.title': 'Entri berjalan bukan yang teratas',
+  'ats.dates.currentPositionWarn.detail':
+    'Pekerjaan yang masih berjalan sebaiknya berada di urutan pertama agar terbaca sebagai pengalaman terkinimu.',
+  'ats.dates.summaryOk.title': '{total} rentang tanggal terbaca',
+  'ats.dates.summaryOk.detail':
+    'Semua tanggal terisi dalam format YYYY-MM. Terbalik {reversed} · tidak lengkap {missingStart}.',
+
+  'ats.length.tooManyWarn.title': 'Dokumen {pages} halaman',
+  'ats.length.tooManyWarn.detail':
+    'Lebih dari {max} halaman hampir selalu dipotong parser. Padatkan bullet atau sembunyikan bagian yang kurang relevan.',
+  'ats.length.overLimitWarn.title': 'Dokumen {pages} halaman, idealnya {max}',
+  'ats.length.overLimitWarn.detail':
+    'Untuk {years} tahun pengalaman, {max} halaman sudah cukup. Potong entri paling lama bila perlu.',
+  'ats.length.summaryOk.title': 'Panjang dokumen {pages} dari {max} halaman',
+  'ats.length.summaryOk.detail':
+    'Sesuai target untuk {years} tahun pengalaman. Tidak ada bagian yang perlu dipangkas.',
+
+  'ats.forbidden.photoBad.title': 'Foto menyala di dokumen',
+  'ats.forbidden.photoBad.detail':
+    'Foto mengacaukan urutan baca parser dan memicu bias. Matikan foto agar struktur tetap bersih.',
+  'ats.forbidden.accentBad.title': 'Aksen warna kurang kontras',
+  'ats.forbidden.accentBad.detail':
+    'Kontras aksen {ratio}:1 di atas kertas, di bawah ambang {min}:1. Matikan aksen atau pilih warna lebih gelap.',
+  'ats.forbidden.templateBad.title': 'Template belum teruji ATS',
+  'ats.forbidden.templateBad.detail':
+    'Template ini tidak ada dalam daftar yang sudah diuji. Pilih salah satu template satu kolom.',
+  'ats.forbidden.skillLevelWarn.title': 'Keahlian memakai level angka',
+  'ats.forbidden.skillLevelWarn.detail':
+    'Nilai seperti “{sample}” di grup {group} terbaca sebagai rating, bukan keahlian. Tulis tanpa angka.',
+  'ats.forbidden.summaryOk.title': 'Tidak ada elemen yang merusak parsing',
+  'ats.forbidden.summaryOk.detail':
+    'Tanpa foto, tanpa rating angka, dan template satu kolom yang sudah teruji.',
+
+  'ats.consistency.dateFormatWarn.title': 'Format tanggal tidak seragam',
+  'ats.consistency.dateFormatWarn.detail':
+    '{count} tanggal tidak berbentuk YYYY-MM, misal “{sample}”. Samakan formatnya.',
+  'ats.consistency.casingInfo.title': 'Kapitalisasi judul bagian campur',
+  'ats.consistency.casingInfo.detail':
+    'Ada {count} gaya penulisan judul. Satu pola membuat pemetaan bagian lebih konsisten.',
+  'ats.consistency.punctuationInfo.title': 'Akhir bullet tidak seragam',
+  'ats.consistency.punctuationInfo.detail':
+    '{withPeriod} bullet memakai titik, {withoutPeriod} tanpa titik. Pilih satu pola.',
+  'ats.consistency.summaryOk.title': 'Format konsisten',
+  'ats.consistency.summaryOk.detail':
+    '{dates} tanggal dan {bullets} bullet mengikuti satu pola penulisan.',
+
+  'ats.fix.fillField': 'Isi kolom ini',
+  'ats.fix.showSection': 'Tampilkan bagian ini',
+  'ats.fix.addSection': 'Tambahkan bagian ini',
+  'ats.fix.renameSection': 'Pakai judul baku',
+  'ats.fix.rewriteBullet': 'Tulis ulang bullet ini',
+  'ats.fix.reorderEntries': 'Urutkan ulang entri',
+  'ats.fix.explainGap': 'Jelaskan celah waktu',
+  'ats.fix.trimContent': 'Padatkan isi dokumen',
+  'ats.fix.removePhoto': 'Matikan foto',
+  'ats.fix.disableAccent': 'Matikan aksen warna',
+  'ats.fix.pickTemplate': 'Pilih template lain',
+  'ats.fix.removeLevel': 'Hapus angka level',
+  'ats.fix.uniformHeadings': 'Samakan gaya judul',
+  'ats.fix.uniformPunctuation': 'Samakan tanda baca',
+
+  'ats.band.low': 'Perlu perbaikan',
+  'ats.band.fair': 'Cukup',
+  'ats.band.good': 'Baik',
+  'ats.band.excellent': 'Sangat baik',
+
+  'ats.jd.label': 'Deskripsi lowongan',
+  'ats.jd.placeholder': 'Tempel teks lowongan di sini untuk membandingkan kata kuncinya…',
+  'ats.jd.hint': 'opsional · tidak dikirim ke mana pun',
+  'ats.jd.clear': 'Hapus deskripsi',
+  'ats.keywords.summary': '{matched} cocok · {missing} belum ada',
+  'ats.keywords.missingHint': 'Klik kata yang belum ada untuk langsung ke kolom keahlian.',
+  'ats.keywords.empty':
+    'Tempel deskripsi lowongan untuk melihat kata kunci mana yang sudah ada di CV kamu.',
+
+  'ats.tape.header': 'URUTAN PARSE TERSIMULASI · {template}',
+  'ats.tape.copy': 'Salin teks',
+  'ats.tape.copied': 'Teks tersalin',
+  'ats.tape.copyFailed': 'Teks gagal disalin. Salin manual dari baris tape.',
+  'ats.tape.footer': '{chars} karakter · {words} kata · {pages} halaman',
+  'ats.tape.unclaimedHint':
+    'Baris bertanda UNCLAIMED memuat karakter yang tidak bisa dipetakan parser.',
+  'ats.marksInPdf': 'Sertakan stabilo di PDF',
+  'ats.marksInPdfHint': 'Default mati supaya berkas unduhan tetap netral.',
 } as const
 
 export type TranslationKey = keyof typeof id

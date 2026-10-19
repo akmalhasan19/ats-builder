@@ -283,6 +283,31 @@
   color: var(--color-ink);
 }
 
+/* §5.6 angka skor — Archivo Expanded 56px, tanpa gradien (§2.8) */
+@utility text-score {
+  font-family: var(--font-expanded);
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--color-ink);
+}
+
+/* §5.6 label tag Parse Tape — mono 9,5px uppercase di atas surface mesin */
+@utility text-tape-tag {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-machine-dim);
+}
+
+/* §5.6 stabilo kata kunci di atas surface mesin (bukan di atas kertas) */
+@utility text-tape-mark {
+  background-color: color-mix(in srgb, var(--color-highlighter) 22%, transparent);
+  color: var(--color-highlighter);
+}
+
 @utility text-dialog-title {
   font-family: var(--font-display);
   font-size: 16px;
@@ -492,6 +517,34 @@
 
 .animate-dot-pulse {
   animation: dot-pulse 600ms var(--ease-standard) 2;
+}
+
+/* §5.6 — kilatan wash 600ms setelah tombol `Perbaiki →` memfokuskan field. */
+@keyframes ats-field-flash {
+  from {
+    background-color: var(--color-cyanotype-wash);
+  }
+}
+
+.ats-field-flash {
+  animation: ats-field-flash 600ms var(--ease-standard);
+  border-radius: 6px;
+}
+
+/* §5.5 — satu sapuan garis scan ke bawah lembar A4 saat Check ATS dijalankan. */
+@keyframes ats-scan-sweep {
+  from {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.ats-scan-sweep {
+  animation: ats-scan-sweep 700ms var(--ease-standard) 1 both;
 }
 
 /* §2.6 — wajib global, bukan tambalan per komponen */

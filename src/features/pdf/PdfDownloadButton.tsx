@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { scrollToFirstInvalidField } from '@/features/editor/scrollToFirstInvalidField'
 import { usePagination } from '@/features/preview/usePagination'
+import { useAtsStore } from '@/store/atsStore'
+import { useUiStore } from '@/store/uiStore'
 import { t } from '@/lib/i18n'
 import { resumeDocSchema } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
@@ -19,6 +21,8 @@ export function PdfDownloadButton({ className }: PdfDownloadButtonProps) {
   const plan = usePagination(doc, doc.templateId)
   const isGenerating = usePdfExportStore((state) => state.isGenerating)
   const setGenerating = usePdfExportStore((state) => state.setGenerating)
+  const keywords = useAtsStore((state) => state.keywords)
+  const includeMarksInPdf = useUiStore((state) => state.includeMarksInPdf)
   const [slow, setSlow] = useState(false)
   const slowTimer = useRef<number | null>(null)
 
@@ -40,7 +44,9 @@ export function PdfDownloadButton({ className }: PdfDownloadButtonProps) {
     setSlow(false)
     slowTimer.current = window.setTimeout(() => setSlow(true), 1200)
     try {
-      const result = await exportPdf(doc, plan)
+      const result = await exportPdf(doc, plan, {
+        keywords: includeMarksInPdf ? keywords : [],
+      })
       downloadPdfBlob(result.blob, result.filename)
       toast(t('pdf.success.downloaded'), {
         action: {

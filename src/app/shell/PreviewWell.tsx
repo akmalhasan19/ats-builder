@@ -10,11 +10,14 @@ import { A4_PX } from '@/lib/units'
 import { t } from '@/lib/i18n'
 import { useDocStore } from '@/store/docStore'
 import { useUiStore } from '@/store/uiStore'
+import { useAtsStore } from '@/store/atsStore'
 import { resolveSpec } from '@/features/templates/specs'
 import { TemplateRenderer } from '@/features/templates/screen/TemplateRenderer'
+import { useAtsAutoCheck } from '@/features/ats/useAtsCheck'
 import { usePagination } from '@/features/preview/usePagination'
 import { usePreviewPrefs } from '@/features/preview/usePreviewPrefs'
 import { withRenderProbe } from '@/features/preview/renderProbe'
+import { ScanSweep } from '@/features/preview/ScanSweep'
 
 const MIN_ZOOM = 0.3
 const MAX_ZOOM = 1.5
@@ -38,8 +41,16 @@ export function PreviewWell({ className }: { className?: string }) {
   const showMarginGuides = useUiStore((state) => state.showMarginGuides)
   const showKeywordMarks = useUiStore((state) => state.showKeywordMarks)
   const setShowMarginGuides = useUiStore((state) => state.setShowMarginGuides)
+  const setShowKeywordMarks = useUiStore((state) => state.setShowKeywordMarks)
+
+  const keywords = useAtsStore((state) => state.keywords)
+  const isChecking = useAtsStore((state) => state.isChecking)
 
   const plan = usePagination(doc, templateId)
+  // T7.6 — pemeriksaan ulang otomatis dipasang di sini karena hanya komponen
+  // ini yang punya `PagePlan` terukur: aturan panjang dokumen butuh jumlah
+  // halaman nyata, bukan perkiraan.
+  useAtsAutoCheck(plan.pageCount)
   const spec = useMemo(
     () => resolveSpec(templateId, doc.theme, doc.settings.page),
     [templateId, doc.theme, doc.settings.page],
@@ -228,8 +239,10 @@ export function PreviewWell({ className }: { className?: string }) {
                   size="sm"
                   label={t('preview.highlighter')}
                   aria-pressed={showKeywordMarks}
-                  disabled
+                  data-probe="preview-highlighter"
+                  disabled={keywords.length === 0}
                   className={cn('rounded', showKeywordMarks && 'bg-cyanotype-wash text-cyanotype')}
+                  onClick={() => setShowKeywordMarks(!showKeywordMarks)}
                 >
                   <Highlighter className="size-3.5" aria-hidden="true" />
                 </IconButton>
@@ -240,17 +253,28 @@ export function PreviewWell({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="mx-auto" style={{ width: A4_PX.w * zoom, height: contentHeight * zoom }}>
+      <div
+        className="relative mx-auto"
+        style={{ width: A4_PX.w * zoom, height: contentHeight * zoom }}
+      >
         <div
           ref={contentRef}
           data-probe="preview-content"
           style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: A4_PX.w }}
         >
           {withRenderProbe(
-            <TemplateRenderer plan={plan} spec={spec} showMarks={showKeywordMarks} />,
+            <TemplateRenderer
+              plan={plan}
+              spec={spec}
+              keywords={keywords}
+              showMarks={showKeywordMarks}
+            />,
             'preview-tree',
           )}
         </div>
+        {/* §5.5 — satu sapuan garis scan saat Check ATS berjalan; hormati
+            reduced-motion (durasi 0,01ms di media query tokens.css). */}
+        {isChecking ? <ScanSweep /> : null}
       </div>
     </section>
   )

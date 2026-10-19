@@ -88,6 +88,8 @@ export type DocStore = {
   setTitle: (title: string) => void
   setPageSettings: (page: Partial<PageSettings>) => void
   setThemeTokens: (theme: Partial<ThemeTokens>) => void
+  setJobDescription: (jobDescription: string | null) => void
+  setLastCheckedAt: (lastCheckedAt: number | null) => void
   resetDoc: (doc: ResumeDoc) => void
   loadDoc: (doc: ResumeDoc) => void
 }
@@ -250,6 +252,22 @@ export const useDocStore = create<DocStore>((set, get) => ({
     })),
 
   setThemeTokens: (theme) => get().commit((doc) => ({ ...doc, theme: { ...doc.theme, ...theme } })),
+
+  // Deskripsi lowongan (T7.5) disimpan di dokumen, bukan di store checker,
+  // supaya ikut tersimpan & migrasi bersama isi CV.
+  setJobDescription: (jobDescription) =>
+    get().commit((doc) =>
+      doc.jobDescription === jobDescription ? doc : { ...doc, jobDescription },
+    ),
+
+  // Pemeriksaan checker mencatat waktunya di dokumen (T7.6). Nilai ini tidak
+  // ikut `docSignature`, jadi menyimpannya tidak memicu pemeriksaan berikutnya.
+  setLastCheckedAt: (lastCheckedAt) =>
+    get().commit((doc) =>
+      doc.meta.lastCheckedAt === lastCheckedAt
+        ? doc
+        : { ...doc, meta: { ...doc.meta, lastCheckedAt } },
+    ),
 
   resetDoc: (doc) => get().commit(() => doc),
 

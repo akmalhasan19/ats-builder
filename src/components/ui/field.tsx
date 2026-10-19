@@ -38,7 +38,7 @@ export function Field({ id, label, hint, error, required, className, children }:
     : children
 
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div data-field-shell className={cn('flex flex-col gap-1.5', className)}>
       <div className="flex items-baseline justify-between gap-2">
         <Label htmlFor={id}>
           {label}
