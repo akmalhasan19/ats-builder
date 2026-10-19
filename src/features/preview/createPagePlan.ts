@@ -15,6 +15,10 @@ export function createPagePlan(
 ): PagePlan {
   const blocks = buildBlocks(doc, spec)
   const box = contentBoxOf(spec)
-  const pages = paginateBlocks(blocks, box.contentHeightPx, heights)
+  const split = paginateBlocks(blocks, box.contentHeightPx, heights)
+  // QA Fase 9: dokumen kosong (tanpa bagian terlihat) dulu menghasilkan rencana
+  // 0 halaman, padahal renderer PDF selalu menulis satu lembar — preview
+  // "HAL 0 / 0" ≠ PDF. Satu lembar kosong menyelaraskan kedua jalur (P4).
+  const pages = split.length > 0 ? split : [[]]
   return { pages, blocks, pageCount: pages.length, ...box }
 }

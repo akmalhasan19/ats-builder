@@ -6,6 +6,7 @@ import { ChipsInput } from '../ChipsInput'
 import { DateRangeField } from '../DateRangeField'
 import { EntryCard } from '../EntryCard'
 import { EntryList } from '../EntryList'
+import { isAllowedUrl, normalizeUrlInput } from '@/lib/text'
 import { projectSchema } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import type { ProjectEntry } from '@/types/resume'
@@ -111,6 +112,7 @@ export function ProjectsEditor({ sectionId }: { sectionId: string }) {
                 id={`proj-${entry.id}-url`}
                 label={t('projects.url')}
                 hint={t('common.optional')}
+                error={isAllowedUrl(entry.url) ? undefined : t('form.urlUnsafe')}
               >
                 <Input
                   placeholder={t('projects.urlPlaceholder')}
@@ -119,6 +121,12 @@ export function ProjectsEditor({ sectionId }: { sectionId: string }) {
                     handleUpdate(entry.id, (prev) => ({
                       ...prev,
                       url: event.target.value,
+                    }))
+                  }
+                  onBlur={(event) =>
+                    handleUpdate(entry.id, (prev) => ({
+                      ...prev,
+                      url: normalizeUrlInput(event.target.value),
                     }))
                   }
                 />

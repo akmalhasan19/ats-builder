@@ -10,7 +10,7 @@ import { t } from '@/lib/i18n'
 import { resumeDocSchema } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import { usePdfExportStore } from '@/store/pdfExportStore'
-import { downloadPdfBlob, exportPdf, openPdfBlob, pdfErrorKey } from './exportPdf'
+import { downloadPdfBlob, exportPdf, openPdfBlob, pdfErrorKey, queueExport } from './exportPdf'
 
 export type PdfDownloadButtonProps = {
   className?: string
@@ -44,9 +44,11 @@ export function PdfDownloadButton({ className }: PdfDownloadButtonProps) {
     setSlow(false)
     slowTimer.current = window.setTimeout(() => setSlow(true), 1200)
     try {
-      const result = await exportPdf(doc, plan, {
-        keywords: includeMarksInPdf ? keywords : [],
-      })
+      const result = await queueExport(() =>
+        exportPdf(doc, plan, {
+          keywords: includeMarksInPdf ? keywords : [],
+        }),
+      )
       downloadPdfBlob(result.blob, result.filename)
       toast(t('pdf.success.downloaded'), {
         action: {

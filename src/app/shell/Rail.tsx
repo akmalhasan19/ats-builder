@@ -219,12 +219,7 @@ function SectionItem({
           aria-hidden="true"
           className={cn('size-[15px] shrink-0', active ? 'text-cyanotype' : 'text-ink-tertiary')}
         />
-        <span
-          className={cn(
-            'text-rail-label truncate',
-            !section.visible && 'text-ink-tertiary opacity-55',
-          )}
-        >
+        <span className={cn('text-rail-label truncate', !section.visible && 'text-ink-tertiary')}>
           {label}
         </span>
       </button>

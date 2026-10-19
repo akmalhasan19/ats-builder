@@ -125,3 +125,32 @@ export function slugify(value: string): string {
     .replace(/^-+|-+$/g, '')
   return slug || 'resume'
 }
+
+const URL_SCHEME = /^[a-zA-Z][a-zA-Z\d+.-]*:/
+const ALLOWED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
+
+/**
+ * T9.6 — hanya `http:`, `https:`, `mailto:` yang boleh dipakai sebagai tautan.
+ * Nilai tanpa scheme (mis. `linkedin.com/in/x`) belum absolut jadi masih lolos:
+ * UI menormalisasinya saat blur, dan renderer memakainya sebagai teks.
+ */
+export function isAllowedUrl(value: string): boolean {
+  const trimmed = value.trim()
+  if (trimmed === '' || !URL_SCHEME.test(trimmed)) return true
+  try {
+    return ALLOWED_URL_PROTOCOLS.has(new URL(trimmed).protocol)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Skema yang tidak diizinkan dikembalikan sebagai string tanpa `:` sehingga
+ * `javascript:` tidak pernah bisa hidup di data dokumen maupun di `href`.
+ */
+export function normalizeUrlInput(value: string): string {
+  const trimmed = value.trim()
+  if (trimmed === '') return ''
+  if (!URL_SCHEME.test(trimmed)) return `https://${trimmed}`
+  return isAllowedUrl(trimmed) ? trimmed : trimmed.replace(':', '')
+}

@@ -260,6 +260,16 @@ export const id = {
   'error.reload': 'Muat ulang',
   'error.backToEditor': 'Kembali ke editor',
 
+  'error.banner.runtime': 'Terjadi galat tak terduga. Isi CV tetap ada di perangkatmu.',
+  'error.banner.quota':
+    'Penyimpanan peramban penuh — perubahan belum tersimpan. Hapus CV lama atau kosongkan data peramban, lalu simpan lagi.',
+
+  'limits.entries':
+    'Batas {max} entri per bagian tercapai — hapus satu entri untuk menambah yang baru.',
+  'limits.bullets': 'Batas {max} bullet per entri tercapai — gabungkan poin yang mirip.',
+  'limits.charsAtMax': 'Batas {max} karakter tercapai — teks tambahan diabaikan.',
+  'form.urlUnsafe': 'Tautan harus memakai http://, https://, atau mailto:.',
+
   'route.templates': 'Galeri template',
   'route.dashboard': 'Dashboard CV',
   'route.login': 'Masuk',

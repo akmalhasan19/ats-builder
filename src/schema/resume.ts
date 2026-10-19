@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isAllowedUrl } from '@/lib/text'
 import type {
   AwardEntry,
   CertificationEntry,
@@ -14,6 +15,14 @@ import type {
 } from '@/types/resume'
 
 export const CURRENT_SCHEMA_VERSION = 1
+
+/** T9.6 — satu sumber batas untuk validasi dan UI. */
+export const DOC_LIMITS = {
+  bulletsPerEntry: 60,
+  entriesPerSection: 40,
+  summaryChars: 1200,
+  jobDescriptionChars: 8000,
+} as const
 
 export type SectionKind = SectionInstance['kind']
 export type SectionData = SectionInstance['data']
@@ -31,7 +40,16 @@ const yearMonth = (): z.ZodType<ISOYearMonth> =>
 
 const idField = (): z.ZodType<string> => z.string().min(1, 'ID entri tidak boleh kosong.')
 
-export const linkItemSchema = z.object({ label: z.string(), url: z.string() })
+const BULLETS_LIMIT_ERROR = `Maksimal ${DOC_LIMITS.bulletsPerEntry} bullet dalam satu entri.`
+const ENTRIES_LIMIT_ERROR = `Maksimal ${DOC_LIMITS.entriesPerSection} entri dalam satu bagian.`
+const SUMMARY_LIMIT_ERROR = `Ringkasan maksimal ${DOC_LIMITS.summaryChars} karakter.`
+const JOB_DESCRIPTION_LIMIT_ERROR = `Deskripsi lowongan maksimal ${DOC_LIMITS.jobDescriptionChars} karakter.`
+const URL_ERROR = 'Tautan harus memakai http://, https://, atau mailto:.'
+
+export const linkItemSchema = z.object({
+  label: z.string(),
+  url: z.string().refine(isAllowedUrl, URL_ERROR),
+})
 
 export const profileSchema = z.object({
   fullName: z.string().max(120, 'Nama terlalu panjang — maksimal 120 karakter.'),
@@ -53,7 +71,7 @@ export const experienceSchema = z.object({
   startDate: yearMonth(),
   endDate: yearMonth(),
   current: z.boolean(),
-  bullets: z.array(z.string()),
+  bullets: z.array(z.string()).max(DOC_LIMITS.bulletsPerEntry, BULLETS_LIMIT_ERROR),
   stack: z.array(z.string()),
 })
 
@@ -81,10 +99,10 @@ export const projectSchema = z.object({
   id: idField(),
   name: z.string(),
   role: z.string(),
-  url: z.string(),
+  url: z.string().refine(isAllowedUrl, URL_ERROR),
   startDate: yearMonth(),
   endDate: yearMonth(),
-  bullets: z.array(z.string()),
+  bullets: z.array(z.string()).max(DOC_LIMITS.bulletsPerEntry, BULLETS_LIMIT_ERROR),
   stack: z.array(z.string()),
 })
 
@@ -94,7 +112,7 @@ export const certificationSchema = z.object({
   issuer: z.string(),
   issuedAt: yearMonth(),
   credentialId: z.string(),
-  url: z.string(),
+  url: z.string().refine(isAllowedUrl, URL_ERROR),
 })
 
 export const languageSchema = z.object({
@@ -118,7 +136,7 @@ export const volunteeringSchema = z.object({
   startDate: yearMonth(),
   endDate: yearMonth(),
   current: z.boolean(),
-  bullets: z.array(z.string()),
+  bullets: z.array(z.string()).max(DOC_LIMITS.bulletsPerEntry, BULLETS_LIMIT_ERROR),
 })
 
 const sectionSchemas = [
@@ -132,55 +150,73 @@ const sectionSchemas = [
     id: idField(),
     kind: z.literal('summary'),
     visible: z.boolean(),
-    data: z.object({ text: z.string() }),
+    data: z.object({
+      text: z.string().max(DOC_LIMITS.summaryChars, SUMMARY_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('experience'),
     visible: z.boolean(),
-    data: z.object({ entries: z.array(experienceSchema) }),
+    data: z.object({
+      entries: z.array(experienceSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('education'),
     visible: z.boolean(),
-    data: z.object({ entries: z.array(educationSchema) }),
+    data: z.object({
+      entries: z.array(educationSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('skills'),
     visible: z.boolean(),
-    data: z.object({ groups: z.array(skillGroupSchema) }),
+    data: z.object({
+      groups: z.array(skillGroupSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('projects'),
     visible: z.boolean(),
-    data: z.object({ entries: z.array(projectSchema) }),
+    data: z.object({
+      entries: z.array(projectSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('certifications'),
     visible: z.boolean(),
-    data: z.object({ entries: z.array(certificationSchema) }),
+    data: z.object({
+      entries: z.array(certificationSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('languages'),
     visible: z.boolean(),
-    data: z.object({ entries: z.array(languageSchema) }),
+    data: z.object({
+      entries: z.array(languageSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('awards'),
     visible: z.boolean(),
-    data: z.object({ entries: z.array(awardSchema) }),
+    data: z.object({
+      entries: z.array(awardSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
   z.object({
     id: idField(),
     kind: z.literal('volunteering'),
     visible: z.boolean(),
-    data: z.object({ entries: z.array(volunteeringSchema) }),
+    data: z.object({
+      entries: z.array(volunteeringSchema).max(DOC_LIMITS.entriesPerSection, ENTRIES_LIMIT_ERROR),
+    }),
   }),
 ] as const
 
@@ -215,7 +251,10 @@ export const resumeDocSchema = z.object({
     ]),
   }),
   sections: z.array(sectionSchema).min(1, 'Dokumen harus punya minimal satu bagian.'),
-  jobDescription: z.string().nullable(),
+  jobDescription: z
+    .string()
+    .max(DOC_LIMITS.jobDescriptionChars, JOB_DESCRIPTION_LIMIT_ERROR)
+    .nullable(),
   meta: z.object({
     createdAt: z.number().positive(),
     updatedAt: z.number().positive(),

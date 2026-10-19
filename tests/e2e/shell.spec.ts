@@ -145,6 +145,10 @@ test('tab mobile menukar isi data dan pratinjau tanpa scroll horizontal', async 
 test('keyboard saja: skip link, ubah judul, lalu ganti template', async ({ page }) => {
   await page.goto('/')
 
+  // Hardening T9.2 — mulai perjalanan keyboard dari titik yang pasti. Tanpa
+  // reset, Tab pertama sesekali mendarat di luar dokumen di mesin berisi beban
+  // (suite paralel penuh), sehingga test ini pernah flake di Fase 8.
+  await page.locator('body').focus()
   await page.keyboard.press('Tab')
   await expect(page.locator('a[href="#workspace-main"]')).toBeFocused()
 

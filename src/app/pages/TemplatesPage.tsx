@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { ArrowLeft, Check } from 'lucide-react'
 import { cn } from 'cn'
@@ -26,6 +26,18 @@ const TemplateThumbSheet = lazy(() =>
 // T6.4 — kartu galeri memakai render nyata skala 0.24 (§5.8), detail skala 0.6.
 const CARD_SCALE = 0.24
 const DETAIL_SCALE = 0.6
+const FRAME_PAD_PX = 48
+
+/**
+ * QA Fase 9 — 0,6 × 794px = 476px tidak muat di layar 360px dan memicu scroll
+ * horizontal. Skala detail dikecilkan mengikuti lebar wrapper, tidak pernah
+ * lebih kecil dari skala kartu dan tidak pernah lebih besar dari 0,6.
+ */
+function fitDetailScale(wrapperWidth: number): number {
+  const available = wrapperWidth - FRAME_PAD_PX
+  if (available <= 0) return CARD_SCALE
+  return Math.min(DETAIL_SCALE, Math.max(CARD_SCALE, available / A4_PX.w))
+}
 
 const transformLabel = (transform: TemplateSpec['headingStyle']['transform']): TranslationKey =>
   transform === 'uppercase'
@@ -61,19 +73,35 @@ function TemplateDetail({ templateId }: { templateId: TemplateId }) {
   const accentOn = templateId === 'ledger' && accentHex !== null
   const isActive = templateId === activeId
   const heading = spec.typeScale.heading
+  const detailRef = useRef<HTMLDivElement>(null)
+  const [detailScale, setDetailScale] = useState(DETAIL_SCALE)
+
+  useEffect(() => {
+    const node = detailRef.current
+    if (!node) return
+    const apply = () => setDetailScale(fitDetailScale(node.clientWidth))
+    apply()
+    const observer = new ResizeObserver(apply)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <div data-probe="template-detail" className="grid gap-8 lg:grid-cols-[auto_1fr]">
+    <div
+      ref={detailRef}
+      data-probe="template-detail"
+      className="grid gap-8 lg:grid-cols-[auto_1fr]"
+    >
       <div className="bg-workbench rounded-lg p-6">
         <Suspense
           fallback={
             <div
               className="bg-sunken animate-pulse rounded-[1px]"
-              style={{ width: A4_PX.w * DETAIL_SCALE, height: A4_PX.h * DETAIL_SCALE }}
+              style={{ width: A4_PX.w * detailScale, height: A4_PX.h * detailScale }}
             />
           }
         >
-          <TemplateThumbSheet templateId={templateId} scale={DETAIL_SCALE} />
+          <TemplateThumbSheet templateId={templateId} scale={detailScale} />
         </Suspense>
       </div>
 

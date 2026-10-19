@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useDeferredValue, useMemo } from 'react'
 import { A4_PX } from '@/lib/units'
 import { t } from '@/lib/i18n'
 import { useDocStore } from '@/store/docStore'
@@ -23,7 +23,11 @@ export type TemplateThumbSheetProps = {
  * Melebihi satu halaman dipotong; thumbnail hanya menjanjikan lembar pertama.
  */
 export function TemplateThumbSheet({ templateId, scale, className }: TemplateThumbSheetProps) {
-  const doc = useDocStore((state) => state.doc)
+  // QA Fase 9: thumbnail ikut render dokumen nyata, tapi render-nya tidak boleh
+  // menang atas ketikan. Nilai dokumen ditunda (React deferred) sehingga layar
+  // kerja tetap responsif di CPU lambat, dan thumbnail mengejar saat idle.
+  const liveDoc = useDocStore((state) => state.doc)
+  const doc = useDeferredValue(liveDoc)
   const spec = useMemo(
     () => resolveSpec(templateId, doc.theme, doc.settings.page),
     [templateId, doc.theme, doc.settings.page],

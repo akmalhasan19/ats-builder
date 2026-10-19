@@ -3,6 +3,7 @@ import {
   createEmptyEntry,
   createEmptySectionData,
   createSampleDoc,
+  DOC_LIMITS,
   type EntriesSectionKind,
   type SectionData,
   type SectionKind,
@@ -142,6 +143,7 @@ export const useDocStore = create<DocStore>((set, get) => ({
   addEntry: (sectionId) => {
     const target = get().doc.sections.find((section) => section.id === sectionId)
     if (!target || !('entries' in target.data)) return
+    if (target.data.entries.length >= DOC_LIMITS.entriesPerSection) return
     const entry = createEmptyEntry(target.kind as EntriesSectionKind)
     get().commit((doc) => withEntries(doc, sectionId, (entries) => [...entries, entry]))
   },
@@ -154,6 +156,7 @@ export const useDocStore = create<DocStore>((set, get) => ({
   duplicateEntry: (sectionId, entryId) => {
     const source = get().doc.sections.find((section) => section.id === sectionId)
     if (!source || !('entries' in source.data)) return
+    if (source.data.entries.length >= DOC_LIMITS.entriesPerSection) return
     const index = source.data.entries.findIndex((entry) => entry.id === entryId)
     if (index < 0) return
     get().commit((doc) =>

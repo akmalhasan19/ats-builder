@@ -9,6 +9,7 @@ import { useAtsDocked } from '@/features/ats/useAtsDock'
 import { SkipToContent } from './SkipToContent'
 import { usePanelMode } from './usePanelMode'
 import { FormPane } from './shell/FormPane'
+import { ErrorBanner } from './shell/ErrorBanner'
 import { MobileTabBar } from './shell/MobileTabBar'
 import { PreviewWell } from './shell/PreviewWell'
 import { Rail } from './shell/Rail'
@@ -47,6 +48,7 @@ export function AppShell() {
         <SkipToContent />
         <TopBar />
         <MobileTabBar />
+        <ErrorBanner />
 
         <main
           id="workspace-main"

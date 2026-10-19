@@ -17,6 +17,27 @@ export function pdfFilename(doc: ResumeDoc): string {
   return `${slugify(fullName || doc.title)}-${doc.templateId}.pdf`
 }
 
+const MIN_EXPORT_INTERVAL_MS = 500
+
+let exportChain: Promise<unknown> = Promise.resolve()
+let lastExportStartedAt = 0
+
+/**
+ * T9.6 — satu ekspor per 500 ms; klik tambahan tidak dibuang melainkan masuk
+ * antrian dan dijalankan berurutan setelah jeda tercapai.
+ */
+export function queueExport<T>(task: () => Promise<T>): Promise<T> {
+  const run = async (): Promise<T> => {
+    const wait = lastExportStartedAt + MIN_EXPORT_INTERVAL_MS - Date.now()
+    if (wait > 0) await new Promise((resolve) => window.setTimeout(resolve, wait))
+    lastExportStartedAt = Date.now()
+    return task()
+  }
+  const result = exportChain.then(run, run)
+  exportChain = result.catch(() => undefined)
+  return result
+}
+
 export async function exportPdf(
   doc: ResumeDoc,
   plan: PagePlan,

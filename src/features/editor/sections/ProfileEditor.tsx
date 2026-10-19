@@ -2,6 +2,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { isAllowedUrl, normalizeUrlInput } from '@/lib/text'
 import { profileSchema } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import type { ProfileData } from '@/types/resume'
@@ -39,10 +40,8 @@ export function ProfileEditor({ sectionId }: { sectionId: string }) {
   }
 
   const handleLinkBlur = (index: number, url: string) => {
-    const trimmed = url.trim()
-    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
-      handleUpdateLink(index, 'url', `https://${trimmed}`)
-    }
+    const normalized = normalizeUrlInput(url)
+    if (normalized !== url) handleUpdateLink(index, 'url', normalized)
   }
 
   const handleRemoveLink = (index: number) => {
@@ -134,36 +133,43 @@ export function ProfileEditor({ sectionId }: { sectionId: string }) {
         </div>
 
         {data.links.map((link, idx) => (
-          <div key={`link-${idx}`} className="flex items-center gap-2">
-            <label htmlFor={`profile-link-label-${idx}`} className="sr-only">
-              {t('profile.linkLabel')}
-            </label>
-            <Input
-              id={`profile-link-label-${idx}`}
-              placeholder={t('profile.linkLabelPlaceholder')}
-              value={link.label}
-              onChange={(event) => handleUpdateLink(idx, 'label', event.target.value)}
-              className="w-1/3"
-            />
-            <label htmlFor={`profile-link-url-${idx}`} className="sr-only">
-              {t('profile.linkUrl')}
-            </label>
-            <Input
-              id={`profile-link-url-${idx}`}
-              placeholder={t('profile.linkUrlPlaceholder')}
-              value={link.url}
-              onChange={(event) => handleUpdateLink(idx, 'url', event.target.value)}
-              onBlur={(event) => handleLinkBlur(idx, event.target.value)}
-              className="flex-1"
-            />
-            <button
-              type="button"
-              aria-label={t('profile.removeLink')}
-              onClick={() => handleRemoveLink(idx)}
-              className="text-ink-tertiary hover:text-signal-bad flex size-8 items-center justify-center rounded"
-            >
-              <Trash2 className="size-4" aria-hidden="true" />
-            </button>
+          <div key={`link-${idx}`} className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <label htmlFor={`profile-link-label-${idx}`} className="sr-only">
+                {t('profile.linkLabel')}
+              </label>
+              <Input
+                id={`profile-link-label-${idx}`}
+                placeholder={t('profile.linkLabelPlaceholder')}
+                value={link.label}
+                onChange={(event) => handleUpdateLink(idx, 'label', event.target.value)}
+                className="w-1/3"
+              />
+              <label htmlFor={`profile-link-url-${idx}`} className="sr-only">
+                {t('profile.linkUrl')}
+              </label>
+              <Input
+                id={`profile-link-url-${idx}`}
+                placeholder={t('profile.linkUrlPlaceholder')}
+                value={link.url}
+                onChange={(event) => handleUpdateLink(idx, 'url', event.target.value)}
+                onBlur={(event) => handleLinkBlur(idx, event.target.value)}
+                className="flex-1"
+              />
+              <button
+                type="button"
+                aria-label={t('profile.removeLink')}
+                onClick={() => handleRemoveLink(idx)}
+                className="text-ink-tertiary hover:text-signal-bad flex size-8 items-center justify-center rounded"
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+            {!isAllowedUrl(link.url) ? (
+              <p role="alert" className="text-hint font-mono text-signal-bad">
+                {t('form.urlUnsafe')}
+              </p>
+            ) : null}
           </div>
         ))}
       </div>

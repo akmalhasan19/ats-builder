@@ -1,0 +1,170 @@
+name: CI
+
+# T9.3/T9.4 — suite QA dijalankan di CI: lint, typecheck, unit+coverage,
+# e2e Playwright, verifikasi PDF (5 template × 3 fixture + silang Parse Tape),
+# build, dan Lighthouse CI.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: lint · typecheck · unit · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # T9.1 — coverage global ≥ 80% (ambang ada di vite.config.ts).
+      - name: Unit + coverage global
+        run: pnpm test:coverage
+
+      # T9.1 — lib/ ≥ 95% branch (gerbang terpisah supaya tidak tenggelam).
+      - name: Unit coverage lib ≥ 95% branch
+        run: pnpm test:coverage:lib
+
+      - name: Build
+        run: pnpm build
+
+      - name: Simpan artefak build untuk job berikutnya
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  e2e:
+    name: e2e (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        # WebKit tidak terpasang di mesin pengembangan; di CI binernya bisa
+        # diunduh dan proyeknya diaktifkan lewat E2E_WEBKIT=1
+        # (keputusan owner Fase 9 no. 2).
+        project: [chromium, mobile-chrome, webkit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      # T9.2 — spec utama pada dua proyek pertama; webkit ikut saat E2E_WEBKIT=1.
+      - name: Playwright (dev server)
+        env:
+          E2E_WEBKIT: ${{ matrix.project == 'webkit' && '1' || '0' }}
+        run: pnpm test:e2e --project=${{ matrix.project }}
+
+      # T9.2/offline — spec offline butuh service worker → build produksi.
+      - name: Playwright offline terhadap build produksi
+        if: matrix.project == 'chromium'
+        run: pnpm exec playwright test --config=playwright.preview.config.ts
+
+      - name: Upload laporan Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report
+
+  pdf:
+    name: pdf:verify (5 template × 3 fixture)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Gate T9.3 memakai pdftotext -layout sebagai pembaca acuan urutan baca.
+      - name: Pasang poppler (pdftotext)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Verifikasi PDF & Parse Tape
+        run: pnpm pdf:verify
+
+      - name: Simpan artefak PDF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdf-verify
+          path: artifacts/pdf-verify
+
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # T9.4 — a11y/BP/SEO/TBT/CLS memblokir; Performance & LCP berstatus warn
+      # sampai diet bundle dikerjakan (keputusan owner Fase 9 no. 1).
+      - name: lhci autorun
+        run: pnpm lhci
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}

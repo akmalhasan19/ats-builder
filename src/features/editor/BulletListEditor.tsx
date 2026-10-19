@@ -18,6 +18,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react'
 import { cn } from 'cn'
 import { startsWithActionVerb, containsMetric } from '@/lib/text'
+import { DOC_LIMITS } from '@/schema/resume'
 import { t } from '@/lib/i18n'
 
 export type BulletListEditorProps = {
@@ -218,7 +219,9 @@ export function BulletListEditor({ idPrefix, bullets, onChange, label }: BulletL
 
   const handlePasteMulti = (index: number, pastedLines: string[]) => {
     const next = [...bullets]
-    next.splice(index, 1, ...pastedLines)
+    // T9.6 — tempel banyak baris tetap tidak boleh melewati batas entri.
+    const room = DOC_LIMITS.bulletsPerEntry - next.length + 1
+    next.splice(index, 1, ...pastedLines.slice(0, Math.max(1, room)))
     onChange(next)
   }
 
@@ -237,8 +240,11 @@ export function BulletListEditor({ idPrefix, bullets, onChange, label }: BulletL
   }
 
   const handleAdd = () => {
+    if (bullets.length >= DOC_LIMITS.bulletsPerEntry) return
     onChange([...bullets, ''])
   }
+
+  const bulletsAtLimit = bullets.length >= DOC_LIMITS.bulletsPerEntry
 
   return (
     <div className="flex flex-col gap-2">
@@ -273,11 +279,17 @@ export function BulletListEditor({ idPrefix, bullets, onChange, label }: BulletL
         <button
           type="button"
           onClick={handleAdd}
-          className="text-button text-cyanotype hover:bg-cyanotype-wash inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 transition-colors"
+          disabled={bulletsAtLimit}
+          className="text-button text-cyanotype hover:bg-cyanotype-wash inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 transition-colors disabled:text-ink-tertiary disabled:hover:bg-transparent"
         >
           <Plus className="size-3.5" aria-hidden="true" />
           <span>{t('bullet.add')}</span>
         </button>
+        {bulletsAtLimit ? (
+          <p className="text-hint mt-1.5 font-mono">
+            {t('limits.bullets', { max: DOC_LIMITS.bulletsPerEntry })}
+          </p>
+        ) : null}
       </div>
     </div>
   )

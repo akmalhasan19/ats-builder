@@ -18,6 +18,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:lib": "vitest run --coverage --coverage.include=src/lib --coverage.thresholds.branches=95",
     "test:e2e": "playwright test",
     "pdf:verify": "esbuild scripts/pdf-verify.ts --bundle --platform=node --format=esm --packages=external --outfile=artifacts/.pdf-verify.mjs --log-level=warning && node artifacts/.pdf-verify.mjs",
     "lhci": "lhci autorun",
@@ -56,6 +58,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^9.39.5",
     "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.64.1",

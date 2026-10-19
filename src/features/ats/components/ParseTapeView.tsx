@@ -64,6 +64,13 @@ export function ParseTapeView({
 }: ParseTapeViewProps) {
   const copy = () => {
     const text = lines.map((line) => line.text).join('\n')
+    // QA Fase 9: di konteks non-secure `navigator.clipboard` tidak ada sama
+    // sekali, dan `writeText` yang dipanggil buta melempar TypeError sinkron
+    // sehingga cabang gagal tidak pernah tercapai.
+    if (!navigator.clipboard) {
+      toast(t('ats.tape.copyFailed'))
+      return
+    }
     void navigator.clipboard
       .writeText(text)
       .then(() => toast(t('ats.tape.copied')))

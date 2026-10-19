@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { EntryCard } from '../EntryCard'
 import { EntryList } from '../EntryList'
 import { MonthPicker } from '../MonthPicker'
+import { isAllowedUrl, normalizeUrlInput } from '@/lib/text'
 import { certificationSchema } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import type { CertificationEntry } from '@/types/resume'
@@ -141,6 +142,7 @@ export function CertificationsEditor({ sectionId }: { sectionId: string }) {
                   id={`cert-${entry.id}-url`}
                   label={t('certifications.url')}
                   hint={t('common.optional')}
+                  error={isAllowedUrl(entry.url) ? undefined : t('form.urlUnsafe')}
                 >
                   <Input
                     placeholder={t('certifications.urlPlaceholder')}
@@ -149,6 +151,12 @@ export function CertificationsEditor({ sectionId }: { sectionId: string }) {
                       handleUpdate(entry.id, (prev) => ({
                         ...prev,
                         url: event.target.value,
+                      }))
+                    }
+                    onBlur={(event) =>
+                      handleUpdate(entry.id, (prev) => ({
+                        ...prev,
+                        url: normalizeUrlInput(event.target.value),
                       }))
                     }
                   />

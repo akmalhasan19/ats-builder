@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { t } from '@/lib/i18n'
+import { DOC_LIMITS } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 
 /**
@@ -43,9 +44,16 @@ export function JobDescriptionField() {
               rows={5}
               value={value}
               placeholder={t('ats.jd.placeholder')}
-              onChange={(event) => setJobDescription(event.target.value)}
+              onChange={(event) =>
+                setJobDescription(event.target.value.slice(0, DOC_LIMITS.jobDescriptionChars))
+              }
             />
           </Field>
+          {value.length >= DOC_LIMITS.jobDescriptionChars ? (
+            <p className="text-hint mt-1.5 font-mono">
+              {t('limits.charsAtMax', { max: DOC_LIMITS.jobDescriptionChars })}
+            </p>
+          ) : null}
           {value !== '' ? (
             <Button
               type="button"

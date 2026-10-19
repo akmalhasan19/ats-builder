@@ -16,7 +16,10 @@ const RECHECK_DEBOUNCE_MS = 1500
 export function useAtsAutoCheck(pageCount: number): void {
   const doc = useDocStore((state) => state.doc)
   const hasOpened = useAtsStore((state) => state.hasOpened)
-  const signature = docSignature(doc)
+  // QA Fase 9: `docSignature` adalah JSON.stringify seluruh dokumen. Dulu ia
+  // dihitung tiap render meski drawer belum pernah dibuka — biaya yang sama
+  // merogoh kocek CPU saat mengetik yang justru ingin dihemat.
+  const signature = hasOpened ? docSignature(doc) : ''
   useEffect(() => {
     if (!hasOpened) return undefined
     const timer = window.setTimeout(() => void runAtsCheck(pageCount), RECHECK_DEBOUNCE_MS)

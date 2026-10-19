@@ -34,9 +34,15 @@ function ThumbSkeleton({ scale, className }: { scale: number; className?: string
 /** Thumbnail render-nyata dalam Suspense — skeleton tampil saat chunk thumb dimuat. */
 function TemplateThumb({ templateId, scale }: { templateId: TemplateId; scale: number }) {
   return (
-    <Suspense fallback={<ThumbSkeleton scale={scale} />}>
-      <TemplateThumbSheet templateId={templateId} scale={scale} />
-    </Suspense>
+    <span
+      aria-hidden="true"
+      className="flex shrink-0 justify-center overflow-hidden"
+      style={{ width: A4_PX.w * scale, height: A4_PX.h * scale }}
+    >
+      <Suspense fallback={<ThumbSkeleton scale={scale} />}>
+        <TemplateThumbSheet templateId={templateId} scale={scale} />
+      </Suspense>
+    </span>
   )
 }
 
@@ -54,22 +60,35 @@ export function TemplateSelect({ className }: TemplateSelectProps) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          data-probe="template-trigger"
-          variant="ghost"
-          disabled={isGenerating}
-          className={cn(
-            'border-rule bg-raised text-ink hover:border-rule-strong hover:bg-hover gap-1.5 border px-2.5',
-            className,
-          )}
-          aria-label={t('topbar.templateTitle')}
+      {/* Thumbnail render-nyata tetap terlihat di dalam pil (desain §5.2) tapi
+          dipasang di LUAR subtree tombol: axe menghitung teks yang terlihat di
+          dalam tombol ber-`aria-label` dan menandainya `label-content-name-mismatch`
+          (temuan T9.5) karena mini-sheet memuat teks CV sungguhan.
+          `pointer-events-none` menjaga klik tetap jatuh ke tombol. */}
+      <span className="relative inline-flex items-center">
+        <span
+          aria-hidden="true"
+          data-probe="template-thumb"
+          className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
         >
           <TemplateThumb templateId={activeId} scale={TRIGGER_THUMB_SCALE} />
-          <span className="text-button">{t(templateLabelKey(activeId))}</span>
-          <ChevronDown aria-hidden="true" className="text-ink-tertiary size-3.5" />
-        </Button>
-      </PopoverTrigger>
+        </span>
+        <PopoverTrigger asChild>
+          <Button
+            data-probe="template-trigger"
+            variant="ghost"
+            disabled={isGenerating}
+            className={cn(
+              'border-rule bg-raised text-ink hover:border-rule-strong hover:bg-hover gap-1.5 border pr-2.5 pl-[30px]',
+              className,
+            )}
+            aria-label={`${t('topbar.templateTitle')}: ${t(templateLabelKey(activeId))}`}
+          >
+            <span className="text-button">{t(templateLabelKey(activeId))}</span>
+            <ChevronDown aria-hidden="true" className="text-ink-tertiary size-3.5" />
+          </Button>
+        </PopoverTrigger>
+      </span>
 
       <PopoverContent align="end" className="w-[340px] p-2">
         <p className="text-eyebrow px-1 pt-1 pb-2">{t('topbar.templateTitle')}</p>

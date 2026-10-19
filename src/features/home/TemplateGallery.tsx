@@ -35,7 +35,7 @@ function TemplateThumb({ templateId }: { templateId: (typeof TEMPLATE_IDS)[numbe
   }, [])
 
   return (
-    <span ref={ref} className="bg-workbench flex justify-center rounded-sm p-2">
+    <span ref={ref} aria-hidden="true" className="bg-workbench flex justify-center rounded-sm p-2">
       {visible ? (
         <Suspense
           fallback={
@@ -66,7 +66,6 @@ function TemplateCard({ templateId }: { templateId: (typeof TEMPLATE_IDS)[number
         applyTemplate(templateId)
         document.getElementById('workspace-main')?.scrollIntoView({ behavior: 'smooth' })
       }}
-      aria-label={`${t('home.section.templates.useThis')}: ${t(templateLabelKey(templateId))} (${t('home.section.templates.eyebrow')})`}
       style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 360px' }}
       className="border-rule bg-raised hover:shadow-raised group flex flex-col gap-2 rounded-lg border p-3 text-left transition-[border-color,box-shadow,transform] duration-[var(--dur-fast)] hover:-translate-y-[3px]"
     >

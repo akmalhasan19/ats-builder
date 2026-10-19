@@ -4,6 +4,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { ChipsInput } from '../ChipsInput'
+import { DOC_LIMITS } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import type { SkillGroup } from '@/types/resume'
 import { t } from '@/lib/i18n'
@@ -15,8 +16,10 @@ export function SkillsEditor({ sectionId }: { sectionId: string }) {
   if (!section || section.kind !== 'skills') return null
 
   const groups = (section.data as { groups: SkillGroup[] }).groups
+  const groupsAtLimit = groups.length >= DOC_LIMITS.entriesPerSection
 
   const handleAddGroup = () => {
+    if (groupsAtLimit) return
     const newGroup: SkillGroup = {
       id: crypto.randomUUID(),
       name: '',
@@ -96,10 +99,20 @@ export function SkillsEditor({ sectionId }: { sectionId: string }) {
           ))}
 
           <div>
-            <Button variant="secondary" onClick={handleAddGroup} className="w-full">
+            <Button
+              variant="secondary"
+              onClick={handleAddGroup}
+              className="w-full"
+              disabled={groupsAtLimit}
+            >
               <Plus className="mr-1.5 size-4" aria-hidden="true" />
               {t('skills.addGroup')}
             </Button>
+            {groupsAtLimit ? (
+              <p className="text-hint mt-1.5 font-mono">
+                {t('limits.entries', { max: DOC_LIMITS.entriesPerSection })}
+              </p>
+            ) : null}
           </div>
         </div>
       )}

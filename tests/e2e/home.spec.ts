@@ -22,7 +22,10 @@ test('homepage Fase 8: workspace hidup + 4 section + footer legal', async ({ pag
 test('galeri homepage: klik kartu = set template + toast', async ({ page }) => {
   await page.goto('/')
 
-  const card = page.getByRole('button', { name: /Pakai template ini: Ledger \(GALERI TEMPLATE\)/ })
+  const card = page
+    .locator('#home-templates')
+    .getByRole('button', { name: /Ledger/ })
+    .first()
   await card.scrollIntoViewIfNeeded()
   await expect(card).toBeVisible()
   await card.click()

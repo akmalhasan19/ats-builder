@@ -16,6 +16,8 @@ import {
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { DOC_LIMITS } from '@/schema/resume'
+import { t } from '@/lib/i18n'
 import type { LucideIcon } from 'lucide-react'
 
 export type EntryListProps<T extends { id: string }> = {
@@ -88,6 +90,9 @@ export function EntryList<T extends { id: string }>({
     onAdd()
   }
 
+  const max = DOC_LIMITS.entriesPerSection
+  const atLimit = entries.length >= max
+
   return (
     <div className="flex flex-col gap-3">
       {entries.length === 0 ? (
@@ -133,10 +138,13 @@ export function EntryList<T extends { id: string }>({
           </DndContext>
 
           <div>
-            <Button variant="secondary" onClick={handleAdd} className="w-full">
+            <Button variant="secondary" onClick={handleAdd} className="w-full" disabled={atLimit}>
               <Plus className="mr-1.5 size-4" aria-hidden="true" />
               {addLabel}
             </Button>
+            {atLimit ? (
+              <p className="text-hint mt-1.5 font-mono">{t('limits.entries', { max })}</p>
+            ) : null}
           </div>
         </>
       )}

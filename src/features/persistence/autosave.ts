@@ -1,5 +1,6 @@
 import type { ResumeDoc } from '@/types/resume'
 import { useDocStore } from '@/store/docStore'
+import { useErrorStore } from '@/store/errorStore'
 import { useSyncStore } from '@/store/syncStore'
 import { DOC_KEY, writeValue } from './idb'
 
@@ -10,15 +11,26 @@ let pendingDoc: ResumeDoc | null = null
 let unsubscribe: (() => void) | null = null
 let flushHandlersInstalled = false
 
+/** Kuota peramban habis — nama galat berbeda antar mesin (T9.6). */
+export function isQuotaError(error: unknown): boolean {
+  const name =
+    typeof error === 'object' && error !== null && 'name' in error
+      ? String((error as { name: unknown }).name)
+      : ''
+  return name === 'QuotaExceededError' || name === 'UsageError'
+}
+
 async function persistNow(doc: ResumeDoc): Promise<void> {
   const sync = useSyncStore.getState()
   try {
     await writeValue(DOC_KEY, doc)
     sync.setStorageMode('idb')
     sync.setStatus(navigator.onLine === false ? 'offline' : 'saved-local')
-  } catch {
+    if (useErrorStore.getState().banner === 'quota') useErrorStore.getState().dismissError()
+  } catch (error) {
     sync.setStorageMode('memory')
     sync.setStatus('error')
+    if (isQuotaError(error)) useErrorStore.getState().showError('quota')
   }
 }
 

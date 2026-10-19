@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { wordCount } from '@/lib/text'
+import { DOC_LIMITS } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import { t } from '@/lib/i18n'
 
@@ -23,8 +24,10 @@ export function SummaryEditor({ sectionId }: { sectionId: string }) {
   }, [text])
 
   const handleChange = (newText: string) => {
-    updateSection(sectionId, () => ({ text: newText }))
+    updateSection(sectionId, () => ({ text: newText.slice(0, DOC_LIMITS.summaryChars) }))
   }
+
+  const summaryAtLimit = text.length >= DOC_LIMITS.summaryChars
 
   const handleApplySample = () => {
     handleChange(t('summary.sampleText'))
@@ -46,6 +49,12 @@ export function SummaryEditor({ sectionId }: { sectionId: string }) {
           className="border-rule bg-raised text-input text-ink placeholder:text-ink-tertiary focus:border-cyanotype focus:shadow-[var(--shadow-focus)] min-h-[100px] w-full resize-none rounded-md border p-3 leading-[1.55] outline-none transition-colors duration-[var(--dur-fast)]"
         />
       </Field>
+
+      {summaryAtLimit ? (
+        <p className="text-hint font-mono">
+          {t('limits.charsAtMax', { max: DOC_LIMITS.summaryChars })}
+        </p>
+      ) : null}
 
       <div className="flex justify-end">
         <Button

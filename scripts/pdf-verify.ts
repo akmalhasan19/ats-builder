@@ -333,15 +333,34 @@ function verifyTapeAgainstPdf(
   const { lines } = simulateParseOrder(doc, spec, plan)
   const tapeTokens = tokenize(tapeText(lines))
   const pdfTokens = tokenize(collapseLetterSpacing(layout))
+  const dateTokens = new Set(
+    lines
+      .filter((line) => line.tag === 'DATE')
+      .flatMap((line) => tokenize(line.text))
+      .map((token) => token.toLowerCase()),
+  )
   if (tapeTokens.length === 0) return
 
   // Urutan, bukan nilai: setiap kata tape harus muncul di PDF sesudah kata
   // sebelumnya. PDF boleh punya token tambahan (halaman, glif) dan berlebih
   // ditoleransi — yang tidak boleh adalah tape yang keluar dari barisan.
   let cursor = 0
+  let transposed = 0
   const outOfOrder: string[] = []
+  // Hanya token tanggal yang boleh dicocokkan mundur. Pada template
+  // `datePosition: 'right'`, poppler `-layout` mencetak kolom kanan satu baris
+  // DI ATAS judul entri — artefak kisi, bukan urutan baca PDF (baseline benar
+  // menurut pdfjs; catatan Fase 6). Judul, badan, dan bullet tetap wajib maju,
+  // jadi scramble nyata tidak bisa bersembunyi di belakang toleransi ini.
   for (const token of tapeTokens) {
-    const at = pdfTokens.indexOf(token, cursor)
+    let at = pdfTokens.indexOf(token, cursor)
+    if (at === -1 && dateTokens.has(token.toLowerCase())) {
+      const early = pdfTokens.indexOf(token, 0)
+      if (early !== -1 && early < cursor) {
+        at = early
+        transposed += 1
+      }
+    }
     if (at === -1) {
       outOfOrder.push(token)
       continue
@@ -349,14 +368,17 @@ function verifyTapeAgainstPdf(
     cursor = at + 1
   }
   const missing = outOfOrder.length
+  const transpositionBudget = Math.max(4, Math.round(tapeTokens.length * 0.02))
   const coverage = Math.round(((tapeTokens.length - missing) / tapeTokens.length) * 1000) / 10
 
   check(
     `${label}: urutan Parse Tape == urutan pdftotext`,
-    missing === 0,
-    missing === 0
-      ? `${tapeTokens.length} token tape semuanya berurutan di ${pdfTokens.length} token PDF`
-      : `${missing}/${tapeTokens.length} token di luar barisan (${coverage}% berurutan): ${outOfOrder.slice(0, 8).join(' ')}`,
+    missing === 0 && transposed <= transpositionBudget,
+    missing > 0
+      ? `${missing}/${tapeTokens.length} token di luar barisan (${coverage}% berurutan): ${outOfOrder.slice(0, 8).join(' ')}`
+      : transposed > transpositionBudget
+        ? `${transposed} token keluar barisan, melewati budget transpose kolom kanan ${transpositionBudget}`
+        : `${tapeTokens.length} token tape semuanya berurutan di ${pdfTokens.length} token PDF · ${transposed} transpose kolom kanan (budget ${transpositionBudget})`,
   )
 }
 
@@ -458,6 +480,15 @@ async function verifyPaginationFixtures(): Promise<void> {
           `fixture ${fixtureName} × ${templateId} [pdftotext -layout]`,
           layout,
           expectedPieces(rendered.doc, rendered.spec),
+        )
+        // T9.3 — silang urutan Parse Tape vs urutan baca pdftotext untuk SETIAP
+        // kombinasi template × fixture, bukan hanya ledger × sampleResume.
+        verifyTapeAgainstPdf(
+          `fixture ${fixtureName} × ${templateId} [tape↔pdftotext]`,
+          rendered.doc,
+          rendered.spec,
+          rendered.plan,
+          layout,
         )
       }
     }
