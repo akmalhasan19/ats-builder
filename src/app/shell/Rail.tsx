@@ -213,7 +213,7 @@ function SectionItem({
         type="button"
         aria-current={active ? 'true' : undefined}
         onClick={onSelect}
-        className="flex min-w-0 flex-1 items-center gap-2 truncate py-1 text-left"
+        className="flex min-w-0 flex-1 items-center gap-2 truncate py-1 pr-0 text-left transition-[padding] duration-[var(--dur-fast)] group-hover:pr-28"
       >
         <Icon
           aria-hidden="true"
@@ -224,25 +224,25 @@ function SectionItem({
         </span>
       </button>
 
-      <div className="flex items-center gap-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="py-1">
-              <CompletenessDots dots={completeness.dots} />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <span className="text-hint">{tooltipText}</span>
-          </TooltipContent>
-        </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="py-1">
+            <CompletenessDots dots={completeness.dots} />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          <span className="text-hint">{tooltipText}</span>
+        </TooltipContent>
+      </Tooltip>
 
-        {issueCount > 0 ? (
-          <span className="text-hint text-signal-warn bg-bad-wash rounded px-1 font-mono">
-            {t('rail.issuesBadge', { count: issueCount })}
-          </span>
-        ) : null}
+      {issueCount > 0 ? (
+        <span className="text-hint text-signal-warn bg-bad-wash rounded px-1 font-mono">
+          {t('rail.issuesBadge', { count: issueCount })}
+        </span>
+      ) : null}
 
-        <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex items-center transition-opacity">
+      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             disabled={index === 0}
@@ -272,7 +272,7 @@ function SectionItem({
         <button
           type="button"
           aria-label={t('rail.dragHandle')}
-          className="text-ink-tertiary hover:text-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex size-6 cursor-grab items-center justify-center transition-opacity active:cursor-grabbing touch-none"
+          className="text-ink-tertiary hover:text-ink flex size-6 cursor-grab items-center justify-center transition-opacity active:cursor-grabbing touch-none"
           {...attributes}
           {...listeners}
         >
@@ -284,7 +284,7 @@ function SectionItem({
             <button
               type="button"
               aria-label={t('rail.moreActions')}
-              className="text-ink-tertiary hover:text-ink opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 flex size-6 items-center justify-center rounded transition-opacity"
+              className="text-ink-tertiary hover:text-ink flex size-6 items-center justify-center rounded transition-opacity"
             >
               <MoreVertical className="size-3.5" aria-hidden="true" />
             </button>

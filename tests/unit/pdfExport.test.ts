@@ -30,8 +30,8 @@ beforeAll(async () => {
 const widthOf = (text: string, size = 10) => font.widthOfTextAtSize(text, size)
 
 describe('pdfFilename', () => {
-  it('memakai nama lengkap + template, diciutkan jadi slug', () => {
-    expect(pdfFilename(createSampleDoc())).toBe('alex-morgan-classic-ats.pdf')
+  it('memakai judul dokumen + template, diciutkan jadi slug', () => {
+    expect(pdfFilename(createSampleDoc())).toBe('cv-alex-morgan-software-engineer-classic-ats.pdf')
   })
 
   it('jatuh ke judul dokumen bila nama masih kosong', () => {

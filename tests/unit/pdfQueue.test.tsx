@@ -273,9 +273,9 @@ describe('pdfFilename — cabang judul dokumen', () => {
     expect(pdfFilename(doc)).toBe('curriculum-vitae-baru-executive.pdf')
   })
 
-  it('nama lengkap lebih diutamakan daripada judul', async () => {
+  it('judul lebih diutamakan daripada nama lengkap', async () => {
     const { pdfFilename } = await realExport()
-    expect(pdfFilename(sampleResume())).toBe('alex-morgan-classic-ats.pdf')
+    expect(pdfFilename(sampleResume())).toBe('cv-alex-morgan-software-engineer-classic-ats.pdf')
   })
 })
 
@@ -644,7 +644,7 @@ describe('renderResumePdfToBlob — panggilan nyata untuk 5 template', () => {
 
     const result = await exportPdf(doc, plan)
 
-    expect(result.filename).toBe('alex-morgan-classic-ats.pdf')
+    expect(result.filename).toBe('cv-alex-morgan-software-engineer-classic-ats.pdf')
     expect(result.blob.type).toBe('application/pdf')
     expect(result.pageCount).toBe(plan.pageCount)
     expect(result.bytes).toBe(result.blob.size)

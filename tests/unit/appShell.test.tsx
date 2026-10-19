@@ -51,7 +51,7 @@ const { pdf } = vi.hoisted(() => ({
   pdf: {
     exportPdf: vi.fn(async () => ({
       blob: new Blob(['%PDF-1.4'], { type: 'application/pdf' }),
-      filename: 'cv-alex-morgan-classic-ats.pdf',
+      filename: 'cv-alex-morgan-software-engineer-classic-ats.pdf',
       bytes: 8,
       durationMs: 1,
       pageCount: 1,
@@ -160,7 +160,7 @@ beforeEach(() => {
   idb.quarantineCorruptDoc.mockImplementation(async () => undefined)
   pdf.exportPdf.mockImplementation(async () => ({
     blob: new Blob(['%PDF-1.4'], { type: 'application/pdf' }),
-    filename: 'cv-alex-morgan-classic-ats.pdf',
+    filename: 'cv-alex-morgan-software-engineer-classic-ats.pdf',
     bytes: 8,
     durationMs: 1,
     pageCount: 1,
@@ -422,7 +422,7 @@ describe('TopBar', () => {
     await waitFor(() => expect(pdf.exportPdf).toHaveBeenCalled())
     expect(pdf.downloadPdfBlob).toHaveBeenCalledWith(
       expect.any(Blob),
-      'cv-alex-morgan-classic-ats.pdf',
+      'cv-alex-morgan-software-engineer-classic-ats.pdf',
     )
     await waitFor(() => expect(usePdfExportStore.getState().isGenerating).toBe(false))
     expect(
