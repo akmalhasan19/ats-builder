@@ -3,13 +3,15 @@ import { Download, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { scrollToFirstInvalidField } from '@/features/editor/scrollToFirstInvalidField'
-import { usePagination } from '@/features/preview/usePagination'
+import { createPagePlan } from '@/features/preview/createPagePlan'
+import { resolveSpec } from '@/features/templates/specs'
 import { useAtsStore } from '@/store/atsStore'
 import { useUiStore } from '@/store/uiStore'
 import { t } from '@/lib/i18n'
 import { resumeDocSchema } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import { usePdfExportStore } from '@/store/pdfExportStore'
+import { useSettledHeights } from '@/store/previewStore'
 import { downloadPdfBlob, exportPdf, openPdfBlob, pdfErrorKey, queueExport } from './exportPdf'
 
 export type PdfDownloadButtonProps = {
@@ -17,8 +19,7 @@ export type PdfDownloadButtonProps = {
 }
 
 export function PdfDownloadButton({ className }: PdfDownloadButtonProps) {
-  const doc = useDocStore((state) => state.doc)
-  const plan = usePagination(doc, doc.templateId)
+  const heights = useSettledHeights()
   const isGenerating = usePdfExportStore((state) => state.isGenerating)
   const setGenerating = usePdfExportStore((state) => state.setGenerating)
   const keywords = useAtsStore((state) => state.keywords)
@@ -34,18 +35,22 @@ export function PdfDownloadButton({ className }: PdfDownloadButtonProps) {
   )
 
   async function handleDownload() {
-    if (!resumeDocSchema.safeParse(doc).success) {
+    const currentDoc = useDocStore.getState().doc
+    if (!resumeDocSchema.safeParse(currentDoc).success) {
       scrollToFirstInvalidField()
       toast(t('pdf.error.invalid'))
       return
     }
+
+    const spec = resolveSpec(currentDoc.templateId, currentDoc.theme, currentDoc.settings.page)
+    const currentPlan = createPagePlan(currentDoc, spec, heights)
 
     setGenerating(true)
     setSlow(false)
     slowTimer.current = window.setTimeout(() => setSlow(true), 1200)
     try {
       const result = await queueExport(() =>
-        exportPdf(doc, plan, {
+        exportPdf(currentDoc, currentPlan, {
           keywords: includeMarksInPdf ? keywords : [],
         }),
       )

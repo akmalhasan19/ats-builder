@@ -184,7 +184,7 @@ function SectionItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group relative flex h-10 items-center gap-2 rounded-md px-2 text-left transition-colors duration-[var(--dur-fast)]',
+        'group relative flex h-10 items-center gap-2 rounded-md px-2 text-left transition-[padding] duration-[var(--dur-fast)] group-hover:pr-32 group-focus-within:pr-32',
         active
           ? 'bg-accent-wash text-ink font-semibold shadow-[var(--shadow-active-bar)]'
           : 'text-ink hover:bg-hover',
@@ -213,7 +213,7 @@ function SectionItem({
         type="button"
         aria-current={active ? 'true' : undefined}
         onClick={onSelect}
-        className="flex min-w-0 flex-1 items-center gap-2 truncate py-1 pr-0 text-left transition-[padding] duration-[var(--dur-fast)] group-hover:pr-28"
+        className="flex min-w-0 flex-1 items-center gap-2 truncate py-1 text-left"
       >
         <Icon
           aria-hidden="true"
@@ -226,7 +226,7 @@ function SectionItem({
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="py-1">
+          <div className="py-1 transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
             <CompletenessDots dots={completeness.dots} />
           </div>
         </TooltipTrigger>
@@ -236,7 +236,7 @@ function SectionItem({
       </Tooltip>
 
       {issueCount > 0 ? (
-        <span className="text-hint text-signal-warn bg-bad-wash rounded px-1 font-mono">
+        <span className="text-hint text-signal-warn bg-bad-wash rounded px-1 font-mono transition-opacity group-hover:opacity-0 group-focus-within:opacity-0">
           {t('rail.issuesBadge', { count: issueCount })}
         </span>
       ) : null}

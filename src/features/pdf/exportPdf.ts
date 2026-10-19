@@ -14,7 +14,8 @@ export type ExportPdfResult = {
 export function pdfFilename(doc: ResumeDoc): string {
   const profile = doc.sections.find((section) => section.kind === 'profile')
   const fullName = profile?.kind === 'profile' ? profile.data.fullName : ''
-  return `${slugify(doc.title || fullName)}-${doc.templateId}.pdf`
+  const title = (doc.title ?? '').trim()
+  return `${slugify(title || fullName)}-${doc.templateId}.pdf`
 }
 
 const MIN_EXPORT_INTERVAL_MS = 500
