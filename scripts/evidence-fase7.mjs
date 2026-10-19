@@ -100,7 +100,9 @@ const horizontalOverflow = async (page) =>
   const tape = drawer.locator('[data-probe="ats-tape"]')
   await tape.waitFor({ state: 'visible', timeout: 10000 })
   const tags = await tape.evaluate((el) =>
-    [...el.querySelectorAll('span')].map((s) => s.textContent?.trim()).filter((t) => t && t === t.toUpperCase() && t.length > 1),
+    [...el.querySelectorAll('span')]
+      .map((s) => s.textContent?.trim())
+      .filter((t) => t && t === t.toUpperCase() && t.length > 1),
   )
   const hasName = tags.includes('NAME')
   const hasHeading = tags.includes('HEADING')
@@ -152,7 +154,11 @@ const horizontalOverflow = async (page) =>
   const focused = await page.evaluate(() => document.activeElement?.id)
   const value = await page.locator('#profile-email').inputValue()
   const heading = await page.getByRole('heading', { level: 1 }).textContent()
-  record('PASS B: Perbaiki → fokus ke field email', `${focused}=${value}`, focused === 'profile-email')
+  record(
+    'PASS B: Perbaiki → fokus ke field email',
+    `${focused}=${value}`,
+    focused === 'profile-email',
+  )
   record('PASS B: bagian aktif ikut berpindah ke Profil', heading, heading === 'Profil')
   await page.screenshot({ path: `${OUT}/fase7-fix-focus-1440.png`, fullPage: false })
 
@@ -174,19 +180,32 @@ const horizontalOverflow = async (page) =>
   const drawer = page.locator('[data-probe="ats-drawer"]')
   const jdToggle = drawer.locator('button[aria-expanded]').first()
   await jdToggle.click()
-  await drawer.locator('[data-probe="ats-jd-input"]').fill(
-    'Butuh Frontend Engineer dengan React dan TypeScript, pengalaman machine learning, serta observability wajib. React TypeScript machine learning observability.',
-  )
-  await drawer.locator('[data-probe="ats-check-now"]').waitFor({ state: 'detached' }).catch(() => {})
+  await drawer
+    .locator('[data-probe="ats-jd-input"]')
+    .fill(
+      'Butuh Frontend Engineer dengan React dan TypeScript, pengalaman machine learning, serta observability wajib. React TypeScript machine learning observability.',
+    )
+  await drawer
+    .locator('[data-probe="ats-check-now"]')
+    .waitFor({ state: 'detached' })
+    .catch(() => {})
   await page.waitForTimeout(2500)
 
   const chipCount = await drawer.locator('[data-probe="ats-keyword-missing"]').count()
   const summary = await drawer.locator('[data-probe="ats-keywords"]').textContent()
-  record('PASS C: ringkasan cocok/belum ada', summary?.trim(), /cocok.*belum ada/.test(summary ?? ''))
+  record(
+    'PASS C: ringkasan cocok/belum ada',
+    summary?.trim(),
+    /cocok.*belum ada/.test(summary ?? ''),
+  )
   record('PASS C: chip kata belum ada dapat diklik', chipCount, chipCount > 0, `${chipCount} chip`)
 
   const marks = await page.locator('#pane-preview mark').count()
-  record('PASS C: kata kunci distabilo di lembar A4', `${marksBefore} → ${marks}`, marks > marksBefore)
+  record(
+    'PASS C: kata kunci distabilo di lembar A4',
+    `${marksBefore} → ${marks}`,
+    marks > marksBefore,
+  )
 
   // Toolbar pratinjau ada di bawah overlay drawer (1280–1599px), jadi drawer
   // ditutup dulu — sama seperti yang dilakukan pengguna.
@@ -220,7 +239,11 @@ const horizontalOverflow = async (page) =>
     const marksOff = await page.locator('#pane-preview mark').count()
     await toggle.click()
     const marksOn = await page.locator('#pane-preview mark').count()
-    record('PASS C: toggle highlighter nyala/mati', `${marksOn}/${marksOff}`, marksOff === 0 && marksOn > 0)
+    record(
+      'PASS C: toggle highlighter nyala/mati',
+      `${marksOn}/${marksOff}`,
+      marksOff === 0 && marksOn > 0,
+    )
   } else {
     record('PASS C: toggle highlighter nyala/mati', 'disabled', false)
   }

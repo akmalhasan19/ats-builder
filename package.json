@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/prerender-home.mjs && node scripts/inject-sw-precache.mjs",
     "build:spike": "tsc -b && vite build --mode spike",
     "preview": "vite preview",
     "typecheck": "tsc -b",
@@ -20,6 +20,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "pdf:verify": "esbuild scripts/pdf-verify.ts --bundle --platform=node --format=esm --packages=external --outfile=artifacts/.pdf-verify.mjs --log-level=warning && node artifacts/.pdf-verify.mjs",
+    "lhci": "lhci autorun",
+    "assets:pwa": "node scripts/make-pwa-assets.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -55,6 +57,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",

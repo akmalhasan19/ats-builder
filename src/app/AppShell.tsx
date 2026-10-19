@@ -1,3 +1,5 @@
+import { Suspense, lazy } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { cn } from 'cn'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useUiStore } from '@/store/uiStore'
@@ -13,6 +15,14 @@ import { Rail } from './shell/Rail'
 import { StickyActionBar } from './shell/StickyActionBar'
 import { TopBar } from './shell/TopBar'
 
+// T8.1 — section 2–6 di bawah workspace dimuat sebagai chunk terpisah:
+// kode & render-nya tidak boleh menahan paint pertama viewport kerja
+// (LCP = lembar A4). Prerender statis untuk crawler disediakan
+// scripts/prerender-home.mjs.
+const HomeSections = lazy(() =>
+  import('@/features/home/HomeSections').then((m) => ({ default: m.HomeSections })),
+)
+
 /**
  * §2.4 — satu grid, empat breakpoint. Lebar rail & label diatur CSS (bukan JS)
  * supaya paint pertama sudah final dan CLS tetap 0; `panelMode` dari
@@ -20,6 +30,10 @@ import { TopBar } from './shell/TopBar'
  *
  * Drawer ATS ikut grid sebagai kolom ke-4 hanya ≥1600px; di bawah itu ia
  * overlay lewat sheet supaya lembar A4 tidak menyusut.
+ *
+ * T8.1 — konten homepage (section 2–6) mengalir di bawah workspace dalam satu
+ * halaman scroll. Workspace dibatasi tingginya sendiri supaya alur isi →
+ * preview → unduh tidak ikut tergulung beranda.
  */
 export function AppShell() {
   usePanelMode()
@@ -29,10 +43,7 @@ export function AppShell() {
 
   return (
     <TooltipProvider>
-      <div
-        data-panel-mode={panelMode}
-        className="bg-surface flex min-h-dvh flex-col lg:h-dvh lg:overflow-hidden"
-      >
+      <div data-panel-mode={panelMode} className="bg-surface flex min-h-dvh flex-col">
         <SkipToContent />
         <TopBar />
         <MobileTabBar />
@@ -40,23 +51,44 @@ export function AppShell() {
         <main
           id="workspace-main"
           aria-label={t('workspace.heading')}
-          className={cn(
-            'grid min-h-0 flex-1 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0 lg:grid-cols-[56px_minmax(360px,1fr)_1fr]',
-            !atsDocked && 'xl:grid-cols-[248px_minmax(380px,520px)_1fr]',
-          )}
-          // Kolom ke-4 hanya ada saat drawer di-dock (≥1600px). Ditulis sebagai
-          // inline style, bukan utility `min-[1600px]:…`, karena dua utility
-          // grid-cols yang hidup berdampingan bergantung pada urutan CSS —
-          // inline style membuat lebar kolom tidak bisa kalah oleh `xl:`.
-          style={
-            atsDocked ? { gridTemplateColumns: '248px minmax(380px, 520px) 1fr 400px' } : undefined
-          }
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <Rail />
-          <FormPane className={cn(activeTab === 'form' ? 'block' : 'hidden', 'lg:block')} />
-          <PreviewWell className={cn(activeTab === 'preview' ? 'block' : 'hidden', 'lg:block')} />
-          <AtsDockSlot />
+          <div
+            className={cn(
+              'relative grid min-h-0 pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0 lg:h-[calc(100dvh-56px)] lg:min-h-[640px] lg:overflow-hidden lg:grid-cols-[56px_minmax(360px,1fr)_1fr]',
+              !atsDocked && 'xl:grid-cols-[248px_minmax(380px,520px)_1fr]',
+            )}
+            // Kolom ke-4 hanya ada saat drawer di-dock (≥1600px). Ditulis sebagai
+            // inline style, bukan utility `min-[1600px]:…`, karena dua utility
+            // grid-cols yang hidup berdampingan bergantung pada urutan CSS —
+            // inline style membuat lebar kolom tidak bisa kalah oleh `xl:`.
+            style={
+              atsDocked
+                ? { gridTemplateColumns: '248px minmax(380px, 520px) 1fr 400px' }
+                : undefined
+            }
+          >
+            <Rail />
+            <FormPane className={cn(activeTab === 'form' ? 'block' : 'hidden', 'lg:block')} />
+            <PreviewWell className={cn(activeTab === 'preview' ? 'block' : 'hidden', 'lg:block')} />
+            <AtsDockSlot />
+            {/* T8.1 — anchor nav minimal: satu ajakan turun ke galeri template. */}
+            <a
+              href="#home-templates"
+              aria-label={t('home.anchor.templates')}
+              data-probe="home-anchor"
+              className="bg-raised/90 border-rule text-ink-secondary hover:text-cyanotype hover:border-cyanotype absolute right-3 bottom-20 z-10 flex size-9 items-center justify-center rounded-full border shadow-[var(--shadow-raised)] backdrop-blur-sm transition-colors md:right-6 md:bottom-6"
+            >
+              <ChevronDown aria-hidden="true" className="size-4" />
+            </a>
+          </div>
         </main>
+
+        {/* Section 2–6 di LUAR <main> workspace: landmark footer & nav beranda
+            hanya bermakna contentinfo/navigation bila bukan keturunan main. */}
+        <Suspense fallback={null}>
+          <HomeSections />
+        </Suspense>
 
         <StickyActionBar />
         <AtsOverlay />

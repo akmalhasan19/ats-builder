@@ -169,7 +169,9 @@ test('keyboard saja: skip link, ubah judul, lalu ganti template', async ({ page 
   await trigger.focus()
   await page.keyboard.press('Enter')
 
-  const ledger = page.getByRole('button', { name: /Ledger/ }).first()
+  const ledger = page
+    .locator('[data-radix-popper-content-wrapper] button', { hasText: 'Ledger' })
+    .first()
   await expect(ledger).toBeVisible()
   await ledger.focus()
   await page.keyboard.press('Enter')

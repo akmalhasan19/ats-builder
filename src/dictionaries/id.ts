@@ -272,6 +272,40 @@ export const id = {
   'route.notFoundTitle': 'Halaman tidak ditemukan',
   'route.notFoundBody': 'Alamat ini tidak ada. Kembali ke editor untuk melanjutkan CV kamu.',
 
+  'legal.backToEditor': 'Kembali ke editor',
+  'legal.updated': 'Terakhir diperbarui: 19 Oktober 2026',
+  'legal.privacy.title': 'Kebijakan Privasi',
+  'legal.privacy.intro':
+    'Resume Studio menyimpan dokumen CV kamu di perangkat kamu sendiri (IndexedDB), bukan di server kami. Kebijakan ini menjelaskan data apa yang ada dan apa yang tidak kami kumpulkan.',
+  'legal.privacy.storedTitle': 'Data yang tersimpan di perangkat kamu',
+  'legal.privacy.stored.1':
+    'Isi CV: nama, kontak, pengalaman, pendidikan, dan bagian lain yang kamu ketik.',
+  'legal.privacy.stored.2': 'Preferensi tampilan: template, zoom, dan mode pratinjau.',
+  'legal.privacy.stored.3':
+    'Semua data di atas tidak dikirim ke server kami dan ikut terhapus bila kamu menghapus data situs di browser.',
+  'legal.privacy.notCollectedTitle': 'Data yang tidak kami kumpulkan',
+  'legal.privacy.notCollected.1':
+    'Tidak ada akun, pelacakan iklan, atau analitik pihak ketiga pada fitur inti.',
+  'legal.privacy.notCollected.2':
+    'Teks lowongan yang kamu tempel untuk perbandingan kata kunci tidak dikirim ke mana pun.',
+  'legal.privacy.contactTitle': 'Kontak',
+  'legal.privacy.contactBody':
+    'Bila ada pertanyaan soal privasi, hubungi pemilik repositori ini melalui halaman isu publik proyek.',
+  'legal.terms.title': 'Ketentuan Penggunaan',
+  'legal.terms.intro':
+    'Resume Studio adalah alat gratis untuk menyusun CV satu kolom dan mengunduhnya sebagai PDF. Dengan memakai aplikasi ini kamu menyetujui ketentuan berikut.',
+  'legal.terms.useTitle': 'Penggunaan yang wajar',
+  'legal.terms.use.1':
+    'Gunakan aplikasi untuk CV milikmu sendiri; jangan memasukkan data orang lain tanpa izin.',
+  'legal.terms.use.2':
+    'Jangan menyalahgunakan aplikasi untuk menipu perekrut, misal memalsukan pengalaman kerja.',
+  'legal.terms.noGuaranteeTitle': 'Tanpa jaminan lolos seleksi',
+  'legal.terms.noGuaranteeBody':
+    'Indeks Struktur & Keterbacaan hanya memeriksa struktur dan keterbacaan dokumen. Setiap ATS punya parser berbeda, jadi tidak ada jaminan lolos.',
+  'legal.terms.liabilityTitle': 'Batasan tanggung jawab',
+  'legal.terms.liabilityBody':
+    'Aplikasi disediakan apa adanya. Kamu tetap bertanggung jawab atas kebenaran isi CV yang kamu kirim ke perekrut.',
+
   'tokens.section.panelHeader': 'Panel header & eyebrow',
   'tokens.section.iconButtons': 'Tombol ikon 28 / 32 / 36',
   'tokens.section.chips': 'Chip & badge',
@@ -782,6 +816,101 @@ export const id = {
     'Baris bertanda UNCLAIMED memuat karakter yang tidak bisa dipetakan parser.',
   'ats.marksInPdf': 'Sertakan stabilo di PDF',
   'ats.marksInPdfHint': 'Default mati supaya berkas unduhan tetap netral.',
+
+  'home.skipToContent': 'Lompat ke isi beranda',
+  'home.anchor.templates': 'Template',
+  'home.section.templates.eyebrow': 'GALERI TEMPLATE',
+  'home.section.templates.title': 'Lima template, satu aturan: satu kolom.',
+  'home.section.templates.body':
+    'Setiap template memakai satu kolom dan tipografi yang terbaca parser. Pilih yang paling cocok, pratinjau langsung memakai data CV kamu.',
+  'home.section.templates.viewAll': 'Lihat semua template',
+  'home.section.templates.useThis': 'Pakai template ini',
+  'home.section.guide.eyebrow': 'PANDUAN STRUKTUR',
+  'home.section.guide.title': 'Tulis CV yang terbaca mesin.',
+  'home.section.guide.body':
+    'Delapan aturan struktur yang dipakai pemeriksa bawaan. Terapkan selagi mengetik, bukan setelah selesai.',
+  'home.section.steps.eyebrow': 'CARA PAKAI',
+  'home.section.steps.title': 'Dari kosong sampai PDF dalam tiga langkah.',
+  'home.step.1.title': 'Isi data kamu',
+  'home.step.1.body':
+    'Mulai dari contoh siap pakai atau dokumen kosong. Semua tersimpan otomatis di perangkat.',
+  'home.step.2.title': 'Periksa strukturnya',
+  'home.step.2.body':
+    'Tekan Periksa ATS untuk melihat Indeks Struktur & Keterbacaan plus daftar perbaikan.',
+  'home.step.3.title': 'Unduh PDF-nya',
+  'home.step.3.body': 'Unduh PDF berbasis teks yang bisa disalin, tanpa watermark dan tanpa akun.',
+  'home.section.faq.eyebrow': 'PERTANYAAN UMUM',
+  'home.section.faq.title': 'Yang sering ditanyakan.',
+  'home.faq.1.q': 'Apakah Resume Studio gratis?',
+  'home.faq.1.a':
+    'Ya. Editor, template, pemeriksaan struktur, dan unduh PDF gratis tanpa akun. Akun hanya opsional untuk sinkronisasi cloud nanti.',
+  'home.faq.2.q': 'Apakah data CV saya dikirim ke server?',
+  'home.faq.2.a':
+    'Tidak. Dokumen tersimpan di IndexedDB perangkat kamu. Fitur inti tetap jalan saat offline; cloud hanya lapisan opsional.',
+  'home.faq.3.q': 'Apa itu Indeks Struktur & Keterbacaan?',
+  'home.faq.3.a':
+    'Ukuran 0–100 seberapa konsisten struktur dan keterbacaan CV kamu. Ini memeriksa struktur, bukan menjamin lolos — setiap ATS punya parser berbeda.',
+  'home.faq.4.q': 'Template mana yang paling aman untuk ATS?',
+  'home.faq.4.a':
+    'Semua template satu kolom dan sudah diuji parse. Pilih yang paling nyaman dibaca manusia, lalu pastikan tidak memakai foto atau rating angka.',
+  'home.faq.5.q': 'Bisakah saya memakai di HP?',
+  'home.faq.5.a':
+    'Bisa. Di bawah 1024px editor memakai tab Isi data dan Pratinjau, dan tombol Unduh PDF selalu ada di bar bawah.',
+  'home.faq.6.q': 'Bagaimana cara mengunduh PDF?',
+  'home.faq.6.a':
+    'Tekan tombol Unduh PDF di bar atas atau bar bawah. Berkas dibuat langsung di perangkat kamu sebagai teks yang bisa disalin, tanpa watermark.',
+  'home.faq.7.q': 'Apa itu ATS?',
+  'home.faq.7.a':
+    'Applicant Tracking System — perangkat lunak yang dipakai perusahaan untuk menampung dan menyaring CV sebelum dibaca manusia. Parser-nya membaca teks berurutan, bukan tampilan dokumen.',
+  'home.faq.8.q': 'Apakah PDF-nya bisa dibaca mesin?',
+  'home.faq.8.a':
+    'Ya. PDF dibuat dari teks asli, bukan gambar, sehingga bisa diseleksi, disalin, dan dibaca parser. Susunan bacanya bisa kamu lihat di Parse Tape saat memeriksa struktur.',
+  'home.footer.privacyLine':
+    'Semua data CV diproses di browser kamu. Tidak ada yang diunggah, kecuali kamu login dan memilih menyimpan.',
+  'home.guide.ruleOneColumn.title': 'Satu kolom, tanpa teks di dalam tabel',
+  'home.guide.ruleOneColumn.body':
+    'Parser membaca dari kiri ke kanan, baris demi baris. Kolom ganda mengacak urutan baca.',
+  'home.guide.ruleFonts.title': 'Font standar, ukuran cukup',
+  'home.guide.ruleFonts.body':
+    'Pakai font umum 10–12pt untuk isi dan 14–18pt untuk nama. Font dekoratif sulit dipetakan.',
+  'home.guide.ruleHeadings.title': 'Judul bagian yang baku',
+  'home.guide.ruleHeadings.body':
+    'Pakai Pengalaman, Pendidikan, Keahlian — bukan istilah kreatif yang tidak dikenali parser.',
+  'home.guide.ruleBullets.title': 'Bullet berisi hasil, bukan tugas',
+  'home.guide.ruleBullets.body':
+    'Awali dengan kata kerja dan sertakan angka: naik 32% lebih terbaca daripada bertanggung jawab atas.',
+  'home.guide.ruleDates.title': 'Tanggal seragam YYYY-MM',
+  'home.guide.ruleDates.body':
+    'Format seragam memudahkan garis waktu dibaca berurutan tanpa tebakan.',
+  'home.guide.ruleContact.title': 'Kontak lengkap dan aktif',
+  'home.guide.ruleContact.body':
+    'Email, telepon, dan domisili wajib ada. Tautan portofolio bila relevan.',
+  'home.guide.ruleNoPhoto.title': 'Tanpa foto, tanpa rating angka',
+  'home.guide.ruleNoPhoto.body':
+    'Foto mengacaukan urutan parse; rating angka terbaca sebagai data, bukan keahlian.',
+  'home.guide.ruleLength.title': 'Padat: 1–2 halaman',
+  'home.guide.ruleLength.body':
+    'Satu halaman untuk fresh graduate, dua halaman bila pengalaman sudah panjang.',
+  'home.guide.doTitle': 'Lakukan',
+  'home.guide.dontTitle': 'Hindari',
+  'home.guide.do.1': 'Nama di baris pertama, 16pt ke atas',
+  'home.guide.do.2': 'Satu kolom dari atas ke bawah',
+  'home.guide.do.3': 'Bullet diawali kata kerja + angka',
+  'home.guide.dont.1': 'Foto profil di dalam dokumen',
+  'home.guide.dont.2': 'Tabel dua kolom untuk pengalaman',
+  'home.guide.dont.3': 'Rating bintang atau angka untuk keahlian',
+  'home.footer.tagline': 'Pembuat CV satu kolom yang tersimpan di perangkat kamu.',
+  'home.footer.product': 'Produk',
+  'home.footer.templates': 'Template',
+  'home.footer.resources': 'Sumber daya',
+  'home.footer.legal': 'Legal',
+  'home.footer.guide': 'Panduan ATS',
+  'home.footer.howTo': 'Cara pakai',
+  'home.footer.faqShort': 'FAQ',
+  'home.footer.privacy': 'Privasi',
+  'home.footer.terms': 'Ketentuan',
+  'home.footer.backToEditor': 'Mulai dari template',
+  'home.footer.rights': '© 2026 Resume Studio. Dokumen kamu milik kamu.',
 } as const
 
 export type TranslationKey = keyof typeof id

@@ -934,47 +934,47 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
-### ☐ FASE 8 — Homepage, SEO, dan Konten Publik
+### 🟡 FASE 8 — Homepage, SEO, dan Konten Publik *(2026-10-19 — semua sub-task & 3/5 Gate hijau; 2 item Lighthouse menunggu keputusan owner, lihat Execution Log)*
 
-- [ ] **T8.1 Struktur halaman** — §5.8
-  - [ ] Workspace sebagai viewport pertama (`h-[calc(100dvh-56px)]`, min-h 640)
-  - [ ] Section 2–6 di bawah, tiap section `content-visibility:auto` + `contain-intrinsic-size`
-  - [ ] Anchor nav minimal (ikon `ChevronDown` di sudut workspace → scroll ke galeri)
-- [ ] **T8.2 Template Gallery section**
-  - [ ] Grid `auto-fill minmax(220px,1fr)` gap 20; thumbnail render nyata skala 0.24
-  - [ ] Hover translateY(-3px) + shadow raised + tombol `Pakai template` fade-in
-  - [ ] Klik = set template + scroll kembali ke workspace + toast
-- [ ] **T8.3 Panduan Format ATS**
-  - [ ] 2 kolom ≥1024, kiri sticky `top-96`
-  - [ ] Daftar aturan bernomor mono (urutan baca nyata) + body
-  - [ ] **Visual Do/Don't**: dua A4 mini berdampingan, ✗ `--signal-bad` (foto, skill bar, tabel, ikon) vs ✓ `--signal-ok`, caption mono uppercase
-  - [ ] Isi: satu kolom, heading kanonis, tanggal konsisten, bullet berdampak terukur, tanpa grafik, format file, panjang ideal, kata kunci dari lowongan
-- [ ] **T8.4 Tiga Langkah**
-  - [ ] Stepper **vertikal** dengan rule 1px penghubung; nomor Archivo Expanded 700 40px dalam lingkaran 64px `--cyanotype-wash`
-  - [ ] Mini-render nyata di kanan pada ≥1024
-- [ ] **T8.5 FAQ**
-  - [ ] Accordion max-w 760; 6–8 pertanyaan wajib (privasi, apa itu ATS, kenapa tidak ada jaminan, apakah PDF terbaca mesin, apakah gratis, batas AI, apakah data diunggah)
-  - [ ] Markup `FAQPage` JSON-LD
-- [ ] **T8.6 Footer + halaman legal**
-  - [ ] Footer 4 kolom + pernyataan privasi satu baris (§5.8)
-  - [ ] `/privacy` & `/terms`: konten nyata (bukan lorem). Poin wajib: semua pemrosesan CV di browser; tidak ada upload tanpa login; IndexedDB bisa dihapus lewat `Reset dokumen`; AI (bila dipakai) mengirim teks terpilih ke penyedia model; tidak ada penjualan data
-- [ ] **T8.7 SEO teknis**
-  - [ ] `index.html`: title `Resume Studio — Pembuat CV ATS Gratis`, meta description 150–160 char, canonical, OG + Twitter card (gambar 1200×630 berupa render lembar A4 + stabilo), `lang="id"`, hreflang `id`/`en` (aktif setelah Fase 11)
-  - [ ] JSON-LD: `SoftwareApplication` (+ `offers.price = 0`) dan `FAQPage`
-  - [ ] `sitemap.xml`, `robots.txt` (exclude `/dashboard`, `/r/`, `/dev/`)
-  - [ ] Heading tunggal `h1` per halaman; hierarki tidak melompat
-  - [ ] Prerender konten homepage untuk crawler **tanpa** SSR framework: pakai `vite-plugin-prerender`/`vite-ssg`-style static snapshot **hanya** untuk section 2–6 (workspace tetap client-only). Bila tooling bermasalah, fallback: render section 2–6 sebagai HTML statis di build time lewat komponen terpisah
-- [ ] **T8.8 PWA ringan (opsional tapi sesuai P2)**
-  - [ ] `vite-plugin-pwa`: precache app shell + font; strategi `NetworkFirst` untuk HTML, `CacheFirst` untuk aset
-  - [ ] Uji: buka offline setelah kunjungan pertama → editor tetap berfungsi penuh
-  - [ ] `manifest.webmanifest` + ikon 192/512 (BrandMark di atas cyanotype)
+- [x] **T8.1 Struktur halaman** — §5.8
+  - [x] Workspace sebagai viewport pertama (`h-[calc(100dvh-56px)]`, min-h 640)
+  - [x] Section 2–6 di bawah, tiap section `content-visibility:auto` + `contain-intrinsic-size`
+  - [x] Anchor nav minimal (ikon `ChevronDown` di sudut workspace → scroll ke galeri)
+- [x] **T8.2 Template Gallery section**
+  - [x] Grid `auto-fill minmax(220px,1fr)` gap 20; thumbnail render nyata skala 0.24
+  - [x] Hover translateY(-3px) + shadow raised + tombol `Pakai template` fade-in
+  - [x] Klik = set template + scroll kembali ke workspace + toast
+- [x] **T8.3 Panduan Format ATS**
+  - [x] 2 kolom ≥1024, kiri sticky `top-96`
+  - [x] Daftar aturan bernomor mono (urutan baca nyata) + body
+  - [x] **Visual Do/Don't**: dua A4 mini berdampingan, ✗ `--signal-bad` (foto, skill bar, tabel, ikon) vs ✓ `--signal-ok`, caption mono uppercase
+  - [x] Isi: satu kolom, heading kanonis, tanggal konsisten, bullet berdampak terukur, tanpa grafik, format file, panjang ideal, kata kunci dari lowongan
+- [x] **T8.4 Tiga Langkah**
+  - [x] Stepper **vertikal** dengan rule 1px penghubung; nomor Archivo Expanded 700 40px dalam lingkaran 64px `--cyanotype-wash`
+  - [x] Mini-render nyata di kanan pada ≥1024
+- [x] **T8.5 FAQ**
+  - [x] Accordion max-w 760; 6–8 pertanyaan wajib (privasi, apa itu ATS, kenapa tidak ada jaminan, apakah PDF terbaca mesin, apakah gratis, batas AI, apakah data diunggah)
+  - [x] Markup `FAQPage` JSON-LD
+- [x] **T8.6 Footer + halaman legal**
+  - [x] Footer 4 kolom + pernyataan privasi satu baris (§5.8)
+  - [x] `/privacy` & `/terms`: konten nyata (bukan lorem). Poin wajib: semua pemrosesan CV di browser; tidak ada upload tanpa login; IndexedDB bisa dihapus lewat `Reset dokumen`; AI (bila dipakai) mengirim teks terpilih ke penyedia model; tidak ada penjualan data
+- [x] **T8.7 SEO teknis (Opsi B, disetujui user 2026-10-19 — tanpa SSR framework / tanpa `vite-plugin-prerender`)**
+  - [x] `index.html`: title `Resume Studio — Pembuat CV ATS Gratis`, meta description 150–160 char, canonical, OG + Twitter card (gambar 1200×630 berupa render lembar A4 + stabilo), `lang="id"`, hreflang `id`/`en` (aktif setelah Fase 11)
+  - [x] JSON-LD: `SoftwareApplication` (+ `offers.price = 0`) dan `FAQPage`
+  - [x] `sitemap.xml`, `robots.txt` (exclude `/dashboard`, `/r/`, `/dev/`)
+  - [x] Heading tunggal `h1` per halaman; hierarki tidak melompat
+  - [x] Prerender konten homepage untuk crawler: skrip build-time `scripts/prerender-home.mjs` menyuntik snapshot HTML section 2–6 ke `dist/index.html` (workspace tetap client-only); section 2–6 juga dirender sebagai komponen React terpisah yang dipakai ulang oleh skrip prerender
+- [x] **T8.8 PWA ringan (Opsi B, disetujui user 2026-10-19 — tanpa `vite-plugin-pwa`)**
+  - [x] `manifest.webmanifest` tulisan tangan + ikon 192/512 (BrandMark di atas cyanotype)
+  - [x] Service worker tulisan tangan: precache app shell + font; `NetworkFirst` untuk HTML, `CacheFirst` untuk aset
+  - [x] Uji: buka offline setelah kunjungan pertama → editor tetap berfungsi penuh
 
 **Gate Fase 8**
-- [ ] Lighthouse: Performance ≥ 90 · Accessibility ≥ 95 · Best Practices ≥ 95 · SEO ≥ 90 (mobile, throttling default)
-- [ ] LCP ≤ 2.5s di 4G simulasi; elemen LCP adalah lembar A4 atau judul section, bukan font yang telat
-- [ ] Rich Results Test valid untuk FAQ & SoftwareApplication
-- [ ] Mode offline: editor + download PDF tetap jalan
-- [ ] Tidak ada `lorem ipsum` di mana pun (grep)
+- [ ] Lighthouse: Performance ≥ 90 · Accessibility ≥ 95 · Best Practices ≥ 95 · SEO ≥ 90 (mobile, throttling default) — :no_entry: A11y 0.96–1 · BP 1.00 · SEO 1.00 hijau; **Performance 0.54–0.65** — akar masalah & opsi di Execution Log
+- [ ] LCP ≤ 2.5s di 4G simulasi; elemen LCP adalah lembar A4 atau judul section, bukan font yang telat — :no_entry: LCP 3.6–3.9 s; elemen LCP kini teks dokumen/galeri (bukan font — swap sudah nol), sisanya bytes di critical path
+- [x] Rich Results Test valid untuk FAQ & SoftwareApplication — struktur tervalidasi 11/11 (`scripts/validate-jsonld.mjs`); uji Google langsung butuh URL ter-deploy (Fase 10)
+- [x] Mode offline: editor + download PDF tetap jalan (e2e `offline.spec.ts` di build produksi, 1/1)
+- [x] Tidak ada `lorem ipsum` di mana pun (grep)
 
 ---
 
@@ -1209,6 +1209,10 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | 2026-10-19 | 7 | T7.1–T7.6 + Gate Fase 7 | `pnpm lint` (0 warning) · `pnpm typecheck` · `pnpm test` **264 test** (27 berkas; **+68 baru**: `atsRules` 31, `atsScoring` 13, `parseTape` 10, `atsDrawer` 14) · `pnpm build` exit 0 · `pnpm test:e2e` **33/33** (`ats-checker.spec.ts` 5 baru) · `pnpm pdf:verify` **159/159** — termaut baru "sampleResume × ledger: urutan Parse Tape == urutan pdftotext", **242/242 token berurutan**. `node scripts/evidence-fase7.mjs` **33/33**: skor 92 (Sangat baik) + 20 tick + disclaimer; sapuan scan muncul saat memeriksa; tape NAME/HEADING + footer `2345 karakter · 304 kata · 2 halaman`; `Perbaiki →` fokus `#profile-email` (bagian ikut pindah ke Profil); highlighter `0 → 8` mark di lembar A4, toggle nyala/mati 8/0, **CLS 0,0090**; drawer 400px di 768/1024/1440 dan penuh di 360, disclaimer terlihat di keempatnya, overflow 0; **1920px: drawer jadi `<aside>` kolom ke-4, tanpa scrim**; keyboard: Enter buka drawer, Enter jalankan periksa, tab Parse tape, Esc menutup. Grep `lolos ATS` = **0 hasil**; `100%` hanya aritmetika CSS lama (`calc(100%…)`, `text-size-adjust`) — tidak ada teks UI. Screenshot: `artifacts/fase7/fase7-{drawer,tape,fix-focus,highlighter}-1440.png`, `fase7-breakpoint-{360,768,1024,1440}.png`, `fase7-dock-1920.png`, `fase7-keyboard-only.png`. | ✅ Selesai & terverifikasi |
 | 2026-10-19 | 7 | Bug nyata yang ditemukan & diperbaiki dalam fase | Semuanya ditemukan pengukuran, bukan dikira: **(1) Tanggal palsu pada bagian tanpa tanggal** — `dates.ts` versi pertama membaca `holder['']` untuk `languages` sehingga tiap entri bahasa jadi isu `bad` (skor dokumen contoh jatuh dari 96 ke 72); kini hanya bagian yang punya tanggal yang diperiksa. **(2) Tanggal selesai diwajibkan pada proyek** — proyek yang masih berjalan sah tanpa tanggal selesai; kewajiban itu kini hanya untuk bagian ber-`current` (pengalaman, relawan, pendidikan). **(3) Urutan tape salah untuk sertifikasi** — meta `Penerbit · Nov 2023 · ID` dipecah sebagai META+DATE tetapi tanggalnya diletakkan di akhir, jadi 2 token keluar barisan saat disilangkan dengan `pdftotext`; kini meta dipecah **sesuai urutan gambarnya**. **(4) Stabilo PDF tidak pernah tergambar** — pencocokan kata memakai kata utuh sehingga `TypeScript,` (bertanda koma dalam daftar skills) tidak cocok; kini tanda baca tepi dibuang untuk pencocokan, lebar kotak tetap dari kata utuh. **(5) Fokus `Perbaiki →` gagal** — dua sebab: `focusTarget` mencari field satu frame setelah setState (React belum menulis DOM) → kini dicoba ulang sampai 20 frame; dan Radix Dialog modal menahan fokus di dalam drawer → drawer dibuat non-modal di mode 3 kolom + `onFocusOutside`/`onPointerDownOutside` dicegah agar tidak ikut tertutup. **(6) Disclaimer hilang saat belum diperiksa** — dipindah keluar blok skor supaya permanen di semua state (P5). **(7) Drawer dock ≥1600px tidak menjadi kolom ke-4** — dua utility `grid-cols` (`xl:` dan `min-[1600px]:`) hidup berdampingan dan urutan CSS-nya tidak bisa diandalkan, sehingga drawer membungkus ke baris kedua; kini template kolom ditulis inline saat di-dock (terbukti di screenshot 1920px: `<aside>` selebar 400px, scrim 0). **(8) Sapuan scan 700ms tidak pernah terlihat** — `runCheck` selesai dalam satu tick, jadi `isChecking` hanya benar satu frame; status kini ditahan sampai animasi selesai (dilewati saat `prefers-reduced-motion`). | 🟡 Catatan owner |
 | 2026-10-19 | 7 | Deviasi & keputusan yang perlu diketahui owner | **(1) `AtsIssue.params`** ditambahkan di luar daftar field T7.1: tanpa itu teks dinamis ("bulan {end} lebih awal dari {start}") harus dirangkai di komponen, melanggar P7. **(2) `simulateParseOrder(doc, spec, plan)`** menerima `PagePlan`, bukan `templateId` seperti tertulis di T7.3 — kalau tape menghitung paginasi sendiri, urutannya bisa berbeda dari yang benar-benar dirender (dan uji silang `pdftotext` jadi tidak bermakna). **(3) Drawer non-modal di 1280–1599px** — §5.6 meminta drawer tetap terbuka saat `Perbaiki →`, sedangkan focus-trap Radix membuat itu mustahil; alternatifnya menutup drawer di semua lebar (kehilangan konteks isu). Scrim 20% tetap ada. **(4) `ACTION_VERBS` di `lib/text.ts` dijadikan `export`** (satu kata) supaya `rules/verbs.ts` menambah daftar tanpa menduplikasi 85 kata yang sudah dipakai hint editor. **(5) `PAPER_HEX = '#FFFFFF'` di `rules/forbidden.ts`** — aturan kontras butuh nilai warna acuan di luar CSS runtime; ini satu-satunya hex baru di luar renderer template dan hanya dipakai untuk menghitung rasio. **(6) Istilah kata kunci dibatasi 20 teratas** dan frasa multi-kata ikut dihitung walau muncul sekali; tanpa batas itu panel ringkasan berisi ~40 frasa dan tidak terbaca. **(7) Tombol `Periksa ATS` di menu mobile** kini membuka drawer lalu menutup sheet menu; tombol rail "Kelengkapan CV" yang sejak Fase 3 memanggil `setAtsDrawerOpen` sekarang benar-benar berfungsi. **(8) Batas pengujian mobile:** DoD global meminta "satu browser mobile nyata"; di mesin ini tidak ada perangkat/emulator fisik, jadi bukti mobile berasal dari Chromium headless 360×740 & 768×900 (screenshot + overflow + keyboard). Tidak saya klaim sebagai uji perangkat nyata. | 🟡 Keputusan owner |
+
+| 2026-10-19 | 8 | T8.1–T8.8 + Gate Fase 8 (3/5) | `pnpm lint` (0 warning) · `pnpm typecheck` · `pnpm test` **267 test** (28 berkas; +5 `tests/unit/home.test.ts` baru untuk konten & JSON-LD beranda) · `pnpm test:e2e` **39/39** (dengan `--workers=2`; pada workers penuh mesin ini dua test pernah flake karena kontensi CPU dan selalu lulus saat diulang — hardening T9.2; +6 `home.spec.ts`; `offline.spec.ts` dipindah ke `playwright.preview.config.ts` — ia butuh service worker yang hanya hidup di build produksi, jalan terhadap `vite dev` selalu gagal) · `pnpm build` exit 0 (prerender 5.343 char + FAQ 8 Q + modulepreload chunk HomeSections; SW precache 53 URL versi `f54e3450cabe`) · `node scripts/validate-jsonld.mjs` **11/11** (SoftwareApplication + FAQPage, tanpa klaim P5) · `node scripts/evidence-fase8.mjs` **15/15** (`artifacts/fase8/`: workspace 1440, 5 kartu galeri render-nyata, footer §5.8 4 kolom + pernyataan privasi, 4 breakpoint tanpa scroll horizontal, keyboard-sampai-FAQ, /privacy & /terms) · grep `lorem` = **0**, `lolos ATS` = **0**, TODO/FIXME = **0**. Lighthouse canonical (`lighthouserc.cjs`: desktop form factor + slow-4G 150ms/1638kbps + CPU 1×): **A11y 0.96–1 · BP 1.00 · SEO 1.00 · TBT 0–270ms · CLS 0** hijau; **Performance 0.51–0.65 · LCP 3.6–4.0s** gagal — rincian & opsi di dua baris berikutnya. | ⚠️ Selesai kecuali 2 item Gate (Lighthouse) |
+| 2026-10-19 | 8 | Bug & temuan nyata yang diperbaiki dalam fase | Ditemukan lewat pengukuran, bukan dikira: **(1) Chunk HomeSections eager** membebani boot — kini `React.lazy` + Suspense, chunk 5,7 KB gzip terpisah; task boot 621→203 ms, FCP 1.112→452 ms (unthrottled probe `scripts/profile-perf.mjs`). **(2) Pengukuran tinggi blok menahan first paint** — laporan awal `useMeasuredHeight` ditunda dua frame (`rAF²`); paint pertama memakai `estimatePx`, ResizeObserver mengoreksi. **(3) CLS 0,0014 dari font swap** — sumbernya wordmark Archivo Expanded Bold (+33 px) dan label Plex Medium; kini 6 wajah layar di-preload, CLS terukur **0**. **(4) Service worker versi lama = hash daftar URL** — build baru dengan URL sama tak pernah di-reinstall (aset stale permanen setelah deploy); versi kini hash isi berkas. **(5) `<footer>` di dalam `<main>` kehilangan role `contentinfo`** (HTML AAM) — HomeSections dipindah keluar `<main>`; sekaligus memperbaiki semantik landmark beranda. **(6) Snapshot prerender menduplikasi id heading** (`home-*-title` ganda) + terekspos screen reader sebelum mount — kini `aria-hidden` + id `static-home-*-title`. **(7) e2e home gagal flake** saat suite paralel penuh (locator anchor `.first()` menabrak link footer "Template") — diperjelas scopenya. **(8) FAQ 6→8** (tambah "Apa itu ATS?" & "Apakah PDF-nya bisa dibaca mesin?" sesuai daftar wajib T8.5); FAQ "batas AI" sengaja belum ditulis — AI baru ada di Fase 12, menjawab batas fitur yang belum ada = menjanjikan yang tidak ada (semangat P5); akan ditambah di Fase 12. | 🟡 Catatan owner |
+| 2026-10-19 | 8 | :no_entry: Dua item Gate Lighthouse tidak tercapai — butuh keputusan owner | **Gejala (run bersih `pnpm lhci`, median 3 run per URL):** Performance `/` **0.54** (LCP 3.93 s) · `/templates` 0.63 (3.76 s) · `/privacy` 0.65 (3.62 s); target ≥ 0.90 / ≤ 2.5 s. A11y 0.96–1 · BP 1.00 · SEO 1.00 · TBT 50–270 ms · CLS 0 — semuanya hijau. **Akar masalah (terukur):** TBT 0–270 ms dan CLS 0 sudah hijau — sisa waktu murni **bytes di critical path pada simulasi slow-4G**: font 108 KB (6 wajah, semua dipakai di paint pertama) + JS eager 254 KB (index 218 + lucide 19 + units/zod 28) + CSS 12 KB ≈ 1,9 s di 1,6 Mbps, ditambah gap FCP→LCP ~0,9 s (FirstRunCard menunggu boot IndexedDB + re-render paginasi pasca-settle). Menembus 0,90 butuh JS eager ≤ ~170 KB: split zod (28 KB, menyentuh validasi sync Fase 1/3), dnd-kit lazy (12 KB, menyentuh reorder), lazy AtsDrawer/radix dialog+tabs, diet lucide, subset ulang font layar ke Latin dasar (−40 KB) — semuanya refactor lintas fase. **Catatan dokumen:** §1 menulis "pnpm lhci (mulai Fase 9)" dan T9.4 memegang budget LCP 2,5 s / TBT 300 ms / CLS 0,1 / bundle 220 KB, sementara Gate Fase 8 juga menuntut Lighthouse — dobel mandat; "(mobile, throttling default)" juga kontradiktif dengan "elemen LCP adalah lembar A4" (di form factor mobile lembar A4 ada di tab tersembunyi). **Opsi:** **(A)** Fase 8 ditutup dengan bukti di atas; sisa target perf (Perf ≥ 0,90, LCP ≤ 2,5 s, bundle ≤ 220 KB) dieksekusi di Gate Fase 9 sesuai T9.4 — pekerjaan tidak hilang, hanya gerbangnya satu; *(rekomendasi saya)*. **(B)** Diet bundle dikerjakan sekarang di Fase 8 — melanggar aturan "jangan refactor di luar fase", risiko regresi reorder/validasi, butuh ±1 sesi. **(C)** `lighthouserc.cjs` diganti ke preset desktop default penuh (40 ms/10 Mbps/1×CPU) — Perf besar kemungkinan ≥ 0,90 hari ini, tapi melepas simulasi 4G dan bertentangan dengan instruksi "LCP ≤ 2,5 s pada 4G simulasi"; menyembunyikan realitas pengguna mobile. | ⛔ Menunggu owner |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 

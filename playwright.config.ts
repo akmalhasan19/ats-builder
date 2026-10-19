@@ -6,6 +6,9 @@ const desktopChrome = devices['Desktop Chrome']
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // offline.spec butuh service worker → hanya hidup di build produksi
+  // (playwright.preview.config.ts). Di server dev ia pasti gagal.
+  testIgnore: /offline\.spec\.ts/,
   outputDir: './test-results',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),

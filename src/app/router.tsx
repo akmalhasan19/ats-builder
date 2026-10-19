@@ -42,11 +42,21 @@ export const router = createBrowserRouter([
     lazy: () => import('./pages/TemplatesPage').then((m) => ({ element: <m.TemplatesPage /> })),
     errorElement: <ErrorScreen />,
   },
+  {
+    path: '/privacy',
+    lazy: () =>
+      import('./pages/LegalPage').then((m) => ({ element: <m.LegalPage page="privacy" /> })),
+    errorElement: <ErrorScreen />,
+  },
+  {
+    path: '/terms',
+    lazy: () =>
+      import('./pages/LegalPage').then((m) => ({ element: <m.LegalPage page="terms" /> })),
+    errorElement: <ErrorScreen />,
+  },
   placeholder('/dashboard', 'route.dashboard'),
   placeholder('/login', 'route.login'),
   placeholder('/auth/callback', 'route.authCallback'),
-  placeholder('/privacy', 'route.privacy'),
-  placeholder('/terms', 'route.terms'),
   placeholder('/cover-letter', 'route.coverLetter'),
   ...(import.meta.env.DEV || __DEV_PAGES__ ? createDevRoutes() : []),
   { path: '*', element: <NotFoundPage />, errorElement: <ErrorScreen /> },

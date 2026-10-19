@@ -48,8 +48,7 @@ const dismissFirstRun = async (page) => {
 
   // Tunggu kelima baris selesai mengukur.
   await page.waitForFunction(
-    () =>
-      Object.keys(window.__atsTemplateCompare ?? {}).length >= 5,
+    () => Object.keys(window.__atsTemplateCompare ?? {}).length >= 5,
     undefined,
     { timeout: 90_000 },
   )
@@ -134,11 +133,7 @@ const dismissFirstRun = async (page) => {
   await page.screenshot({ path: `${OUT}/popover-thumbs.png` })
   await page.keyboard.press('Enter')
   await page.getByText('Template Executive dipakai').waitFor({ timeout: 5000 })
-  record(
-    'ganti template: toast "Template Executive dipakai"',
-    'tampil',
-    true,
-  )
+  record('ganti template: toast "Template Executive dipakai"', 'tampil', true)
   await page.waitForTimeout(300)
   const fontFamily = await page.evaluate(() => {
     const header = document
@@ -154,8 +149,8 @@ const dismissFirstRun = async (page) => {
   await page.screenshot({ path: `${OUT}/workspace-executive.png` })
 
   // 2. Konten dokumen tidak berubah saat ganti template (semua bagian tetap).
-  const sections = await page.evaluate(() =>
-    document.querySelectorAll('#pane-preview [data-probe="preview-block"]').length,
+  const sections = await page.evaluate(
+    () => document.querySelectorAll('#pane-preview [data-probe="preview-block"]').length,
   )
   record('lembar tetap terisi blok setelah ganti template', `${sections} blok`, sections > 5)
 
@@ -173,14 +168,16 @@ const dismissFirstRun = async (page) => {
         .catch(() => false)
     )
       await previewTab.click()
-    await shotPage.locator('#pane-preview [data-probe="page-sheet"]').first().waitFor({ timeout: 20_000 })
+    await shotPage
+      .locator('#pane-preview [data-probe="page-sheet"]')
+      .first()
+      .waitFor({ timeout: 20_000 })
     await shotPage.waitForTimeout(600)
     const numbers = await shotPage.evaluate(() => ({
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       sheet: Math.round(
-        document
-          .querySelector('#pane-preview [data-probe="page-sheet"]')
-          ?.getBoundingClientRect().width ?? 0,
+        document.querySelector('#pane-preview [data-probe="page-sheet"]')?.getBoundingClientRect()
+          .width ?? 0,
       ),
     }))
     record(
