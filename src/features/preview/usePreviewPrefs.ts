@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { PREFS_KEY, readValue, writeValue } from '@/features/persistence/idb'
-import { useUiStore } from '@/store/uiStore'
+import { useUiStore, type EditMode } from '@/store/uiStore'
 
 type PreviewPrefs = {
   zoom: number
   fitMode: boolean
   showMarginGuides: boolean
   showKeywordMarks: boolean
+  editMode: EditMode
 }
 
 /**
@@ -18,6 +19,7 @@ export function usePreviewPrefs(): void {
   const fitMode = useUiStore((state) => state.fitMode)
   const showMarginGuides = useUiStore((state) => state.showMarginGuides)
   const showKeywordMarks = useUiStore((state) => state.showKeywordMarks)
+  const editMode = useUiStore((state) => state.editMode)
   const loaded = useRef(false)
 
   useEffect(() => {
@@ -33,6 +35,8 @@ export function usePreviewPrefs(): void {
           store.setShowMarginGuides(stored.showMarginGuides)
         if (typeof stored.showKeywordMarks === 'boolean')
           store.setShowKeywordMarks(stored.showKeywordMarks)
+        if (stored.editMode === 'form' || stored.editMode === 'canvas')
+          store.setEditMode(stored.editMode)
       } catch {
         // Preferensi tidak kritis; uiStore tetap jadi sumber kebenaran sesi ini.
       } finally {
@@ -46,8 +50,12 @@ export function usePreviewPrefs(): void {
 
   useEffect(() => {
     if (!loaded.current) return
-    void writeValue(PREFS_KEY, { zoom, fitMode, showMarginGuides, showKeywordMarks }).catch(
-      () => undefined,
-    )
-  }, [zoom, fitMode, showMarginGuides, showKeywordMarks])
+    void writeValue(PREFS_KEY, {
+      zoom,
+      fitMode,
+      showMarginGuides,
+      showKeywordMarks,
+      editMode,
+    }).catch(() => undefined)
+  }, [zoom, fitMode, showMarginGuides, showKeywordMarks, editMode])
 }

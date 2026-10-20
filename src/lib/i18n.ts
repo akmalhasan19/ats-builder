@@ -29,4 +29,14 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
   return text
 }
 
+/**
+ * Pencarian kunci opsional: mengembalikan `undefined` bila kunci tidak ada di
+ * kamus. Dipakai untuk struktur override berjenjang (mis. guide per template:
+ * `canvas.guide.<templateId>.*` → fallback `canvas.guide.*`) — P7 tetap
+ * berlaku karena teks yang tampil tetap berasal dari kamus.
+ */
+export function tMaybe(key: string): string | undefined {
+  return dictionaries[lang][key as TranslationKey] ?? (id as Record<string, string>)[key]
+}
+
 export type { TranslationKey }

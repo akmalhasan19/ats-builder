@@ -8,6 +8,7 @@ import { AtsDockSlot, AtsOverlay } from '@/features/ats/components/AtsDrawer'
 import { useAtsDocked } from '@/features/ats/useAtsDock'
 import { SkipToContent } from './SkipToContent'
 import { usePanelMode } from './usePanelMode'
+import { useUndoRedoShortcuts } from './useUndoRedoShortcuts'
 import { FormPane } from './shell/FormPane'
 import { ErrorBanner } from './shell/ErrorBanner'
 import { MobileTabBar } from './shell/MobileTabBar'
@@ -44,13 +45,19 @@ const HomeSections = lazy(() =>
  */
 export function AppShell() {
   usePanelMode()
+  useUndoRedoShortcuts()
   const panelMode = useUiStore((state) => state.panelMode)
   const activeTab = useUiStore((state) => state.activeTab)
+  const editMode = useUiStore((state) => state.editMode)
   const atsDocked = useAtsDocked()
 
   return (
     <TooltipProvider>
-      <div data-panel-mode={panelMode} className="bg-surface flex min-h-dvh flex-col">
+      <div
+        data-panel-mode={panelMode}
+        data-edit-mode={editMode}
+        className="bg-surface flex min-h-dvh flex-col"
+      >
         <SkipToContent />
         <TopBar />
         <MobileTabBar />

@@ -107,5 +107,20 @@ export function screenStylesOf(spec: TemplateSpec) {
       textAlign: 'right' as const,
     },
     bulletGlyph: spec.bulletGlyph,
+    /**
+     * C2 — gaya per slot tanpa warna slot, dipakai segmen mode kanvas:
+     * segmen berisi nilai mewarisi warna baris, segmen kosong (guide)
+     * memakai `guideColor` (tinta tersier dokumen) + gaya italic role.
+     */
+    roleOf: {
+      name: roleStyle(spec.typeScale.name),
+      headline: roleStyle(spec.typeScale.headline),
+      contact: roleStyle(spec.typeScale.contact),
+      title: roleStyle(spec.typeScale.title),
+      dates: roleStyle(spec.typeScale.meta),
+      meta: roleStyle(spec.typeScale.meta),
+      body: roleStyle(spec.typeScale.body),
+    },
+    guideColor: SPEC_COLOR_VAR.tertiary,
   }
 }

@@ -2,8 +2,10 @@ import { memo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { mmToPx } from '@/lib/units'
 import { useDocStore } from '@/store/docStore'
+import { useUiStore } from '@/store/uiStore'
 import { useMeasuredHeight } from '@/features/preview/useMeasuredHeight'
 import { withRenderProbe } from '@/features/preview/renderProbe'
+import { CanvasBlock } from '@/features/canvas/CanvasBlock'
 import type { BlockKind } from '@/features/preview/pagination'
 import {
   entryContentOf,
@@ -243,6 +245,10 @@ const EntryLineBlock = ({
 export const BlockView = memo(function BlockView(props: BlockViewProps) {
   const heightKey = props.scope ? `${props.scope}:${props.blockKey}` : props.blockKey
   const ref = useMeasuredHeight<HTMLDivElement>(heightKey)
+  // D4/D13 — mode kanvas dibaca dari store (tanpa prop baru). Salinan di luar
+  // pratinjau utama (thumbnail, halaman pembanding) selalu memakai jalur form:
+  // keduanya non-interaktif dan tidak boleh menampilkan guide.
+  const canvasMode = useUiStore((state) => state.editMode === 'canvas')
   const slice = {
     sectionId: props.sectionId,
     itemId: props.itemId ?? '',
@@ -250,7 +256,16 @@ export const BlockView = memo(function BlockView(props: BlockViewProps) {
     marked: { keywords: props.keywords, showMarks: props.showMarks },
   }
   const inner =
-    props.kind === 'header' ? (
+    canvasMode && !props.scope ? (
+      <CanvasBlock
+        kind={props.kind}
+        sectionKind={props.sectionKind}
+        sectionId={props.sectionId}
+        itemId={props.itemId}
+        lineIndex={props.lineIndex}
+        spec={props.spec}
+      />
+    ) : props.kind === 'header' ? (
       <HeaderBlock {...slice} />
     ) : props.kind === 'section-heading' ? (
       <HeadingBlock sectionKind={props.sectionKind} spec={props.spec} />

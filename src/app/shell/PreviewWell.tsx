@@ -14,10 +14,11 @@ import { useAtsStore } from '@/store/atsStore'
 import { resolveSpec } from '@/features/templates/specs'
 import { TemplateRenderer } from '@/features/templates/screen/TemplateRenderer'
 import { useAtsAutoCheck } from '@/features/ats/useAtsCheck'
-import { usePagination } from '@/features/preview/usePagination'
+import { usePreviewPlans } from '@/features/preview/usePagination'
 import { usePreviewPrefs } from '@/features/preview/usePreviewPrefs'
 import { withRenderProbe } from '@/features/preview/renderProbe'
 import { ScanSweep } from '@/features/preview/ScanSweep'
+import { TampilanMenu } from './TampilanMenu'
 
 const MIN_ZOOM = 0.3
 const MAX_ZOOM = 1.5
@@ -45,12 +46,17 @@ export function PreviewWell({ className }: { className?: string }) {
 
   const keywords = useAtsStore((state) => state.keywords)
   const isChecking = useAtsStore((state) => state.isChecking)
+  const editMode = useUiStore((state) => state.editMode)
 
-  const plan = usePagination(doc, templateId)
+  // C2 — mode kanvas memakai rencana berisi blok guide; rencana isi dokumen
+  // tetap dihitung terpisah supaya pemeriksa ATS menilai dokumen, bukan
+  // kerangka pemandu.
+  const { content, canvas } = usePreviewPlans(doc, templateId, editMode === 'canvas')
+  const plan = canvas ?? content
   // T7.6 — pemeriksaan ulang otomatis dipasang di sini karena hanya komponen
   // ini yang punya `PagePlan` terukur: aturan panjang dokumen butuh jumlah
   // halaman nyata, bukan perkiraan.
-  useAtsAutoCheck(plan.pageCount)
+  useAtsAutoCheck(content.pageCount)
   const spec = useMemo(
     () => resolveSpec(templateId, doc.theme, doc.settings.page),
     [templateId, doc.theme, doc.settings.page],
@@ -250,6 +256,9 @@ export function PreviewWell({ className }: { className?: string }) {
             </TooltipTrigger>
             <TooltipContent>{t('preview.highlighterPending')}</TooltipContent>
           </Tooltip>
+
+          <Separator orientation="vertical" className="h-5" />
+          <TampilanMenu />
         </div>
       </div>
 

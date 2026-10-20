@@ -2,11 +2,15 @@ import { create } from 'zustand'
 
 export type PanelMode = '3col' | 'icon-rail' | 'tabs'
 
+/** C1.2 — cara user mengerjakan CV: form terpandu atau langsung di kertas (D1). */
+export type EditMode = 'form' | 'canvas'
+
 export type UiStore = {
   zoom: number
   fitMode: boolean
   panelMode: PanelMode
   activeTab: 'form' | 'preview'
+  editMode: EditMode
   showMarginGuides: boolean
   showKeywordMarks: boolean
   atsDrawerOpen: boolean
@@ -18,6 +22,7 @@ export type UiStore = {
   setFitMode: (fitMode: boolean) => void
   setPanelMode: (panelMode: PanelMode) => void
   setActiveTab: (activeTab: 'form' | 'preview') => void
+  setEditMode: (editMode: EditMode) => void
   setShowMarginGuides: (showMarginGuides: boolean) => void
   setShowKeywordMarks: (showKeywordMarks: boolean) => void
   setAtsDrawerOpen: (atsDrawerOpen: boolean) => void
@@ -31,6 +36,7 @@ export const useUiStore = create<UiStore>((set) => ({
   fitMode: true,
   panelMode: '3col',
   activeTab: 'form',
+  editMode: 'form',
   showMarginGuides: true,
   showKeywordMarks: true,
   atsDrawerOpen: false,
@@ -41,6 +47,7 @@ export const useUiStore = create<UiStore>((set) => ({
   setFitMode: (fitMode) => set({ fitMode }),
   setPanelMode: (panelMode) => set({ panelMode }),
   setActiveTab: (activeTab) => set({ activeTab }),
+  setEditMode: (editMode) => set({ editMode }),
   setShowMarginGuides: (showMarginGuides) => set({ showMarginGuides }),
   setShowKeywordMarks: (showKeywordMarks) => set({ showKeywordMarks }),
   setAtsDrawerOpen: (atsDrawerOpen) => set({ atsDrawerOpen }),

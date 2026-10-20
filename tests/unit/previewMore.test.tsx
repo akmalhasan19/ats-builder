@@ -134,6 +134,7 @@ beforeEach(() => {
     fitMode: true,
     showMarginGuides: true,
     showKeywordMarks: true,
+    editMode: 'form',
     panelMode: '3col',
     activeTab: 'preview',
     atsDrawerOpen: false,
@@ -255,12 +256,13 @@ describe('useMeasuredHeight — ResizeObserver & fallback estimatePx', () => {
 })
 
 describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => {
-  it('memuat keempat preferensi dari IndexedDB saat mount', async () => {
+  it('memuat kelima preferensi dari IndexedDB saat mount', async () => {
     vi.mocked(readValue).mockResolvedValue({
       zoom: 1.5,
       fitMode: false,
       showMarginGuides: false,
       showKeywordMarks: false,
+      editMode: 'canvas',
     })
     const { unmount } = renderHook(() => usePreviewPrefs())
     await waitFor(() => {
@@ -269,6 +271,7 @@ describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => 
       expect(state.fitMode).toBe(false)
       expect(state.showMarginGuides).toBe(false)
       expect(state.showKeywordMarks).toBe(false)
+      expect(state.editMode).toBe('canvas')
     })
     expect(readValue).toHaveBeenCalledWith(PREFS_KEY)
     unmount()
@@ -279,6 +282,7 @@ describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => 
       zoom: '1.5',
       fitMode: 'ya',
       showMarginGuides: false,
+      editMode: 'kanvas',
       // showKeywordMarks hilang sama sekali
     })
     const { unmount } = renderHook(() => usePreviewPrefs())
@@ -286,6 +290,7 @@ describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => 
     expect(useUiStore.getState().zoom).toBe(1)
     expect(useUiStore.getState().fitMode).toBe(true)
     expect(useUiStore.getState().showKeywordMarks).toBe(true)
+    expect(useUiStore.getState().editMode).toBe('form')
     unmount()
   })
 
@@ -313,6 +318,7 @@ describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => 
       fitMode: true,
       showMarginGuides: true,
       showKeywordMarks: true,
+      editMode: 'form',
     })
     unmount()
   })
@@ -340,6 +346,7 @@ describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => 
       fitMode: false,
       showMarginGuides: false,
       showKeywordMarks: false,
+      editMode: 'form',
     })
     expect(writeValue).toHaveBeenCalledWith(PREFS_KEY, saved.at(-1))
     unmount()

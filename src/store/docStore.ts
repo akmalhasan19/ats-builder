@@ -34,8 +34,8 @@ export type SectionEntry =
 
 type EntryListState = { entries: SectionEntry[] }
 
-// History dipakai undo/redo di Fase 11; dibatasi supaya memori tidak
-// tumbuh tanpa batas saat mengetik panjang.
+// History dipakai undo/redo (T11.1 ditarik ke FASE 12/C1.1); dibatasi supaya
+// memori tidak tumbuh tanpa batas saat mengetik panjang.
 const HISTORY_LIMIT = 50
 
 // Edit field (updateSection/updateEntry) menimpa history dalam jendela ini
@@ -64,11 +64,20 @@ const withEntries = (
   }),
 })
 
+// Undo bisa mengembalikan dokumen tanpa bagian yang sedang aktif di rail/form.
+const syncActiveSection = (doc: ResumeDoc, activeSectionId: string): string =>
+  doc.sections.some((section) => section.id === activeSectionId)
+    ? activeSectionId
+    : (doc.sections[0]?.id ?? '')
+
 export type DocStore = {
   doc: ResumeDoc
   activeSectionId: string
   history: ResumeDoc[]
+  future: ResumeDoc[]
   commit: (updater: (doc: ResumeDoc) => ResumeDoc, options?: { coalesce?: boolean }) => void
+  undo: () => void
+  redo: () => void
   updateSection: (sectionId: string, mutator: (data: SectionData) => SectionData) => void
   updateEntry: (
     sectionId: string,
@@ -101,6 +110,7 @@ export const useDocStore = create<DocStore>((set, get) => ({
   doc: initialDoc,
   activeSectionId: initialDoc.sections[0]?.id ?? '',
   history: [],
+  future: [],
 
   commit: (updater, options) =>
     set((state) => {
@@ -115,8 +125,38 @@ export const useDocStore = create<DocStore>((set, get) => ({
           meta: { ...next.meta, updatedAt: now },
         },
         history: coalesce ? state.history : [...state.history, state.doc].slice(-HISTORY_LIMIT),
+        // Edit baru memutus cabang redo, sama seperti editor teks pada umumnya.
+        future: [],
       }
     }),
+
+  undo: () => {
+    lastEditCommitAt = -Infinity
+    set((state) => {
+      const prev = state.history.at(-1)
+      if (!prev) return state
+      return {
+        doc: prev,
+        history: state.history.slice(0, -1),
+        future: [...state.future, state.doc].slice(-HISTORY_LIMIT),
+        activeSectionId: syncActiveSection(prev, state.activeSectionId),
+      }
+    })
+  },
+
+  redo: () => {
+    lastEditCommitAt = -Infinity
+    set((state) => {
+      const next = state.future.at(-1)
+      if (!next) return state
+      return {
+        doc: next,
+        future: state.future.slice(0, -1),
+        history: [...state.history, state.doc].slice(-HISTORY_LIMIT),
+        activeSectionId: syncActiveSection(next, state.activeSectionId),
+      }
+    })
+  },
 
   updateSection: (sectionId, mutator) =>
     get().commit(
@@ -279,6 +319,7 @@ export const useDocStore = create<DocStore>((set, get) => ({
     set({
       doc,
       history: [],
+      future: [],
       activeSectionId: doc.sections[0]?.id ?? '',
     })
   },

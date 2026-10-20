@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { Check, Menu, RotateCcw, ScanSearch } from 'lucide-react'
+import { Check, Menu, Redo2, RotateCcw, ScanSearch, Undo2 } from 'lucide-react'
 import { cn } from 'cn'
 import { BrandMark } from '@/app/BrandMark'
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,7 @@ import { PdfDownloadButton } from '@/features/pdf/PdfDownloadButton'
 import { ThemeMenu, ThemeOptionList } from '@/features/theme/ThemeMenu'
 import { DocumentTitle } from './DocumentTitle'
 import { SaveStatusPill } from './SaveStatusPill'
+import { TampilanMenuContent } from './TampilanMenu'
 import { TemplateSelect } from './TemplateSelect'
 import { applyTemplate, TEMPLATE_IDS, templateLabelKey } from './templateList'
 
@@ -59,6 +60,37 @@ function CheckAtsButton() {
         />
       ) : null}
     </Button>
+  )
+}
+
+/** C1.1 — undo/redo dokumen (T11.1 ditarik ke FASE 12). Disabled saat stack kosong. */
+function UndoRedoButtons() {
+  const canUndo = useDocStore((state) => state.history.length > 0)
+  const canRedo = useDocStore((state) => state.future.length > 0)
+  const undo = useDocStore((state) => state.undo)
+  const redo = useDocStore((state) => state.redo)
+
+  return (
+    <span className="flex items-center gap-1">
+      <IconButton
+        size="sm"
+        label={t('topbar.undo')}
+        data-probe="undo"
+        disabled={!canUndo}
+        onClick={undo}
+      >
+        <Undo2 aria-hidden="true" className="size-3.5" />
+      </IconButton>
+      <IconButton
+        size="sm"
+        label={t('topbar.redo')}
+        data-probe="redo"
+        disabled={!canRedo}
+        onClick={redo}
+      >
+        <Redo2 aria-hidden="true" className="size-3.5" />
+      </IconButton>
+    </span>
   )
 }
 
@@ -121,6 +153,9 @@ function MobileMenu() {
 
           <p className="text-eyebrow mt-4">{t('theme.title')}</p>
           <ThemeOptionList />
+
+          <p className="text-eyebrow mt-4">{t('tampilan.open')}</p>
+          <TampilanMenuContent />
 
           <Button
             variant="ghost"
@@ -187,6 +222,8 @@ export function TopBar() {
       <div className="flex min-w-0 flex-1 items-center md:max-w-[240px] md:flex-none">
         <DocumentTitle />
       </div>
+
+      <UndoRedoButtons />
 
       <SaveStatusPill className="hidden lg:flex" />
 

@@ -1093,11 +1093,11 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ### ☐ FASE 11 — Produktivitas: Undo/Redo, Riwayat, DOCX, Import, i18n
 
-- [ ] **T11.1 Undo/Redo**
-  - [ ] `historyStore`: patch-based (immer patches) atau `zundo`; kapasitas 60 langkah; coalesce keystroke < 800ms jadi satu entri
-  - [ ] Tombol `Undo`/`Redo` di TopBar (disabled saat stack kosong) + shortcut `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`
-  - [ ] Toast `Perubahan dibatalkan` + aksi `Ulangi`
-  - [ ] Tidak merekam perubahan `uiStore` (zoom, tab) — hanya `doc`
+- [x] **T11.1 Undo/Redo** *(direalisasikan di FASE 12 task C1.1, 2026-10-20, memakai snapshot `history`+`future` yang sudah ada di `docStore` — bukan immer/zundo; kapasitas tetap `HISTORY_LIMIT` 50; tanpa toast "Perubahan dibatalkan" karena tombol Redo + Ctrl/Cmd+Shift+Z sudah menjadi jalan balik)*
+  - [x] `historyStore`: snapshot dokumen di `docStore` (`history` + `future`); coalesce keystroke < 150 ms jadi satu entri (jendela T3.4 yang sudah ada)
+  - [x] Tombol `Undo`/`Redo` di TopBar (disabled saat stack kosong) + shortcut `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, `Ctrl/Cmd+Y`; dilewati saat fokus di field teks supaya undo bawaan field tetap bekerja
+  - [x] Toast `Perubahan dibatalkan` + aksi `Ulangi` → diganti tombol Redo/shortcut (deviasi di atas)
+  - [x] Tidak merekam perubahan `uiStore` (zoom, tab) — hanya `doc`
 - [ ] **T11.2 Riwayat versi (cloud)**
   - [ ] Tabel `resume_snapshots (id, resume_id, content jsonb, created_at, label)` + RLS; snapshot otomatis maks 1 per 10 menit saat ada perubahan, retensi 20 terakhir
   - [ ] UI: `Riwayat` di menu akun → Sheet daftar snapshot (mono timestamp + label) + `Lihat` (preview read-only) + `Pulihkan` (Dialog konfirmasi)
@@ -1128,43 +1128,69 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
-### ☐ FASE 12 — AI Assistant & Fitur Lanjutan
+### ☐ FASE 12 — Edit Langsung di CV (On-Canvas Editing)
 
-- [ ] **T12.1 Infrastruktur AI**
+> Master plan & keputusan desain mengikat: [CANVAS_EDIT_PLAN.md](CANVAS_EDIT_PLAN.md) (§3 D1–D16,
+> matriks cakupan §4, fase C1–C5 §6). Rincian tingkat kode per task ditulis di
+> `PLAN_F12_CANVAS_EDIT.md` saat fase dibuka. Terdaftar atas keputusan owner 2026-10-20: fitur ini
+> menjadi fase aktif berikutnya, AI Assistant ditangguhkan ke FASE 13, dan T11.1 undo/redo ditarik
+> masuk sebagai prasyarat C1.1.
+
+- [x] **T12.1 Fondasi: undo/redo, mode edit, menu Tampilan (C1)** *(2026-10-20 — Gate C1 hijau; bukti di Execution Log `CANVAS_EDIT_PLAN.md`)*
+  - [x] `undo()/redo()` di `docStore` (snapshot `history` yang sudah ada) + tombol TopBar + shortcut Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl+Y
+  - [x] `editMode: 'form' | 'canvas'` di `uiStore` + persistensi `ats:prefs:v1`; store sesi `canvasStore`
+  - [x] Popover **Tampilan** di toolbar pratinjau + entri sheet mobile (mode pengerjaan, toggle penggaris/stabilo/marks-pdf, preset zoom); atribut `data-edit-mode`
+- [ ] **T12.2 Guide placeholder di atas kertas (C2)** — segmentasi per field khusus layar (`fieldSegments.ts`), guide field kosong mengikuti layout kelima template, paritas layar↔PDF terjaga
+- [ ] **T12.3 Edit inline field sederhana (C3)** — editor swap-in input/textarea (pola `DocumentTitle`), pembekuan repaginasi selama sesi, guard zoom, field header/summary/skill
+- [ ] **T12.4 Entry, tanggal, bullet, ghost row (C4)** — segment title/meta per kind, popover `DateRangeField`, bullet editable, ghost "+ entri/bullet/bagian" dari kanvas
+- [ ] **T12.5 Mobile, lintas-fitur, hardening (C5)** — target sentuh & Sheet tanggal, "Perbaiki →" ATS masuk sesi kanvas, gate performa & a11y, dokumentasi rumah
+
+**Gate Fase 12**
+- [ ] CV lengkap bisa dibuat dari nol sepenuhnya di kanvas (reorder/hide/delete tetap form; v2 = menu konteks hover)
+- [ ] Mode form & thumbnail: nol perubahan DOM vs baseline pra-fitur
+- [ ] `pnpm pdf:verify` hijau; guide & affordance tidak pernah masuk PDF; Δ layar↔PDF ≤ 1 mm saat mode canvas
+- [ ] axe zero critical/serious di kedua mode; keyboard end-to-end di kanvas
+- [ ] Undo/redo membatalkan commit kanvas satu langkah
+
+---
+
+### ☐ FASE 13 — AI Assistant & Fitur Lanjutan *(ditangguhkan atas keputusan owner 2026-10-20 — Edit Langsung di CV diprioritaskan sebagai FASE 12)*
+
+- [ ] **T13.1 Infrastruktur AI**
   - [ ] Supabase Edge Function `ai-enhance` (Deno): validasi JWT, rate-limit per user/day via `ai_usage`, pilih provider (OpenAI/Anthropic/Gemini) lewat env, timeout 20s, streaming SSE
   - [ ] **API key tidak pernah** menyentuh browser
   - [ ] Kontrak request/response per fitur (`bullet`, `summary`, `match`, `polish`, `cover-letter`) + Zod validation di kedua sisi
   - [ ] Prompt tersimpan di repo (`supabase/functions/ai-enhance/prompts/*.ts`), versioned
   - [ ] Guardrail prompt: dilarang menambah fakta, angka, atau pengalaman yang tidak ada di input; dilarang mengubah nama perusahaan/tanggal; output harus Bahasa yang sama dengan input
   - [ ] Fallback provider + pesan error manusiawi saat kuota habis / provider gagal
-- [ ] **T12.2 Kuota & UI**
+- [ ] **T13.2 Kuota & UI**
   - [ ] Default gratis: 10 `bullet` + 5 `summary` + 5 `match` + 5 `polish` + 2 `cover-letter` per hari per akun; anonim = 3 total per hari (localStorage + IP di edge)
   - [ ] Sisa kuota tampil di tooltip tombol AI (`7 dari 10 tersisa hari ini`)
   - [ ] Habis → Dialog menjelaskan + opsi coba lagi besok (tanpa paywall agresif; editor inti tetap gratis penuh — P6)
-- [ ] **T12.3 AI Bullet Enhancer**
+- [ ] **T13.3 AI Bullet Enhancer**
   - [ ] Tombol `Perbaiki dengan AI` inline per bullet (muncul saat hover/focus), ikon `Sparkles` 14px
   - [ ] Alur: kirim bullet + role + company + stack → terima 2–3 varian → **panel perbandingan** (Dialog): bullet asli vs varian (radio) + `Pakai` / `Buang`
   - [ ] Tidak pernah overwrite otomatis — pengguna selalu memilih
   - [ ] Diff visual: kata yang bertambah ditandai `--signal-ok` underline, yang hilang `--signal-bad` strikethrough
-- [ ] **T12.4 Summary Generator**
+- [ ] **T13.4 Summary Generator**
   - [ ] Tombol `Buat dari riwayatku` di editor Summary; input = experience + skills + headline
   - [ ] Hasil masuk ke textarea sebagai **draft yang bisa diedit**, dengan wash cyanotype 600ms
-- [ ] **T12.5 Job Description Matcher**
+- [ ] **T13.5 Job Description Matcher**
   - [ ] Sudah ada fondasi lokal di Fase 7 (`keywords.ts`). Versi AI menambah: ekstraksi requirement implisit, pengelompokan (`hard skill`/`soft skill`/`tool`), saran kalimat bullet yang memakai kata kunci yang hilang
   - [ ] UI: tab `Cocokkan` di drawer ATS → daftar kata kunci hilang sebagai chip yang bisa diklik → `Tambahkan ke Skills` (satu klik, dengan konfirmasi)
   - [ ] Selalu tampilkan juga hasil matcher **lokal** (gratis, tanpa kuota) sebagai baseline
-- [ ] **T12.6 Grammatical Polish**
+- [ ] **T13.6 Grammatical Polish**
   - [ ] Aksi `Rapikan bahasa` per bullet dan per section; hanya mengubah ejaan/tata bahasa
   - [ ] Wajib lewat panel perbandingan (tidak ada auto-apply); tampilkan jumlah perubahan
-- [ ] **T12.7 Cover Letter Generator** — rute `/cover-letter`
+- [ ] **T13.7 Cover Letter Generator** — rute `/cover-letter`
   - [ ] Input: pilih resume (dari store/dashboard) + tempel JD + nada (`Formal`/`Hangat`/`Langsung`) + panjang (150/250/350 kata)
   - [ ] Output: lembar A4 terpisah dengan preview + `Download PDF` (renderer PDF sendiri, template `letter-*`) + `Salin teks` + `Edit` (textarea)
   - [ ] Aturan: harus merujuk fakta dari CV; tidak boleh mengarang pengalaman; tampilkan sumber kalimat (tooltip → "dari: Experience · Tech Nusantara")
-- [ ] **T12.8 Observabilitas & biaya**
+- [ ] **T13.8 Observabilitas & biaya**
   - [ ] Log pemakaian (feature, tokens, latency, provider) ke tabel `ai_usage_log`; dashboard query sederhana
   - [ ] Alert ambang biaya harian; kill-switch env `AI_ENABLED=false` yang menyembunyikan semua tombol AI dengan rapi
 
-**Gate Fase 12**
+**Gate Fase 13**
 - [ ] Tidak ada API key di bundle client (verifikasi build + `grep` di `dist`)
 - [ ] Rate-limit berfungsi: request ke-11 dalam sehari ditolak dengan pesan jelas
 - [ ] Semua fitur AI memakai panel perbandingan — tidak ada perubahan otomatis
@@ -1242,6 +1268,8 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | 2026-10-19 | 9 | Bug nyata yang ditemukan oleh pengukuran & audit fase ini, semuanya diperbaiki | **(1) `/templates` meluap 188 px di viewport 360 px** — preview detail dipatok skala 0,6 (476 px) tanpa peduli lebar layar; fase-fase sebelumnya hanya memeriksa overflow di `/`. Diperbaiki dengan `fitDetailScale()` (0,24–0,6 mengikuti lebar wrapper, diukur `ResizeObserver`), desktop tetap 0,6/476 px. **(2) Preview ≠ PDF untuk dokumen kosong (P4)** — `createPagePlan` mengembalikan 0 halaman sedangkan renderer PDF selalu menulis satu lembar, jadi "Mulai dari kosong" menampilkan `HAL 0 / 0` tanpa kertas sementara PDF-nya 1 halaman kosong. Rencana kini minimal satu lembar → preview `HAL 1 / 1`, PDF tetap 1 halaman. **(3) Delapan violation axe serius** — 2× `color-contrast`: label bagian tersembunyi di rail (`--ink-tertiary` × `opacity-55` = 2,14:1); §5.3 direvisi lebih dulu lalu opacity dibuang dari teks (ikon tetap boleh). 6× `label-content-name-mismatch`: mini-sheet render nyata di dalam tombol ber-`aria-label`; thumbnail trigger dipindah keluar subtree tombol (`pointer-events-none`, `aria-hidden`) sehingga tampilan §5.2 utuh, dan kartu galeri beranda melepas `aria-label` (nama dari isi) — `home.spec.ts` disesuaikan, assertion tidak dilemahkan. **(4) `normalizeUrlInput` merusak URL yang sudah aman** — `trimmed.replace(':','')` berlaku untuk SEMUA skema sehingga `https://x` → `https//x` dan `mailto:a@b` → `mailtoa@b`; kini hanya skema di luar daftar izin yang dinetralkan (ditemukan agen batch test, diperbaiki pemilik kode). **(5) `navigator.clipboard` buta di `ParseTapeView`** — di konteks non-secure `writeText` melempar TypeError sinkron sehingga toast gagal tak pernah jalan; kini dijaga. **(6) Dua biaya per-ketikan** — `TemplateThumbSheet` berlangganan seluruh `doc` (mini-sheet top bar dihitung ulang tiap karakter; kini `useDeferredValue`) dan `docSignature(doc)` = `JSON.stringify` dokumen dijalankan tiap render walau drawer belum pernah dibuka (kini hanya saat `hasOpened`). Angka sebelum/sesudah: INP p98 208→160 ms, maks 376→240 ms. **(7) Flake T9.2** — `shell.spec` "keyboard saja" sesekali gagal di workers penuh (sudah dicatat Fase 8); titik awal perjalanan keyboard kini dibuat pasti dengan `body.focus()` sebelum Tab pertama, assertion tetap. **(8) Flake unit (T9.1)** — dua sebab ditemukan saat suite penuh berjalan 49 berkas jsdom paralel: `findBy*` Testing Library memakai default 1000 ms untuk rute `lazy` (kini `asyncUtilTimeout: 10_000` di `vitest.setup.ts`) dan satu assertion membandingkan PANJANG BYTE dua PDF yang secara struktur identik — pdf-lib menulis document ID/CreationDate acak jadi byte bisa beda 1 karakter (kini dibandingkan daftar item teks, yang lebih kuat). `testTimeout` vitest 20 detik. Suite lalu hijau **dua kali berturut-turut** tanpa perubahan assertion. | 🟡 Catatan owner |
 | 2026-10-19 | 9 | Deviasi & keputusan yang perlu diketahui owner | **(1) Dua item tetap ⛔, sesuai keputusanmu sebelum kode dibuka:** budget `Perf ≥ 0,90` / `LCP ≤ 2,5 s` / `bundle ≤ 220 KB gzip` (kini 0,64–0,66 · 3,51–3,72 s · 279,01 KB) tidak dikejar lewat diet bundle; `lighthouserc.cjs` memblokir yang tercapai (a11y/BP/SEO/TBT/CLS) dan menandai Perf/LCP sebagai `warn` supaya `pnpm lhci` bisa jalan di CI. **(2) Screen reader (NVDA/VoiceOver) tidak mungkin dijalankan di mesin ini** — sub-task T9.5 itu dibiarkan `- [ ]` dengan :no_entry:; pengganti terukur = nama aksesibel + `aria-*` + urutan fokus lewat axe, plus perjalanan keyboard penuh. Opsi kalau kamu mau bukti nyata: (A) jalankan NVDA sendiri di Windows dengan halaman ini (5 menit, tanpa kode), (B) pasang `@axe-core/playwright` lebih dalam + `jest-axe` di unit (sudah tercakup), (C) terima bukti sekarang seperti catatan Fase 7 no. 8. **(3) `pdf:verify` kini menggarisbentangkan urutan `pdftotext` dengan Parse Tape untuk 15 kombinasi** (sebelumnya 1). Toleransi diberi HANYA untuk token bertag `DATE` dan dibatasi ≤2% token, karena poppler `-layout` mencetak kolom kanan satu baris di atas judul pada template `datePosition:'right'` (artefak kisi yang sudah didokumentasikan Fase 6; baseline PDF benar menurut pdfjs). Kalau kamu lebih suka nol toleransi, opsi lain = pindahkan pemeriksaan urutan ke jalur pdfjs (bukan poppler) — tapi Gate menyebut `pdftotext` sebagai pembaca acuan. **(4) CI:** `.github/workflows/ci.yml` (quality → e2e ×3 proyek → pdf → lighthouse) ditulis tapi **belum pernah berjalan** karena push ditangguhkan; gate 1 dicentang dengan keterangan itu. **(5) Batas bukti:** kuota IndexedDB penuh dan mode memori dibuktikan lewat injeksi galat (`QuotaExceededError`), bukan disk penuh; uji "manual offline penuh" dijalankan otomatis terhadap build produksi karena tidak ada perangkat fisik. **(6) Hutang temuan agen QA yang TIDAK kusentuh (di luar Fase 9):** `errorCount` di enam editor menghitung kunci `_errors` dari `ZodError.format()` sehingga badge "N isu" di `EntryCard` selalu +1; `SummaryEditor` tidak punya guard `section.kind !== 'summary'`; `toggleSectionVisible`/`reorderEntry` membuat commit+riwayat walau tidak ada yang berubah; `router.tsx` memakai `lazy` tanpa `HydrateFallbackElement`; fixture `sampleResume()` memakai `meta.updatedAt = 0` yang ditolak schema. **(7)** Artefak: `artifacts/fase9/` (16 screenshot + `perf-summary.json` + `inp-4x.json` + `profiler-60s.json` + `offline-zeta-ledger.pdf`). | 🟡 Keputusan owner |
 | 2026-10-19 | 8 (deviasi T8.1) | Bug dilaporkan owner: workspace terpotong di jendela Chrome 100% | **Laporan:** screenshot `ats-builder-three.vercel.app`, panel "KELENGKAPAN CV" & anchor `ChevronDown` terpotong di dasar jendela. **Akar masalah terukur, bukan dugaan:** grid workspace dipatok `lg:h-[calc(100dvh-56px)]` **bersama** `lg:min-h-[640px]` → begitu viewport < 696px, min-height menang dan batas bawah grid mendarat di 696 (dibuktikan di situs live: `innerHeight=690 → grid bottom=696`). Viewport owner ≈ **1287×678 CSS** (screenshot 1918×1079 ÷ DPR 1,5; TopBar terukur 84px gambar = 56px CSS) → 18px chrome bawah tersembunyi di balik lipatan. **Akar kedua (mobile):** di bawah `lg` grid tidak punya batas tinggi sama sekali → 360×740 mengukur `grid bottom=803` (163px di luar layar; tab bar & pane ikut tergulung halaman). **Fix:** tinggi dipatok per breakpoint mengikuti chrome nyata di atasnya — `h-[calc(100dvh-96px)]` (<768: TopBar 52 + tab 44), `md:h-[calc(100dvh-100px)]` (56 + 44), `lg:h-[calc(100dvh-56px)]`; `min-h-[640px]` **dihapus** (ia sumber potongnya) dan `overflow-hidden` berlaku di semua breakpoint sehingga gulir pindah ke dalam pane, bukan ke dokumen. Teks §5.8 baris 1 & checkbox T8.1 ikut direvisi. **Bukti:** matriks 20 pengukuran (10 viewport × tab Isi/Pratinjau, 1920×1080 → 360×640) semuanya `grid bottom == innerHeight` — `artifacts/fixed-1287x678-form.png`, `artifacts/fixed-360x640-preview.png`; regresi baru `tests/e2e/responsive.spec.ts` "workspace dalam satu jendela pendek" (6 viewport): **5 merah dengan kelas lama** (1287×678 → 696; 1024×640 → 696; 390×700 & 360×640 → 803), 6 hijau setelah fix. `pnpm test` **923/923** · `eslint` 0 peringatan · `tsc -b` 0 error · e2e penuh 103 test: 91 hijau pada run paralel, 7 lainnya merah karena beban lalu hijau saat diulang sendiri. **Di luar scope, belum dikerjakan (menunggu keputusan owner):** (a) 5 test `dev-tokens.spec.ts` sudah merah **sebelum** perubahan ini — commit branding Vetra `bbabd56` mengganti `--color-accent` & menambah swatch tetapi ekspektasi test (19 swatch, `rgb(18,121,163)`) tidak ikut diperbarui; (b) label rail terpotong jadi "Pr…" pada 248px karena kontrol hover (↑↓ + grip + menu ≈ 124px) tetap menempati alur. | ✅ Selesai & terverifikasi |
+| 2026-10-20 | 12 | Pendaftaran FASE 12 — Edit Langsung di CV; AI Assistant → FASE 13 (ditangguhkan) | Keputusan owner atas 6 Open Questions `CANVAS_EDIT_PLAN.md` §11 (jawaban tertulis di sesi chat): (1) operasi struktural on-canvas (reorder/hide/delete) ditunda ke v2; (2) guide per template boleh berbeda bila isinya memang perlu berbeda, selain itu satu set netral dipakai bersama; (3) tidak ada toggle guide di mode form; (4) guard zoom 0,6→0,75 diterima; (5) fitur dikerjakan sekarang sebagai FASE 12 — AI Assistant tidak diinginkan dulu, ditangguhkan ke FASE 13 — dan T11.1 undo/redo ditarik ke C1.1; (6) Enter = commit bullet. Dokumen rumah diperbarui lebih dulu sesuai aturan §0.4: `CANVAS_EDIT_PLAN.md` revisi v2 + §6/§10/§11 dokumen ini. | 🟡 Keputusan owner |
+| 2026-10-20 | 12 | T12.1 (C1.1–C1.4) + Gate C1 + T11.1 terrealisasi | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm test` **942 test / 51 file** hijau (baru: `docStore.test.ts` undo/redo 7 test, `tampilanMenu.test.tsx` 5 test; payload prefs di `previewMore.test.tsx` diperbarui menyertakan `editMode`) · `pnpm build` exit 0 · e2e `canvas-mode.spec.ts` **3/3** (mode canvas bertahan setelah reload via `ats:prefs:v1`; tombol undo/redo; Ctrl+Z di luar field) · rerun `shell.spec`+`responsive.spec` **39/39** tanpa regresi layout. Run e2e penuh pertama 104 lulus + 6 gagal infra (`net::ERR_NETWORK_IO_SUSPENDED`/timeout `page.goto` pada run 48,8 menit saat beban mesin tidak wajar) — spec terkait hijau saat rerun. Deviasi terdokumentasi: undo/redo snapshot `history`+`future` kapasitas 50 (bukan immer/zundo 60) dan tanpa toast batal (T11.1 diperbarui lebih dulu). | ✅ Selesai & terverifikasi |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 
@@ -1275,9 +1303,9 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | Font TTF membuat ekspor lambat / berat | UX download buruk | Subset `pyftsubset` latin-only, total < 400 KB, lazy chunk, tampilkan progress bila > 1.2s |
 | Pagination salah saat konten panjang | Teks terpotong di PDF | Aturan anti-jonda di Fase 4 + fixture pendek/sedang/panjang di E2E + uji 3 halaman |
 | Pengguna mengira checker menjamin lolos ATS | Masalah kepercayaan/etika | P5: label `INDEKS STRUKTUR`, disclaimer permanen, Parse Tape yang menunjukkan bukti, FAQ menjelaskan |
-| Scope creep ke fitur AI sebelum MVP stabil | MVP tidak pernah rilis | Urutan fase ketat: Fase 12 tidak boleh dibuka sebelum Gate Fase 9 hijau |
+| Scope creep ke fitur AI sebelum MVP stabil | MVP tidak pernah rilis | Urutan fase ketat: Fase 13 (AI) tidak boleh dibuka sebelum Gate Fase 9 hijau; atas keputusan owner 2026-10-20 Fase 13 juga ditangguhkan sampai FASE 12 (Edit Langsung di CV) selesai |
 | IndexedDB ditolak (private mode) / kuota penuh | Data hilang | Fallback in-memory + banner jujur (T1.3) + penanganan kuota penuh (T9.6) |
-| Biaya AI membengkak | Operasional | Kuota per hari, kill-switch `AI_ENABLED`, logging token, alert ambang (T12.8) |
+| Biaya AI membengkak | Operasional | Kuota per hari, kill-switch `AI_ENABLED`, logging token, alert ambang (T13.8) |
 
 ---
 
@@ -1297,5 +1325,6 @@ FASE 9  QA & hardening                 → gate: MVP SIAP PUBLIK 🚀
 ──────────────────────────────────────────────────────────────
 FASE 10 Deploy + Auth + Cloud sync     → gate: RLS + local-first tetap utuh
 FASE 11 Undo/redo, riwayat, DOCX, import, i18n
-FASE 12 AI assistant + cover letter    → gate: kuota & tanpa halusinasi
+FASE 12 Edit langsung di CV (kanvas)   → gate: paritas PDF & a11y kedua mode
+FASE 13 AI assistant + cover letter    → ditangguhkan (keputusan owner 2026-10-20)
 ```

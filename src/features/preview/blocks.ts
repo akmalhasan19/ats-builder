@@ -10,7 +10,16 @@ import {
   skillGroupLines,
   summaryText,
   type EntriesSection,
+  type EntriesSectionKind,
 } from '@/features/templates/contentLines'
+import {
+  displayLineOf,
+  entryHeadGroups,
+  entryLineGroups,
+  headerGroups,
+  skillGroupGroups,
+  summaryGroups,
+} from '@/features/templates/fieldSegments'
 import {
   contactLine,
   headingLabel,
@@ -68,7 +77,91 @@ const headingEstimatePx = (spec: TemplateSpec, label: string, contentWidthPx: nu
   )
 }
 
-export function buildBlocks(doc: ResumeDoc, spec: TemplateSpec): DocBlock[] {
+/* --------------------------------------------------------------------------
+ * Estimasi tinggi untuk blok guide (C2)
+ *
+ * Blok guide hanya ada di mode kanvas: field kosong tetap punya baris berisi
+ * teks pemandu, jadi tingginya harus diperkirakan dari teks guide — kalau
+ * tidak, halaman pertama akan terlihat "kosong" sebelum pengukuran DOM arrive.
+ * ----------------------------------------------------------------------- */
+
+const guideLinePx = (text: string, role: TypeRole, widthPx: number): number =>
+  linePx(role, linesFor(text, role.sizePt, widthPx))
+
+const roleOfSlot = (spec: TemplateSpec, slot: string): TypeRole => {
+  switch (slot) {
+    case 'name':
+      return spec.typeScale.name
+    case 'headline':
+      return spec.typeScale.headline
+    case 'contact':
+      return spec.typeScale.contact
+    case 'title':
+      return spec.typeScale.title
+    case 'dates':
+    case 'meta':
+      return spec.typeScale.meta
+    default:
+      return spec.typeScale.body
+  }
+}
+
+const headerGuidePx = (spec: TemplateSpec, widthPx: number): number => {
+  const groups = headerGroups(null, spec)
+  let height = 0
+  groups.forEach((group, index) => {
+    if (index === 0) height += mmToPx(spec.gapMm.nameToHeadline)
+    if (index === 1) height += mmToPx(spec.gapMm.headlineToContact)
+    height += guideLinePx(displayLineOf(group, spec.id), roleOfSlot(spec, group.slot), widthPx)
+  })
+  return height
+}
+
+const summaryGuidePx = (spec: TemplateSpec, widthPx: number): number => {
+  const group = summaryGroups('')[0]
+  if (!group) return 0
+  return guideLinePx(displayLineOf(group, spec.id), spec.typeScale.body, widthPx)
+}
+
+const skillGroupGuidePx = (spec: TemplateSpec, widthPx: number): number => {
+  const groups = skillGroupGroups(null, 'new')
+  let height = 0
+  groups.forEach((group, index) => {
+    if (index > 0) height += mmToPx(spec.gapMm.titleToMeta)
+    height += guideLinePx(displayLineOf(group, spec.id), roleOfSlot(spec, group.slot), widthPx)
+  })
+  return height
+}
+
+const entryHeadGuidePx = (
+  kind: SectionKind,
+  spec: TemplateSpec,
+  widthPx: number,
+  lang: 'id' | 'en',
+): number => {
+  const groups = entryHeadGroups(kind as EntriesSectionKind, null, spec, lang)
+  let height = 0
+  let previousLine = -1
+  groups.forEach((group) => {
+    if (previousLine !== -1 && group.line !== previousLine) height += mmToPx(spec.gapMm.titleToMeta)
+    previousLine = group.line
+    height += guideLinePx(displayLineOf(group, spec.id), roleOfSlot(spec, group.slot), widthPx)
+  })
+  return height
+}
+
+const entryLineGuidePx = (spec: TemplateSpec, widthPx: number): number => {
+  const group = entryLineGroups('experience', null, 0)[0]
+  if (!group) return 0
+  return guideLinePx(displayLineOf(group, spec.id), spec.typeScale.body, widthPx)
+}
+
+export function buildBlocks(
+  doc: ResumeDoc,
+  spec: TemplateSpec,
+  options: { guides?: boolean } = {},
+): DocBlock[] {
+  const guides = options.guides === true
   const { contentWidthPx } = contentBoxOf(spec)
   const lang = doc.settings.language
   const indentPx = mmToPx(spec.gapMm.bulletIndent)
@@ -91,13 +184,13 @@ export function buildBlocks(doc: ResumeDoc, spec: TemplateSpec): DocBlock[] {
     const contact = contactLine(profileContact(data), spec)
     const contactLines = linesFor(contact, spec.typeScale.contact.sizePt, contentWidthPx)
     if (contactLines > 0) height += linePx(spec.typeScale.contact, contactLines)
-    if (height > 0) {
+    if (height > 0 || guides) {
       blocks.push({
         key: `${profile.id}:header`,
         kind: 'header',
         sectionKind: 'profile',
         sectionId: profile.id,
-        estimatePx: height,
+        estimatePx: height > 0 ? height : headerGuidePx(spec, contentWidthPx),
         padAfterMm: 0,
         minWithNext: 0,
       })
@@ -110,20 +203,33 @@ export function buildBlocks(doc: ResumeDoc, spec: TemplateSpec): DocBlock[] {
     const base = { sectionId: section.id, sectionKind: section.kind as SectionKind }
 
     if (section.kind === 'summary') {
-      const lines = linesFor(summaryText(section), spec.typeScale.body.sizePt, contentWidthPx)
-      if (lines > 0)
+      const text = summaryText(section)
+      const lines = linesFor(text, spec.typeScale.body.sizePt, contentWidthPx)
+      if (lines > 0 || guides)
         body.push({
           ...base,
           key: `${section.id}:summary`,
           kind: 'summary',
-          estimatePx: linePx(spec.typeScale.body, lines),
+          estimatePx:
+            lines > 0 ? linePx(spec.typeScale.body, lines) : summaryGuidePx(spec, contentWidthPx),
           padAfterMm: 0,
           minWithNext: 0,
         })
     } else if (section.kind === 'skills') {
+      if (section.data.groups.length === 0 && guides) {
+        body.push({
+          ...base,
+          key: `${section.id}:new`,
+          kind: 'skill-group',
+          itemId: 'new',
+          estimatePx: skillGroupGuidePx(spec, contentWidthPx),
+          padAfterMm: 0,
+          minWithNext: 0,
+        })
+      }
       for (const group of section.data.groups) {
         const lines = skillGroupLines(group)
-        if (lines.length === 0) continue
+        if (lines.length === 0 && !guides) continue
         let height = 0
         lines.forEach((line, index) => {
           const role = index === 0 ? spec.typeScale.title : spec.typeScale.body
@@ -135,15 +241,40 @@ export function buildBlocks(doc: ResumeDoc, spec: TemplateSpec): DocBlock[] {
           key: `${section.id}:${group.id}`,
           kind: 'skill-group',
           itemId: group.id,
-          estimatePx: height,
+          estimatePx: lines.length > 0 ? height : skillGroupGuidePx(spec, contentWidthPx),
           padAfterMm: 0,
           minWithNext: 0,
         })
       }
     } else if (isEntriesSection(section)) {
-      entriesOf(section).forEach((entry, index) => {
+      const entries = entriesOf(section)
+      if (entries.length === 0 && guides) {
+        body.push({
+          ...base,
+          key: `${section.id}:new:head`,
+          kind: 'entry-head',
+          itemId: 'new',
+          entryLineCount: 1,
+          estimatePx: entryHeadGuidePx(section.kind, spec, contentWidthPx, lang),
+          padAfterMm: 0,
+          minWithNext: 1,
+        })
+        body.push({
+          ...base,
+          key: `${section.id}:new:l0`,
+          kind: 'entry-line',
+          itemId: 'new',
+          lineIndex: 0,
+          entryLineCount: 1,
+          estimatePx: entryLineGuidePx(spec, contentWidthPx),
+          padAfterMm: 0,
+          minWithNext: 0,
+        })
+      }
+      entries.forEach((entry, index) => {
         const content = entryContentOf(section.kind, entry, lang)
-        if (isBlankEntry(content)) return
+        const blank = isBlankEntry(content)
+        if (blank && !guides) return
         const itemId = itemIdOf(entry, index)
         const rightDates = spec.entryLayout.datePosition === 'right'
         const titleLines = linesFor(content.title, spec.typeScale.title.sizePt, contentWidthPx)
@@ -169,7 +300,10 @@ export function buildBlocks(doc: ResumeDoc, spec: TemplateSpec): DocBlock[] {
           kind: 'entry-head',
           itemId,
           entryLineCount: content.bodyLines.length,
-          estimatePx: headHeight,
+          estimatePx:
+            headHeight > 0
+              ? headHeight
+              : entryHeadGuidePx(section.kind, spec, contentWidthPx, lang),
           padAfterMm: 0,
           minWithNext: Math.min(2, content.bodyLines.length),
         })
@@ -188,6 +322,19 @@ export function buildBlocks(doc: ResumeDoc, spec: TemplateSpec): DocBlock[] {
             minWithNext: 0,
           })
         })
+        if (guides && content.bodyLines.length === 0) {
+          body.push({
+            ...base,
+            key: `${section.id}:${itemId}:l0`,
+            kind: 'entry-line',
+            itemId,
+            lineIndex: 0,
+            entryLineCount: 1,
+            estimatePx: entryLineGuidePx(spec, contentWidthPx),
+            padAfterMm: 0,
+            minWithNext: 0,
+          })
+        }
       })
     }
 

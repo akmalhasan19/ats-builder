@@ -7,13 +7,19 @@ import { contentBoxOf, type HeightMap, type PagePlan } from './pagination'
 /**
  * Jalur tunggal pembentukan rencana halaman untuk preview dan PDF (P4).
  * Hook layar hanya menyuplai tinggi blok yang telah diukur oleh DOM.
+ *
+ * `guides` menambah blok placeholder untuk field kosong — hanya mode kanvas
+ * memakainya (C2). Jalur PDF (renderer & ekspor) TIDAK pernah memakai opsi ini,
+ * jadi guide tidak pernah masuk berkas dan pemecahan halaman PDF tidak ikut
+ * berubah karena mode kerja.
  */
 export function createPagePlan(
   doc: ResumeDoc,
   spec: TemplateSpec,
   heights: HeightMap = {},
+  options: { guides?: boolean } = {},
 ): PagePlan {
-  const blocks = buildBlocks(doc, spec)
+  const blocks = buildBlocks(doc, spec, options)
   const box = contentBoxOf(spec)
   const split = paginateBlocks(blocks, box.contentHeightPx, heights)
   // QA Fase 9: dokumen kosong (tanpa bagian terlihat) dulu menghasilkan rencana

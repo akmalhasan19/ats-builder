@@ -402,6 +402,35 @@
   }
 }
 
+/* ==========================================================================
+   FASE 12 (C2) — affordance mode kanvas (D15).
+   Hook global: root shell punya `data-edit-mode="canvas"`. Warna & motion
+   selalu dari token; tidak ada nilai layout di sini.
+   ========================================================================== */
+
+[data-edit-mode='canvas'] .canvas-field {
+  cursor: text;
+  text-decoration-color: var(--color-ink-tertiary);
+}
+
+[data-edit-mode='canvas'] .canvas-field:hover {
+  outline: 1px dashed var(--color-accent-ink);
+  outline-offset: 1px;
+}
+
+[data-edit-mode='canvas'] .canvas-field:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 2px;
+}
+
+/* Guide = slot kosong: teks muted + garis bawah titik halus. */
+[data-edit-mode='canvas'] .canvas-field[data-canvas-guide='true'] {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
 /* ---- Motion (§2.6) — keyframes & state Radix ------------------------------ */
 
 @keyframes overlay-in {

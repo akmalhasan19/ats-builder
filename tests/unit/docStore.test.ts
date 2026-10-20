@@ -60,6 +60,106 @@ describe('commit', () => {
   })
 })
 
+describe('undo/redo (C1.1 — T11.1 ditarik ke FASE 12)', () => {
+  it('undo mengembalikan dokumen sebelumnya dan redo mengulanginya', () => {
+    store().setTitle('Satu')
+    store().setTitle('Dua')
+
+    store().undo()
+    expect(store().doc.title).toBe('Satu')
+    store().undo()
+    expect(store().doc.title).toBe('')
+    expect(store().history).toHaveLength(0)
+
+    store().redo()
+    expect(store().doc.title).toBe('Satu')
+    store().redo()
+    expect(store().doc.title).toBe('Dua')
+    expect(store().future).toHaveLength(0)
+  })
+
+  it('undo/redo pada stack kosong tidak mengubah apa pun', () => {
+    const doc = store().doc
+
+    store().undo()
+    store().redo()
+
+    expect(store().doc).toBe(doc)
+    expect(store().history).toHaveLength(0)
+    expect(store().future).toHaveLength(0)
+  })
+
+  it('commit baru memutus cabang redo', () => {
+    store().setTitle('Satu')
+    store().setTitle('Dua')
+    store().undo()
+    expect(store().future).toHaveLength(1)
+
+    store().setTitle('Cabang baru')
+
+    expect(store().future).toHaveLength(0)
+    store().redo()
+    expect(store().doc.title).toBe('Cabang baru')
+  })
+
+  it('satu burst ketikan ter-coalesce menjadi satu langkah undo', () => {
+    let clock = 1700000000000
+    vi.spyOn(Date, 'now').mockImplementation(() => clock)
+    const profileId = store().doc.sections[0]!.id
+    const setName = (name: string) =>
+      store().updateSection(profileId, (data) => ({ ...(data as ProfileData), fullName: name }))
+
+    setName('Ru')
+    clock += 50
+    setName('Rum')
+    clock += 50
+    setName('Ruma')
+
+    store().undo()
+    const undone = store().doc.sections[0]!
+    expect(undone.kind === 'profile' && undone.data.fullName).toBe('')
+
+    store().redo()
+    const redone = store().doc.sections[0]!
+    expect(redone.kind === 'profile' && redone.data.fullName).toBe('Ruma')
+  })
+
+  it('undo menjaga activeSectionId tetap menunjuk bagian yang ada', () => {
+    const target = store().doc.sections[1]!
+    store().setActiveSection(target.id)
+    store().removeSection(target.id)
+    expect(store().activeSectionId).not.toBe(target.id)
+
+    store().undo()
+
+    expect(store().doc.sections.some((section) => section.id === target.id)).toBe(true)
+    expect(store().doc.sections.some((section) => section.id === store().activeSectionId)).toBe(
+      true,
+    )
+  })
+
+  it('undo penambahan bagian memindahkan activeSectionId ke bagian yang ada', () => {
+    store().addSection('projects')
+    const addedId = store().activeSectionId
+
+    store().undo()
+
+    expect(store().doc.sections.some((section) => section.id === addedId)).toBe(false)
+    expect(store().activeSectionId).toBe(store().doc.sections[0]!.id)
+  })
+
+  it('loadDoc mengosongkan kedua stack', () => {
+    store().setTitle('Satu')
+    store().undo()
+    expect(store().future).toHaveLength(1)
+
+    store().loadDoc(createSampleDoc())
+
+    expect(store().history).toHaveLength(0)
+    expect(store().future).toHaveLength(0)
+  })
+})
+
 describe('aksi bagian', () => {
   it('updateSection mengganti data bagian lewat commit', () => {
     const profileId = store().doc.sections[0]!.id
