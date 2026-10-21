@@ -12,6 +12,8 @@ import { fieldLabelOf } from '@/features/templates/fieldSegments'
 import { useCanvasStore } from '@/store/canvasStore'
 import { useDocStore } from '@/store/docStore'
 import { validateCanvasField, writeCanvasField } from './canvasCommit'
+import { startCaretFollow, stopCaretFollow } from './canvasCaretFollow'
+import { isNarrowLayout } from './canvasEditZoom'
 import { normalizeCanvasValue, readCanvasFieldValue, type CanvasFieldSpec } from './canvasFields'
 
 /**
@@ -31,6 +33,11 @@ import { normalizeCanvasValue, readCanvasFieldValue, type CanvasFieldSpec } from
  * sehingga autosave, validasi zod, dan undo punya satu sumber (D8). Jendela
  * coalesce history diputus sebelum & sesudah commit supaya satu sesi edit =
  * satu langkah undo (D9).
+ *
+ * FASE 14C — di layar sempit, komponen ini juga menjadi titik integrasi
+ * **kamera mengikuti caret**: begitu sesi dibuka, follow dinyalakan supaya
+ * kertas bergerak sedikit demi sedikit mengikuti ketikan (lihat
+ * `canvasCaretFollow.ts`).
  */
 
 export type CanvasFieldEditorProps = {
@@ -54,7 +61,7 @@ export function CanvasFieldEditor({ spec, guideText, style }: CanvasFieldEditorP
   //
   // `preventScroll` penting: secara bawaan browser memunculkan "scroll into
   // view" yang akan menggulir sumbu horizontal ke tepi elemen — persis
-  // membatalkan pemusatan field yang baru saja dihitung (addendum layar
+  // membatalkan penjajaran field yang baru saja dihitung (addendum layar
   // sempit).
   useEffect(() => {
     const control = controlRef.current
@@ -62,6 +69,30 @@ export function CanvasFieldEditor({ spec, guideText, style }: CanvasFieldEditorP
     control.focus({ preventScroll: true })
     control.select()
   }, [])
+
+  // FASE 14C — **kamera mengikuti caret** saat mengetik.
+  //
+  // Hanya di layar sempit (panel mode `tabs`): di desktop kertas muat di
+  // layar, jadi tidak ada yang perlu digeser.
+  //
+  // Editor tanggal (Sheet mobile) tidak mengetik di atas kertas sehingga tidak
+  // ikut follow; semua jalur lain — klik segmen, ghost row (entri/bullet
+  // baru), tombol "Perbaiki →" di drawer ATS — otomatis tercover karena
+  // semuanya dirender lewat komponen ini.
+  //
+  // Effect ini sengaja dibuat **setelah** effect fokus di atas: penataan
+  // awal field (FASE 14B) harus selesai lebih dulu, dan follow tidak
+  // menggeser apa pun selama caret masih berada di dalam pita (caret awal =
+  // kiri field yang memang sudah mendarat di margin kiri).
+  useEffect(() => {
+    const control = controlRef.current
+    if (!control) return
+    if (!isNarrowLayout()) return
+    if (spec.widget === 'dates') return
+    control.focus({ preventScroll: true })
+    startCaretFollow(control)
+    return () => stopCaretFollow()
+  }, [spec.widget])
 
   // Textarea tumbuh mengikuti isinya (D3).
   useEffect(() => {

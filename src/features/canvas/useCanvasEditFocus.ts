@@ -1,22 +1,22 @@
 import { useLayoutEffect, useRef } from 'react'
 import { useCanvasStore } from '@/store/canvasStore'
 import { useUiStore } from '@/store/uiStore'
-import { centerFocusPoint, isNarrowLayout, restorePreviewZoom } from './canvasEditZoom'
+import { alignFocusStart, isNarrowLayout, restorePreviewZoom } from './canvasEditZoom'
 
 /**
  * Addendum FASE 13 — lifecycle zoom & fokus sesi edit di layar sempit.
  *
  * Dua hal yang harus terjadi bersama-sama:
  *
- *  1. **Sesi dibuka** → field yang sedang diedit dipusatkan secara horizontal
- *     di well pratinjau, supaya layar yang dilihat user persis tempat dia
- *     mengetik. Pemusatan berjalan di `useLayoutEffect` supaya terjadi
+ *  1. **Sesi dibuka** → field yang sedang diedit dijejarkan ke **tepi kiri**
+ *     well pratinjau, supaya layar yang dilihat user persis tempat dia
+ *     mengetik. Penataan ini berjalan di `useLayoutEffect` supaya terjadi
  *     sebelum browser menggambar frame berikutnya — tanpa kedipan.
  *  2. **Sesi ditutup** → zoom kembali ke skala ringkasan (30%/Fit), seperti
  *     sebelum user menyentuh field.
  *
  * Hook ini dipasang di `PreviewWell` — komponen yang menerapkan transform
- * ke pohon kertas, sehingga pemusatan selalu diukur terhadap skala yang
+ * ke pohon kertas, sehingga penataan selalu diukur terhadap skala yang
  * benar-benar terpakai, bukan angka preferensi.
  */
 export function useCanvasEditFocus(): void {
@@ -33,15 +33,15 @@ export function useCanvasEditFocus(): void {
     wasEditing.current = Boolean(session)
   }, [session])
 
-  // Sesi terbuka → pusatkan field yang diedit. Effect ini ikut jalan saat
-  // zoom berubah (mis. user memperbesar sendiri), supaya field tetap di
-  // tengah layar.
+  // Sesi terbuka → sejajarkan tepi kiri field yang diedit. Effect ini ikut
+  // jalan saat zoom berubah (mis. user memperbesar sendiri), supaya field
+  // tetap di tepi kiri layar.
   //
-  // Pemusatan hanya berlaku di layar sempit: di desktop kertas muat di layar,
+  // Penataan hanya berlaku di layar sempit: di desktop kertas muat di layar,
   // jadi guard zoom (D7, sekali per sesi aplikasi) tetap berlaku tanpa
   // memindahkan pandangan.
   useLayoutEffect(() => {
     if (!session || !isNarrowLayout()) return
-    centerFocusPoint(focusPoint)
+    alignFocusStart(focusPoint)
   }, [session, focusPoint, zoom, fitMode])
 }

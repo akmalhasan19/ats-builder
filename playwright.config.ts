@@ -10,11 +10,17 @@ const pixel7 = devices['Pixel 7']
 // dan baru aktif saat `E2E_WEBKIT=1` — misalnya di CI Linux.
 // C5.1 — spec kanvas kini juga masuk proyek mobile-chrome (§5.3): alur edit
 // langsung di kertas wajib usable di Pixel 7, bukan hanya di desktop.
+// FASE 14 — `canvas-caret-follow` juga khusus layar sempit (kamera mengikuti
+// caret), jadi ikut allowlist mobile.
 const mobileSpecs =
-  /(?:first-visit|editor-flow|template-switch|download-pdf|ats-check|responsive|canvas-mode|canvas-guides|canvas-edit|canvas-edit-zoom|canvas-entry|canvas-mobile)\.spec\.ts/
+  /(?:first-visit|editor-flow|template-switch|download-pdf|ats-check|responsive|canvas-mode|canvas-guides|canvas-edit|canvas-edit-zoom|canvas-caret-follow|canvas-entry|canvas-mobile)\.spec\.ts/
 
 // Spec yang khusus menguji perilaku panel mobile (<1024px).
-const mobileOnlySpecs = [/canvas-mobile\.spec\.ts/, /canvas-edit-zoom\.spec\.ts/]
+const mobileOnlySpecs = [
+  /canvas-mobile\.spec\.ts/,
+  /canvas-edit-zoom\.spec\.ts/,
+  /canvas-caret-follow\.spec\.ts/,
+]
 
 // C5.1 — `offline.spec` butuh service worker (hanya hidup di build produksi;
 // dijalankan lewat `playwright.preview.config.ts`). Penting: `testIgnore` di

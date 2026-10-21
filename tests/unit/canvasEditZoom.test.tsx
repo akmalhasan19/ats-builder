@@ -3,9 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import {
   EDIT_ZOOM,
+  FOCUS_EDGE_MARGIN_PX,
+  alignFocusStart,
   applyEditZoom,
   capturePreviewZoom,
-  centerFocusPoint,
   isNarrowLayout,
   measureFocusPoint,
   restorePreviewZoom,
@@ -21,11 +22,13 @@ import { t } from '@/lib/i18n'
  *
  * Yang diuji:
  *  1. titik fokus diukur dalam **koordinat kertas** (tidak ikut berubah saat
- *     zoom), dengan sumbu horizontal = tengah teks & sumbu vertikal = tepi atas;
+ *     zoom), dengan sumbu horizontal = **tepi kiri** teks & sumbu vertikal =
+ *     tepi atas (FASE 14B — urutan ketik selalu dari kiri);
  *  2. di layar sempit skala naik ke 75% dan zoom ringkasan disimpan;
  *  3. sesi ditutup → zoom kembali ke nilai ringkasan (kecuali user mengubah
  *     zoom sendiri selama sesi);
- *  4. pemusatan horizontal: field yang diedit berakhir di tengah well.
+ *  4. penjajaran kiri: tepi kiri field yang diedit mendarat di margin kiri
+ *     area terlihat, dan gulirnya dibatasi pada batas kiri/kanan kertas.
  */
 
 vi.mock('sonner', () => ({ toast: vi.fn() }))
@@ -122,14 +125,14 @@ describe('layar sempit sebagai penentu perilaku', () => {
 })
 
 describe('titik fokus di koordinat kertas', () => {
-  it('sumbu horizontal = tengah segmen, sumbu vertikal = tepi atas', () => {
+  it('sumbu horizontal = tepi kiri segmen, sumbu vertikal = tepi atas', () => {
     const restore = stubScale(0.5)
     const { field } = buildTree(0.5)
 
     const point = measureFocusPoint(field)
 
-    // x: tengah segmen (58 + 25 = 83) diukur dari tepi konten (24) → 59 / 0,5 = 118.
-    expect(point?.x).toBeCloseTo(118, 5)
+    // x: tepi kiri segmen (58) diukur dari tepi konten (24) → 34 / 0,5 = 68.
+    expect(point?.x).toBeCloseTo(68, 5)
     // y: tepi atas segmen (120) dari tepi konten (100) → 20 / 0,5 = 40.
     expect(point?.y).toBeCloseTo(40, 5)
     restore()
@@ -316,27 +319,58 @@ describe('satu pintu masuk sesi edit', () => {
     })
 
     expect(useCanvasStore.getState().session?.fieldPath).toBe('profile.fullName')
-    expect(useCanvasStore.getState().focusPoint?.x).toBeCloseTo(118, 5)
+    expect(useCanvasStore.getState().focusPoint?.x).toBeCloseTo(68, 5)
     expect(useUiStore.getState().zoom).toBe(EDIT_ZOOM)
     restore()
   })
 })
 
-describe('pemusatan horizontal', () => {
-  it('segmen digeser ke tengah well', () => {
-    const restore = stubScale(0.5)
-    const { well, scroller, field } = buildTree(0.5)
+describe('penjajaran kiri field yang diedit', () => {
+  /** Pohon pratinjau tiruan pada skala edit 75% + ukuran lapisan gulir. */
+  const buildEditTree = () => {
+    const tree = buildTree(0.75)
+    Object.defineProperty(tree.well, 'clientWidth', { configurable: true, value: 412 })
+    Object.defineProperty(tree.well, 'clientHeight', { configurable: true, value: 800 })
+    // Kertas 794 × 0,75 = 595px, area terlihat 364px → batas gulir 231px.
+    Object.defineProperty(tree.scroller, 'clientWidth', { configurable: true, value: 364 })
+    Object.defineProperty(tree.scroller, 'scrollWidth', { configurable: true, value: 595 })
+    return tree
+  }
+
+  it('tepi kiri field mendarat di margin kiri konten well', () => {
+    const restore = stubScale(0.75)
+    const { scroller, field } = buildEditTree()
     const written = stubScrollLeft(scroller)
-    Object.defineProperty(well, 'clientWidth', { configurable: true, value: 412 })
-    Object.defineProperty(well, 'clientHeight', { configurable: true, value: 800 })
 
     const point = measureFocusPoint(field)
-    act(() => centerFocusPoint(point))
+    act(() => alignFocusStart(point))
 
-    // Titik fokus: x=118 (kartu) → 59 px pada skala 0,5 → layar 24+59 = 83.
-    // Tengah well = 412 / 2 = 206 → konten harus bergeser 123 px ke kanan,
-    // artinya `scrollLeft` berkurang 123 (gulir ke kiri).
-    expect(written[written.length - 1]).toBeCloseTo(-123, 5)
+    const scrollLeft = written[written.length - 1] ?? 0
+    // Titik fokus: x=68 (kartu) → 51 px pada skala 0,75 → layar 24+51 = 75.
+    // Tepi kiri konten well = 0 (well mulai di x=0, tanpa border), jadi field
+    // harus bergeser 75 - 24 = 51 px ke kanan.
+    expect(scrollLeft).toBeCloseTo(51, 5)
+
+    // Posisi akhir tepi kiri field di layar: tepi kiri konten digeser
+    // `scrollLeft`, lalu ditambah offset field di dalam kertas.
+    const fieldLeft = 24 - scrollLeft + point!.x * 0.75
+    expect(fieldLeft - 0).toBeCloseTo(FOCUS_EDGE_MARGIN_PX, 5)
+    restore()
+  })
+
+  it('gulir dibatasi: tidak melewati tepi kiri maupun tepi kanan kertas', () => {
+    const restore = stubScale(0.75)
+    const { scroller } = buildEditTree()
+    const written = stubScrollLeft(scroller)
+
+    // Titik fokus di luar kertas → wanted negatif → dijepit di 0.
+    act(() => alignFocusStart({ x: -80, y: 40 }))
+    expect(written[written.length - 1]).toBe(0)
+
+    // Titik fokus jauh di kanan → wanted melewati batas → dijepit di
+    // scrollWidth - clientWidth (595 - 364 = 231).
+    act(() => alignFocusStart({ x: 600, y: 40 }))
+    expect(written[written.length - 1]).toBe(231)
     restore()
   })
 
@@ -345,7 +379,7 @@ describe('pemusatan horizontal', () => {
     const { scroller } = buildTree(0.5)
     const written = stubScrollLeft(scroller)
 
-    act(() => centerFocusPoint(null))
+    act(() => alignFocusStart(null))
 
     expect(written).toHaveLength(0)
     restore()

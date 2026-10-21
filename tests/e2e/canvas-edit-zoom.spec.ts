@@ -8,15 +8,22 @@ import { expect, test, type Page } from '@playwright/test'
  * berarti mengetik di teks setinggi ±4px. Perilaku yang diuji:
  *
  *  1. menyentuh field → skala naik ke **75%**;
- *  2. field yang disentuh berada di **tengah horizontal** well (fokus layar
- *     jatuh di tempat user mengetik) — dan toolbar (nilai zoom, "Tampilan",
- *     "Keluar") tetap terlihat;
+ *  2. **tepi kiri** field yang disentuh mendarat di margin kiri area terlihat
+ *     (FASE 14B — urutan ketik selalu dari kiri), dan toolbar (nilai zoom,
+ *     "Tampilan", "Keluar") tetap terlihat;
  *  3. edit selesai (commit) atau dibatalkan (Escape) → skala **kembali** ke
  *     zoom ringkasan yang tadi dipakai.
  *
  * Spec ini khusus mobile: desktop memakai guard lama (D7) yang menaikkan zoom
  * sekali saja per sesi aplikasi dan **tidak** mengembalikannya.
  */
+
+/**
+ * Jarak tepi kiri field dari tepi kiri konten well — cerminan
+ * `FOCUS_EDGE_MARGIN_PX` di `src/features/canvas/canvasEditZoom.ts`.
+ * Disalin literal supaya spec e2e tidak menarik modul aplikasi ke runner.
+ */
+const FOCUS_EDGE_MARGIN_PX = 24
 
 const startApp = async (page: Page): Promise<void> => {
   await page.goto('/')
@@ -60,10 +67,10 @@ const scaleOf = (page: Page) =>
 const zoomLabel = (page: Page) => page.locator('[data-probe="zoom-value"]').innerText()
 
 /**
- * Koordinat kertas (tanpa skala) dari tengah kotak sebuah segmen — dasar
- * untuk memeriksa bahwa teks yang disentuh berakhir di tengah layar.
+ * Koordinat kertas (tanpa skala) dari **tepi kiri** sebuah segmen — dasar
+ * untuk memeriksa bahwa teks yang disentuh berakhir di margin kiri well.
  */
-const paperCenterOf = async (page: Page, selector: string) =>
+const paperLeftOf = async (page: Page, selector: string) =>
   page.evaluate((sel) => {
     const element = document.querySelector(sel)
     const content = document.querySelector('[data-probe="preview-content"]')
@@ -71,17 +78,17 @@ const paperCenterOf = async (page: Page, selector: string) =>
     const scale = new DOMMatrix(getComputedStyle(content).transform).a || 1
     const rect = element.getBoundingClientRect()
     const contentRect = content.getBoundingClientRect()
-    return { x: (rect.left + rect.width / 2 - contentRect.left) / scale }
+    return { x: (rect.left - contentRect.left) / scale }
   }, selector)
 
-/** Posisi tengah area yang terlihat di well pratinjau. */
-const wellCenter = (page: Page) =>
+/** Tepi kiri area konten well (bukan border box). */
+const wellLeft = (page: Page) =>
   page.evaluate(() => {
     const well = document.querySelector('#pane-preview')
     if (!well) return null
     const rect = well.getBoundingClientRect()
     const borderLeft = Number.parseFloat(getComputedStyle(well).borderLeftWidth) || 0
-    return rect.left + borderLeft + well.clientWidth / 2
+    return rect.left + borderLeft
   })
 
 /** Set zoom ke angka pasti (bukan "Fit") lewat tombol Perkecil. */
@@ -101,7 +108,7 @@ const setZoomPercent = async (page: Page, percent: number): Promise<void> => {
 }
 
 test.describe('zoom edit di layar sempit (addendum FASE 13)', () => {
-  test('sentuh field → skala 75% & field di tengah horizontal; selesai → kembali 30%', async ({
+  test('sentuh field → skala 75% & tepi kiri field di margin kiri; selesai → kembali 30%', async ({
     page,
   }) => {
     await startApp(page)
@@ -114,7 +121,7 @@ test.describe('zoom edit di layar sempit (addendum FASE 13)', () => {
     expect(await scaleOf(page)).toBeCloseTo(0.3, 2)
 
     const name = page.locator('#pane-preview [data-field="profile.fullName"]')
-    const paper = await paperCenterOf(page, '#pane-preview [data-field="profile.fullName"]')
+    const paper = await paperLeftOf(page, '#pane-preview [data-field="profile.fullName"]')
     expect(paper).not.toBeNull()
 
     await name.click()
@@ -125,8 +132,8 @@ test.describe('zoom edit di layar sempit (addendum FASE 13)', () => {
       .toBeCloseTo(0.75, 2)
     await expect(page.locator('#pane-preview .canvas-editor')).toBeVisible()
 
-    // 2. Field yang disentuh berada di tengah horizontal well.
-    const center = await wellCenter(page)
+    // 2. Tepi kiri field yang disentuh mendarat di margin kiri area terlihat.
+    const left = await wellLeft(page)
     const landed = await page.evaluate((paperX) => {
       const content = document.querySelector('[data-probe="preview-content"]')
       if (!content) return null
@@ -135,7 +142,10 @@ test.describe('zoom edit di layar sempit (addendum FASE 13)', () => {
       return contentRect.left + paperX * scale
     }, paper!.x)
     expect(landed).not.toBeNull()
-    expect(Math.abs(landed! - center!), 'field di tengah horizontal well').toBeLessThan(2)
+    expect(
+      Math.abs(landed! - left! - FOCUS_EDGE_MARGIN_PX),
+      'tepi kiri field di margin kiri area terlihat',
+    ).toBeLessThan(2)
 
     // Toolbar tetap terlihat walau kertas bergeser horizontal — nilai zoom
     // dan jalan keluar dari mode kanvas tidak boleh ikut hilang.
