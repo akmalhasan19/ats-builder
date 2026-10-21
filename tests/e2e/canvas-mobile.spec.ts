@@ -324,7 +324,11 @@ test.describe('kertas layar penuh di mobile & tablet (FASE 13 Fase 4)', () => {
     // Menyentuh segmen kanvas membuka sesi edit → guard menaikkan skala.
     await page.locator('#pane-preview [data-canvas-field]').first().click()
     await expect.poll(scaleOf, { message: 'skala tidak naik ke 75%' }).toBeCloseTo(0.75, 2)
-    await expect(page.locator('[data-sonner-toast]').first()).toContainText('75%')
+    // Tanpa toast: di mobile toast duduk tepat di atas field yang sedang
+    // diedit, jadi ia menutupi teks yang diketik (addendum FASE 13).
+    // Nilai zoom di toolbar yang memberi tahu.
+    await expect(page.locator('[data-sonner-toast]')).toHaveCount(0)
+    await expect(page.locator('[data-probe="zoom-value"]')).toHaveText('75%')
   })
 
   test('T4.3: sheet "Bagian" berada di atas StickyActionBar', async ({ page }) => {

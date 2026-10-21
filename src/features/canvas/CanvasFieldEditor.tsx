@@ -51,10 +51,15 @@ export function CanvasFieldEditor({ spec, guideText, style }: CanvasFieldEditorP
   const settledRef = useRef(false)
 
   // Fokus + pilih seluruh teks begitu sesi dibuka (D3).
+  //
+  // `preventScroll` penting: secara bawaan browser memunculkan "scroll into
+  // view" yang akan menggulir sumbu horizontal ke tepi elemen — persis
+  // membatalkan pemusatan field yang baru saja dihitung (addendum layar
+  // sempit).
   useEffect(() => {
     const control = controlRef.current
     if (!control) return
-    control.focus()
+    control.focus({ preventScroll: true })
     control.select()
   }, [])
 

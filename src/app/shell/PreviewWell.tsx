@@ -29,6 +29,7 @@ import {
   zoomPresetsFor,
 } from '@/features/preview/previewZoom'
 import { useCanvasFull } from '../useCanvasFull'
+import { useCanvasEditFocus } from '@/features/canvas/useCanvasEditFocus'
 import { CanvasExitButton } from './CanvasExitButton'
 import { CanvasSectionMenu } from './CanvasSectionMenu'
 import { TampilanMenu } from './TampilanMenu'
@@ -68,8 +69,23 @@ const wellPadPx = (well: HTMLElement): number => {
   return Number.isFinite(total) && total > 0 ? total : FIT_PAD_PX
 }
 
+/**
+ * Ruang ekstra (px) untuk garis gulir horizontal di lapisan dalam.
+ *
+ * Browser desktop memakai scrollbar klasik yang memakan tinggi; tanpa ruang
+ * ini, garis gulir memotong 15px bawah kertas **dan** memunculkan scrollbar
+ * vertikal kedua di dalam lapisan. Di mobile (scrollbar overlay) ruang ini
+ * hanya jadi jarak abu-abu tipis di bawah kertas.
+ */
+const SCROLLBAR_ROOM = 16
+
 export function PreviewWell({ className }: { className?: string }) {
   usePreviewPrefs()
+  // Addendum FASE 13 — sesi edit di layar sempit: field yang diedit
+  // dipusatkan horizontal, dan zoom kembali ke skala ringkasan setelah
+  // edit selesai. Hook ini di sini (bukan di dalam kanvas) karena hanya
+  // komponen ini yang tahu skala yang benar-benar terpakai.
+  useCanvasEditFocus()
   const doc = useDocStore((state) => state.doc)
   const templateId = doc.templateId
   const zoomPref = useUiStore((state) => state.zoom)
@@ -218,7 +234,7 @@ export function PreviewWell({ className }: { className?: string }) {
       tabIndex={-1}
       aria-label={t('workspace.previewTitle')}
       className={cn(
-        'bg-workbench min-h-0 overflow-auto shadow-[var(--shadow-well)] p-6 [touch-action:pan-x_pan-y_pinch-zoom]',
+        'bg-workbench min-h-0 overflow-y-auto overflow-x-hidden shadow-[var(--shadow-well)] p-6 [touch-action:pan-x_pan-y_pinch-zoom]',
         // T2.3 — di layar penuh kertas diberi ruang lebih lega; padding
         // `p-6` di mobile tetap. Padding well dibaca `wellPadPx` untuk
         // perhitungan skala Fit, jadi lembar tetap pas di kotak konten.
@@ -234,7 +250,10 @@ export function PreviewWell({ className }: { className?: string }) {
           canvasFull && 'lg:-mt-10',
         )}
       >
-        <div className="border-rule bg-toolbar-glass flex h-10 items-center gap-1.5 rounded-lg border px-2.5 backdrop-blur-[6px]">
+        <div
+          data-probe="preview-toolbar"
+          className="border-rule bg-toolbar-glass flex h-10 items-center gap-1.5 rounded-lg border px-2.5 backdrop-blur-[6px]"
+        >
           <IconButton
             size="sm"
             label={t('preview.zoomOut')}
@@ -353,28 +372,44 @@ export function PreviewWell({ className }: { className?: string }) {
         </div>
       </div>
 
+      {/*
+        Addendum FASE 13 — lapisan gulir horizontal sendiri untuk kertas.
+
+        Saat zoom edit 75% di layar sempit, kertas A4 (595px) lebih lebar
+        daripada layar (≤412px), jadi sumbu horizontal *harus* digulir untuk
+        memusatkan field yang diedit. Kalau well ikut bergeser, toolbar
+        (nilai zoom, "Tampilan", "Keluar") ikut keluar layar. Karena itu
+        gulir horizontal dipindah ke lapisan dalam: toolbar tetap menempel di
+        atas well, kertas yang bergeser.
+      */}
       <div
-        className="relative mx-auto"
-        style={{ width: A4_PX.w * zoom, height: contentHeight * zoom }}
+        data-probe="preview-scroll"
+        className="overflow-x-auto"
+        style={{ height: contentHeight * zoom + SCROLLBAR_ROOM }}
       >
         <div
-          ref={contentRef}
-          data-probe="preview-content"
-          style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: A4_PX.w }}
+          className="relative mx-auto"
+          style={{ width: A4_PX.w * zoom, height: contentHeight * zoom }}
         >
-          {withRenderProbe(
-            <TemplateRenderer
-              plan={plan}
-              spec={spec}
-              keywords={keywords}
-              showMarks={showKeywordMarks}
-            />,
-            'preview-tree',
-          )}
+          <div
+            ref={contentRef}
+            data-probe="preview-content"
+            style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', width: A4_PX.w }}
+          >
+            {withRenderProbe(
+              <TemplateRenderer
+                plan={plan}
+                spec={spec}
+                keywords={keywords}
+                showMarks={showKeywordMarks}
+              />,
+              'preview-tree',
+            )}
+          </div>
+          {/* §5.5 — satu sapuan garis scan saat Check ATS berjalan; hormati
+              reduced-motion (durasi 0,01ms di media query tokens.css). */}
+          {isChecking ? <ScanSweep /> : null}
         </div>
-        {/* §5.5 — satu sapuan garis scan saat Check ATS berjalan; hormati
-            reduced-motion (durasi 0,01ms di media query tokens.css). */}
-        {isChecking ? <ScanSweep /> : null}
       </div>
     </section>
   )

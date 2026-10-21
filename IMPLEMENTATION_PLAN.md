@@ -1218,6 +1218,35 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
+### ☑ Addendum 13A-1 — Zoom edit di layar sempit (khusuhan mobile) *(2026-10-21)*
+
+> **Permintaan owner:** di versi mobile, ketika user menyentuh bagian yang mau diedit di
+> mode "Langsung di CV", tampilan harus otomatis ter-zoom ke **75%** dengan field yang
+> diedit berada di **tengah horizontal** layar; setelah selesai atau dibatalkan, zoom
+> **kembali** ke 30% (skala ringkasan).
+>
+> **Keputusan desain mengikat:** `CANVAS_EDIT_PLAN.md` **D17**. Ringkasan: aturan ini
+> berlaku **hanya di panel mode `tabs` (<1024px)**; desktop memakai guard D7 seperti
+> sebelumnya (naik sekali per sesi aplikasi, tidak dikembalikan, tanpa pemusatan).
+
+- [x] **Skala edit 75% + pengembalian** — `canvasEditZoom.ts`: `capturePreviewZoom()`
+  menyimpan skala ringkasan, `applyEditZoom()` naik ke 75% (tidak pernah memperkecil),
+  `restorePreviewZoom()` mengembalikannya saat sesi ditutup — termasuk mode Fit
+- [x] **Pemusatan horizontal field** — titik fokus diukur dalam **koordinat kertas**
+  (tengah segmen secara horizontal, tepi atas secara vertikal) lalu dipakai
+  `centerFocusPoint()`; vertikal hanya dijaga agar field tetap terlihat
+- [x] **Toolbar tetap terlihat** — gulir horizontal pindah ke lapisan dalam
+  (`[data-probe="preview-scroll"]`), jadi menggeser kertas tidak ikut menggeser toolbar
+  (nilai zoom, "Tampilan", "Keluar"); `focus({ preventScroll: true })` mencegah scroll
+  bawaan browser membatalkan pemusatan
+- [x] **Copy** — tanpa toast baru: toast mobile duduk tepat di atas field yang sedang
+  diedit (menutupi teks yang diketik), jadi cukup nilai zoom di toolbar yang memberi
+  tahu; toast D7 tetap dipakai desktop (`canvas.zoomRaised`)
+- [x] **Pengujian** — `tests/unit/canvasEditZoom.test.tsx` (15 test) &
+  `tests/e2e/canvas-edit-zoom.spec.ts` (3 test mobile: 30% → 75% → 30%, Escape, Fit)
+
+---
+
 ### ☐ FASE 13 — AI Assistant & Fitur Lanjutan *(ditangguhkan atas keputusan owner 2026-10-20 — Edit Langsung di CV diprioritaskan sebagai FASE 12)*
 
 - [ ] **T13.1 Infrastruktur AI**
@@ -1344,6 +1373,7 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 
 | 2026-10-21 | 13A | FASE 13A "kertas layar penuh" selesai — Fase 0–7 & Gate hijau | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm build` exit 0 (entry `index` 866,97 kB / **259,56 kB gzip**, vs 860,53 kB / 257,94 kB di Fase 12 = **+6,44 kB / +1,62 kB gzip**; **nol chunk baru** — `CanvasSectionMenu` ikut entry, `HomeSections` tetap chunk lazy terpisah) · `pnpm test` **62 berkas / 1116 tes hijau** · `pnpm test:e2e` **185/185** (chromium + mobile-chrome) · `pnpm pdf:verify` **174/174**. Angka kunci: kertas 1360 px (**skala 1,7128**) di 1440 px vs plafon mode form 1191 px (1,5); satu pane di 1024/1280/1440/1920/2560/360/390/768; mode form identik sebelum & sesudah di kelima rentang lebar. Bukti: `artifacts/fase13-f7/` (skrip + JSON + 32 tangkapan layar) dan `artifacts/fase13-f6/skala-kertas-1440.png`. | ✅ Selesai & terverifikasi |
 | 2026-10-21 | 13A | Temuan yang **tidak** ditutup fase ini (butuh keputusan owner) | **(1) Cold load dengan `canvasFullscreen` tersimpan = 1 layout-shift 0,5001** pada t=1085 ms (FCP 836 ms) dan chunk `HomeSections` tetap diminta (t=801 ms) lalu di-unmount — karena prefs dibaca async dari IndexedDB **setelah** paint (mekanisme pre-existing, dampaknya membesar karena fase ini mengubah tata letak); ditambah `modulepreload HomeSections-*.js` di `dist/index.html` (Fase 8, untuk crawler). Perbaikan butuh mekanisme baru (mirror sinkron), di luar plan. **(2) Mode kanvas berpanel (`canvasFullscreen=false`) di 360/390 px meluber 36/21 px** karena chip "3 HAL" (rencana kanvas 1 halaman lebih banyak dari mode form) — terbukti **pre-existing FASE 12**: dua kontrol baru (menu Bagian, tombol Keluar) tidak dirender di keadaan itu dan perampingan `max-sm:hidden` hanya aktif saat `canvasFull` (HEAD `b95b48a` tidak punya perampingan sama sekali). **(3) Bentrok nomor fase**: dokumen plan memakai "FASE 13" sementara slot itu sudah terisi AI Assistant (ditangguhkan 2026-10-20) → didaftarkan sebagai **FASE 13A** menunggu keputusan owner. | ⛔ Menunggu owner |
+| 2026-10-21 | 13A-1 | **Addendum 13A-1 — zoom edit di layar sempit (mobile)** | Permintaan owner: di mobile, menyentuh field di mode "Langsung di CV" → otomatis ter-zoom **75%** dengan field yang diedit di **tengah horizontal** layar; selesai/batal → **kembali** ke 30% (skala ringkasan). Realisasi: `canvasEditZoom.ts` (skala edit 75% + snapshot zoom ringkasan + titik fokus dalam koordinat kertas + pemusatan horizontal) · `useCanvasEditFocus.ts` (pusatkan saat sesi terbuka, kembalikan zoom saat sesi ditutup) · `startCanvasEdit()` jadi satu pintu masuk untuk klik segmen, ghost row, dan tombol "Perbaiki →" di drawer ATS · `canvasStore` menambah `focusPoint` & `preEditZoom` · **`text-align: inherit`** pada `.canvas-editor` (nama rata tengah tetap rata tengah saat diedit) · **gulir horizontal pindah ke lapisan dalam** (`[data-probe="preview-scroll"]`) supaya toolbar (nilai zoom, "Tampilan", "Keluar") tidak ikut keluar layar saat kertas bergeser · `focus({ preventScroll: true })` supaya scroll bawaan browser tidak membatalkan pemusatan · **tanpa toast di mobile** (toast top-center 104px menutupi field yang sedang diedit; nilai zoom di toolbar yang memberi tahu) — desktop tetap `canvas.zoomRaised` D7 (**tidak** dikembalikan). Desktop **tidak berubah** (D7: naik sekali per sesi aplikasi, tanpa pemusatan). Bukti: `tests/unit/canvasEditZoom.test.tsx` **15 tes** · `tests/e2e/canvas-edit-zoom.spec.ts` **3 tes** mobile (30% → 75% → 30% + field tepat di tengah; Escape → kembali 30%; Fit → kembali Fit) · `pnpm test` **63 berkas / 1131 tes** hijau · `pnpm test:e2e` **188/188** (chromium + mobile-chrome) · `pnpm pdf:verify` **174/174** · `pnpm build` exit 0 (index 868,91 kB / **260,18 kB gzip**, +0,62 kB gzip vs FASE 13A; nol chunk baru). | ✅ Selesai & terverifikasi |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 

@@ -12,7 +12,12 @@ import {
   entryIdForField,
   entryRecordOf,
 } from './canvasFields'
-import { ensureReadableZoom } from './canvasZoom'
+import {
+  applyEditZoom,
+  capturePreviewZoom,
+  isNarrowLayout,
+  measureFocusPoint,
+} from './canvasEditZoom'
 
 /**
  * C5.2 — jembatan ATS → kanvas (D2, §5.6).
@@ -117,9 +122,19 @@ const revealEditor = (): void => {
   const attempt = (frame: number): void => {
     const block = document.querySelector<HTMLElement>('#pane-preview [data-canvas-editing="true"]')
     if (block) {
-      ensureReadableZoom(block)
+      // Addendum layar sempit — field yang diedit dipusatkan horizontal, dan
+      // zoom edit (75%) dipasang di sini: blok baru lahir di render
+      // berikutnya, jadi elemen field-nya belum ada saat sesi dibuka.
+      useCanvasStore.getState().setFocusPoint(measureFocusPoint(block))
+      capturePreviewZoom()
+      applyEditZoom(block)
       // `scrollIntoView` tidak ada di jsdom (unit test), jadi dipanggil opsional.
-      block.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+      // Di layar sempit gulirnya **instan**: gulir halus akan membatalkan
+      // pemusatan horizontal yang baru dihitung (layout effect).
+      block.scrollIntoView?.({
+        block: 'center',
+        behavior: isNarrowLayout() ? 'auto' : 'smooth',
+      })
       return
     }
     if (frame >= REVEAL_MAX_FRAMES) return

@@ -461,6 +461,10 @@
   color: inherit;
   line-height: inherit;
   letter-spacing: inherit;
+  /* Segmen yang digantikan sudah memakai `text-align: inherit` (lihat
+     `CANVAS_BUTTON_RESET`), jadi teks di dalam editor harus mengikuti slotnya
+     juga — nama yang rata tengah tetap rata tengah saat diedit. */
+  text-align: inherit;
   background: transparent;
   /* Garis batas memakai outline, bukan border: tinggi control tetap
      "tinggi baris teks + padding 2px" dan tidak menambah layout. */

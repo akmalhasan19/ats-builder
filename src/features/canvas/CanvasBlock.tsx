@@ -22,7 +22,7 @@ import { CanvasDatesEditor } from './CanvasDatesEditor'
 import { CanvasFieldEditor } from './CanvasFieldEditor'
 import { CANVAS_BUTTON_RESET } from './canvasButtonStyle'
 import { blockKeyForField, canvasFieldSpecOf } from './canvasFields'
-import { ensureReadableZoom } from './canvasZoom'
+import { startCanvasEdit } from './canvasEditZoom'
 import type { BlockKind } from '@/features/preview/pagination'
 import type { SectionKind } from '@/schema/resume'
 import type { ResumeDoc, TemplateId } from '@/types/resume'
@@ -64,7 +64,6 @@ const CanvasField = memo(function CanvasField({
   templateId,
   sectionId,
 }: CanvasFieldProps) {
-  const openSession = useCanvasStore((state) => state.openSession)
   const session = useCanvasStore((state) =>
     state.session &&
     state.session.sectionId === sectionId &&
@@ -126,9 +125,9 @@ const CanvasField = memo(function CanvasField({
       }
       onClick={(event) => {
         if (!spec) return
-        // D7 — zoom terlalu kecil bikin editor tak terbaca; naikkan sekali saja.
-        ensureReadableZoom(event.currentTarget)
-        openSession({
+        // D7 + addendum layar sempit — zoom edit (75%) & pemusatan field
+        // dikemas satu pintu masuk supaya semua jalur edit punya perilaku sama.
+        startCanvasEdit(event.currentTarget, {
           blockKey: blockKeyForField(sectionId, segment.fieldPath),
           sectionId,
           fieldPath: segment.fieldPath,

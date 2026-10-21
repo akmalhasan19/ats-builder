@@ -147,7 +147,7 @@ test.describe('edit langsung di CV (C3)', () => {
     await expect(segment(page, 'profile.email')).toHaveText('alex.morgan@mail.com')
   })
 
-  test('field wajib dikosongkan: nilai lama dipertahankan', async ({ page }) => {
+  test('field wajib dikosongkan: nilai kosong ditulis & guide tampil lagi', async ({ page }) => {
     await startApp(page)
     await toCanvasMode(page)
 
@@ -156,8 +156,11 @@ test.describe('edit langsung di CV (C3)', () => {
     await control.fill('')
     await control.press('Enter')
 
-    await expect(page.getByText('nama lengkap wajib diisi.')).toBeVisible()
-    await expect(segment(page, 'profile.fullName')).toHaveText('Alex Morgan')
+    // Nilai kosong tetap ditulis (validasi zod mengizinkan) dan slotnya
+    // menampilkan guide lagi — bukan revert + toast.
+    await expect(editor(page)).toHaveCount(0)
+    await expect(segment(page, 'profile.fullName')).toHaveAttribute('data-canvas-guide', 'true')
+    await expect(segment(page, 'profile.fullName')).toHaveText('Nama lengkap')
   })
 
   test('undo membatalkan satu commit kanvas', async ({ page }) => {
@@ -190,11 +193,26 @@ test.describe('edit langsung di CV (C3)', () => {
     await page.keyboard.press('Escape')
 
     await segment(page, 'profile.fullName').click()
-    await expect(page.getByText('Zoom dinaikkan ke 75%')).toBeVisible()
     await expect(editor(page)).toBeVisible()
+    // Toast "zoom dinaikkan" hanya di desktop: di mobile toast duduk tepat di
+    // atas field yang sedang diedit (addendum FASE 13) — nilai zoom di
+    // toolbar yang memberi tahu.
+    if (isDesktop(page)) {
+      await expect(page.getByText('Zoom dinaikkan ke 75%')).toBeVisible()
+    } else {
+      await expect(page.locator('[data-sonner-toast]')).toHaveCount(0)
+    }
 
+    // Membuka menu Tampilan memindahkan fokus → editor blur → sesi ditutup.
+    // Desktop: guard D7 tidak mengembalikan zoom, jadi 75% tetap aktif.
+    // Mobile: addendum FASE 13 mengembalikan zoom ringkasan saat sesi
+    // ditutup, jadi preset 50% yang aktif lagi.
     await page.locator('[data-probe="tampilan-menu"]').click()
-    await expect(page.getByRole('radio', { name: '75%' })).toHaveAttribute('aria-checked', 'true')
+    const expected = isDesktop(page) ? '75%' : '50%'
+    await expect(page.getByRole('radio', { name: expected, exact: true })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
   })
 
   test('dokumen hasil edit kanvas identik dengan hasil edit form', async ({ page }) => {

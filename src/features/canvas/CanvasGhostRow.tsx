@@ -4,7 +4,6 @@ import { cn } from 'cn'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DOC_LIMITS } from '@/schema/resume'
 import { t } from '@/lib/i18n'
-import { useCanvasStore } from '@/store/canvasStore'
 import { useDocStore } from '@/store/docStore'
 import { useUiStore } from '@/store/uiStore'
 import { addCanvasBullet, addCanvasEntry } from './canvasCommit'
@@ -14,7 +13,7 @@ import {
   entryRecordOf,
   firstEntryFieldPath,
 } from './canvasFields'
-import { ensureReadableZoom } from './canvasZoom'
+import { startCanvasEdit } from './canvasEditZoom'
 import type { CanvasGhost } from './canvasGhosts'
 import type { ResumeDoc } from '@/types/resume'
 
@@ -53,7 +52,6 @@ const atLimitFor = (doc: ResumeDoc, ghost: CanvasGhost): boolean => {
 }
 
 export const CanvasGhostRow = memo(function CanvasGhostRow({ ghost }: { ghost: CanvasGhost }) {
-  const openSession = useCanvasStore((state) => state.openSession)
   const setSectionCatalogOpen = useUiStore((state) => state.setSectionCatalogOpen)
   const atLimit = useDocStore((state) => atLimitFor(state.doc, ghost))
 
@@ -77,14 +75,13 @@ export const CanvasGhostRow = memo(function CanvasGhostRow({ ghost }: { ghost: C
       setSectionCatalogOpen(true)
       return
     }
-    // D7 — editor yang akan dibuka harus terbaca.
-    ensureReadableZoom(event.currentTarget)
-
+    // D7 + addendum layar sempit — editor yang akan dibuka harus terbaca,
+    // dan field yang diedit dipusatkan horizontal.
     if (ghost.kind === 'entry') {
       const entryId = addCanvasEntry(ghost.sectionId)
       if (!entryId) return
       const fieldPath = firstEntryFieldPath(ghost.entryKind, entryId)
-      openSession({
+      startCanvasEdit(event.currentTarget, {
         blockKey: blockKeyForField(ghost.sectionId, fieldPath),
         sectionId: ghost.sectionId,
         entryId,
@@ -99,7 +96,7 @@ export const CanvasGhostRow = memo(function CanvasGhostRow({ ghost }: { ghost: C
     const list = bulletListKeyOf(ghost.entryKind)
     if (!list) return
     const fieldPath = `entries.${ghost.entryKind}.${ghost.entryId}.${list}[${index}]`
-    openSession({
+    startCanvasEdit(event.currentTarget, {
       blockKey: `${ghost.sectionId}:${ghost.entryId}:l${index}`,
       sectionId: ghost.sectionId,
       entryId: ghost.entryId,
