@@ -351,7 +351,7 @@ function SectionItem({
   )
 }
 
-export function Rail() {
+export function Rail({ className }: { className?: string }) {
   const sections = useDocStore((state) => state.doc.sections)
   const activeSectionId = useDocStore((state) => state.activeSectionId)
   const setActiveSection = useDocStore((state) => state.setActiveSection)
@@ -439,7 +439,12 @@ export function Rail() {
 
       <aside
         aria-label={t('rail.heading')}
-        className="border-rule bg-sunken hidden flex-col border-r lg:flex lg:w-14 xl:w-[248px]"
+        // `hidden lg:flex` bawaan tidak diubah (mode form harus tetap sama);
+        // kelas tambahan dari `AppShell` yang menentukan apakah rail tampil.
+        className={cn(
+          'border-rule bg-sunken hidden flex-col border-r lg:flex lg:w-14 xl:w-[248px]',
+          className,
+        )}
       >
         <PanelHeader
           title={t('rail.heading')}

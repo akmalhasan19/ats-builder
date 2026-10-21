@@ -41,10 +41,9 @@ const toCanvasMode = async (page: Page): Promise<void> => {
   // Popover/sheet menutup soal target di kertas — keduanya ditutup supaya
   // interaksi kanvas berikutnya tidak tertutup overlay (desktop: popover
   // Tampilan; mobile: sheet MobileMenu, lalu pindah ke tab Pratinjau).
+  // FASE 13 (D1, §4) — di mode kanvas kertas langsung jadi satu pane: tab bar
+  // mobile tidak dirender lagi, jadi tidak ada tab Pratinjau untuk diklik.
   await page.keyboard.press('Escape')
-  if (!isDesktop(page)) {
-    await page.getByRole('tab', { name: /Pratinjau/ }).click()
-  }
 }
 
 /** Viewport kerja + kartu first-run; `empty` = dokumen bersih tanpa contoh. */
@@ -228,7 +227,9 @@ test.describe('edit langsung di CV — entri (C4)', () => {
 
     await page.reload()
     await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'canvas')
-    if (!isDesktop(page)) await page.getByRole('tab', { name: /Pratinjau/ }).click()
+    // FASE 13 (D1) — di mode kanvas kertas tetap jadi satu pane setelah reload:
+    // tidak ada tab yang perlu dibuka, panel formulir tidak dirender.
+    await expect(page.locator('#pane-form')).toBeHidden()
     await expect(segment(page, 'profile.fullName')).toHaveText('Budi Santoso')
     await expect(lastExperienceSegment(page, '.bullets[0]')).toContainText('design system')
   })

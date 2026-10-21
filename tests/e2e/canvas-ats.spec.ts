@@ -84,7 +84,7 @@ test.describe('Perbaiki → di mode kanvas (C5.2)', () => {
     await expect(segment).toContainText('Mar 2023')
   })
 
-  test('field di luar matriks kanvas (tanggal pendidikan) tetap diperbaiki di form', async ({
+  test('field di luar matriks kanvas (tanggal pendidikan) tidak membuka sesi kanvas', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
@@ -113,9 +113,15 @@ test.describe('Perbaiki → di mode kanvas (C5.2)', () => {
 
     await issue.locator('[data-probe="ats-fix"]').click()
 
-    // Fallback: tidak ada sesi kanvas, dan field form yang sama terfokus.
+    // Fallback: field ini tidak punya padanan di matriks kanvas, jadi tidak
+    // ada sesi kanvas yang dibuka.
     await expect(page.locator('[data-canvas-editing="true"]')).toHaveCount(0)
     await expect(page.locator('[data-probe="canvas-dates"]')).toHaveCount(0)
-    await expect(endDate).toBeFocused()
+
+    // FASE 13 (D1) — di mode kanvas layar penuh panel formulir disembunyikan,
+    // jadi field form tidak bisa difokuskan. Ke mana fokus harus pergi
+    // (kertas) diputuskan di T3.5; untuk sementara hal ini tercatat saja.
+    await expect(page.locator('#pane-form')).toBeHidden()
+    await expect(endDate).not.toBeFocused()
   })
 })

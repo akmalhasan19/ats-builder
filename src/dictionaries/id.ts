@@ -267,6 +267,20 @@ export const id = {
   'canvas.ghost.addBullet': '+ Tambahkan bullet',
   'canvas.ghost.addSection': '+ Tambahkan bagian',
 
+  /* ---- FASE 13 (T3): jalan keluar & kontrol kanvas layar penuh ---- */
+  'canvas.fullscreenLabel': 'Kertas layar penuh',
+  'canvas.fullscreenExit': 'Keluar dari layar penuh',
+  'canvas.sectionsMenu': 'Bagian',
+
+  /* ---- FASE 13 (T5): aksesibilitas & i18n mode kanvas layar penuh ----
+     `fullscreenDesc` menjelaskan efek toggle (rail & formulir disembunyikan),
+     `fullscreenExitHint` jadi tooltip tombol keluar, dan
+     `fullscreenAnnounce` jadi teks live region saat mode kanvas menyala. */
+  'canvas.fullscreenDesc':
+    'Rail dan formulir disembunyikan; kertas CV mengisi layar. Matikan untuk kembali berpanel.',
+  'canvas.fullscreenExitHint': 'Kembali ke tampilan berpanel: rail dan formulir tampil lagi.',
+  'canvas.fullscreenAnnounce': 'Mode langsung di CV, kertas layar penuh.',
+
   'theme.open': 'Tema warna',
   'theme.title': 'Tema warna',
   'theme.description':

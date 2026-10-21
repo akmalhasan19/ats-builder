@@ -136,6 +136,7 @@ beforeEach(() => {
   useUiStore.setState({
     panelMode: '3col',
     activeTab: 'form',
+    editMode: 'form',
     fitMode: false,
     zoom: 1,
     showMarginGuides: true,
@@ -763,5 +764,116 @@ describe('AppShell — grid satu halaman (§2.4)', () => {
     )
     await waitFor(() => expect(probe('ats-drawer')).not.toBeNull())
     expect(document.querySelector('aside[data-probe="ats-drawer"]')).toBeNull()
+  })
+
+  it('mode kanvas: rail & formulir tersembunyi, pratinjau jadi satu pane penuh', () => {
+    stubViewport(1440)
+    // T6.3 — kombinasi yang diuji eksplisit: mode kanvas + preferensi layar
+    // penuh menyala (default store `true`, disetel agar tes tidak bergantung
+    // pada state yang tersisa dari tes lain).
+    useUiStore.setState({ editMode: 'canvas', canvasFullscreen: true })
+    render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    )
+
+    // Grid jadi satu kolom penuh — utility grid-cols breakpoint tidak lagi dipakai.
+    const grid = document.querySelector<HTMLElement>('#workspace-main > div')
+    expect(grid?.className).toContain('grid-cols-1')
+    expect(grid?.className).not.toContain('lg:grid-cols-')
+    expect(grid?.style.gridTemplateColumns).toBe('')
+
+    // Rail & formulir disembunyikan lewat utility `hidden` (D3).
+    const rail = document.querySelector<HTMLElement>(`aside[aria-label="${t('rail.heading')}"]`)
+    expect(rail?.className).toContain('hidden')
+    expect(rail?.className).toContain('lg:hidden')
+    const formPane = document.querySelector<HTMLElement>('#pane-form')
+    expect(formPane?.className).toContain('hidden')
+
+    // Pratinjau tetap tampil dan mengisi workspace.
+    const preview = document.querySelector<HTMLElement>('#pane-preview')
+    expect(preview?.className).toContain('block')
+
+    // Tab bar mobile, anchor beranda, dan section beranda tidak dirender (D7/D8).
+    expect(screen.queryByRole('tablist')).toBeNull()
+    expect(probe('home-anchor')).toBeNull()
+    expect(document.getElementById('home-templates')).toBeNull()
+
+    // Penanda mode global tetap utuh.
+    expect(document.querySelector('[data-edit-mode]')?.getAttribute('data-edit-mode')).toBe(
+      'canvas',
+    )
+    expect(
+      document.querySelector('[data-panel-mode]')?.getAttribute('data-panel-mode'),
+    ).not.toBeNull()
+  })
+
+  /**
+   * FASE 13 — T5.1 (D13) & T5.2: fokus berpindah ke kertas saat masuk mode
+   * kanvas, live region's menyebut "kertas layar penuh", dan skip link tetap
+   * bermakna walau rail & formulir tersembunyi.
+   */
+  it('mode kanvas: fokus pindah ke kertas, live region menyebut layar penuh, skip link tetap hidup', async () => {
+    stubViewport(1440)
+    useUiStore.setState({ editMode: 'form' })
+    render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    )
+
+    // `#pane-preview` adalah tujuan fokus → harus bisa difokuskan.
+    const well = document.getElementById('pane-preview')
+    expect(well?.getAttribute('tabindex')).toBe('-1')
+
+    // Skip link tetap menuju ruang kerja yang berisi kertas.
+    const skip = document.querySelector<HTMLAnchorElement>('a[href="#workspace-main"]')
+    expect(skip).not.toBeNull()
+    const main = document.getElementById('workspace-main')
+    expect(main).not.toBeNull()
+    expect(main?.contains(well)).toBe(true)
+
+    // Live region menyebut mode biasa saat masih di mode form.
+    const live = probe('edit-mode-announce')
+    expect(live).toHaveTextContent('Form terpandu')
+
+    // Fokus pindah ke kertas begitu mode kanvas menyala.
+    const trigger = screen.getByRole('button', { name: t('tampilan.open') })
+    trigger.focus()
+    act(() => useUiStore.getState().setEditMode('canvas'))
+    expect(document.activeElement).toBe(well)
+
+    // Penguman mode sekarang menyebut "kertas layar penuh" (T5.2).
+    await waitFor(() => expect(live).toHaveTextContent('kertas layar penuh'))
+  })
+
+  it('mode form: grid, tab bar, dan anchor beranda tetap seperti sebelumnya', () => {
+    // Stub `matchMedia` di helper considers ≥1280px sebagai "ATS di-dock",
+    // jadi dipakai 1200px agar cabang kolom xl (bukan gaya inline) yang diuji.
+    stubViewport(1200)
+    useUiStore.setState({ editMode: 'form' })
+    render(
+      <MemoryRouter>
+        <AppShell />
+      </MemoryRouter>,
+    )
+
+    const grid = document.querySelector<HTMLElement>('#workspace-main > div')
+    expect(grid?.className).toContain('lg:grid-cols-[56px_minmax(360px,1fr)_1fr]')
+    expect(grid?.className).toContain('xl:grid-cols-[248px_minmax(380px,520px)_1fr]')
+    expect(grid?.className).toContain('h-[calc(100dvh-96px)]')
+    expect(grid?.className).toContain('md:h-[calc(100dvh-100px)]')
+    expect(grid?.className).toContain('lg:h-[calc(100dvh-56px)]')
+    expect(grid?.style.gridTemplateColumns).toBe('')
+
+    // Rail tetap tampil di ≥1024px (kelas bawaannya tidak diubah).
+    const rail = document.querySelector<HTMLElement>(`aside[aria-label="${t('rail.heading')}"]`)
+    expect(rail?.className).not.toContain('lg:hidden')
+    expect(rail?.className).toContain('lg:flex')
+
+    // Tab bar & anchor beranda tetap dirender.
+    expect(screen.queryByRole('tablist')).not.toBeNull()
+    expect(probe('home-anchor')).not.toBeNull()
   })
 })

@@ -8,6 +8,8 @@ type PreviewPrefs = {
   showMarginGuides: boolean
   showKeywordMarks: boolean
   editMode: EditMode
+  /** FASE 13 (D2) — "kertas layar penuh" saat mode kanvas. */
+  canvasFullscreen: boolean
 }
 
 /**
@@ -20,6 +22,7 @@ export function usePreviewPrefs(): void {
   const showMarginGuides = useUiStore((state) => state.showMarginGuides)
   const showKeywordMarks = useUiStore((state) => state.showKeywordMarks)
   const editMode = useUiStore((state) => state.editMode)
+  const canvasFullscreen = useUiStore((state) => state.canvasFullscreen)
   const loaded = useRef(false)
 
   useEffect(() => {
@@ -37,6 +40,10 @@ export function usePreviewPrefs(): void {
           store.setShowKeywordMarks(stored.showKeywordMarks)
         if (stored.editMode === 'form' || stored.editMode === 'canvas')
           store.setEditMode(stored.editMode)
+        // Preferensi lama (sebelum FASE 13) tidak punya kunci ini: `undefined`
+        // sengaja dilewati supaya default `true` (D2) tetap berlaku.
+        if (typeof stored.canvasFullscreen === 'boolean')
+          store.setCanvasFullscreen(stored.canvasFullscreen)
       } catch {
         // Preferensi tidak kritis; uiStore tetap jadi sumber kebenaran sesi ini.
       } finally {
@@ -56,6 +63,7 @@ export function usePreviewPrefs(): void {
       showMarginGuides,
       showKeywordMarks,
       editMode,
+      canvasFullscreen,
     }).catch(() => undefined)
-  }, [zoom, fitMode, showMarginGuides, showKeywordMarks, editMode])
+  }, [zoom, fitMode, showMarginGuides, showKeywordMarks, editMode, canvasFullscreen])
 }

@@ -4,6 +4,10 @@
  * Enam viewport difoto dan diukur: tidak boleh ada scroll horizontal, dan
  * chrome yang dijanjikan §2.4 harus benar-benar muncul di breakpointnya
  * (rail penuh ≥1280, icon rail 1024–1279, dual-tab <1024, sticky bar <768).
+ *
+ * FASE 13 Fase 4 (T4.1) — matriks yang sama untuk mode "kertas layar penuh":
+ * satu pane, tinggi workspace pas, tanpa celah di bawah kertas, dan tanpa
+ * overflow horizontal (toolbar kanvas harus muat di kotak konten well).
  */
 import { expect, test, type Page } from '@playwright/test'
 
@@ -211,6 +215,106 @@ test.describe('responsive — workspace dalam satu jendela pendek', () => {
       await page.screenshot({
         path: `artifacts/fase9/responsive-short-${win.width}x${win.height}.png`,
       })
+    })
+  }
+})
+
+/**
+ * FASE 13 Fase 4 (T4.1) — mode "kertas layar penuh" di breakpoint mobile &
+ * tablet.
+ *
+ * Yang diuji:
+ *  - tab bar, rail, dan formulir tidak lagi tampil → satu pane (§4, D1);
+ *  - grid tetap SATU kolom (jebakan auto-placement §1.2: menyembunyikan anak
+ *    tanpa mengubah `grid-template-columns` akan menyusutkan well ke 56px);
+ *  - tinggi workspace = `100dvh` dikurangi chrome di atasnya: 52px (TopBar
+ *    mobile) atau 56px (TopBar md) — tab bar 44px tidak ada lagi;
+ *  - bawah kertas persis menyentuh `StickyActionBar`: tidak ada celah kosong
+ *    dan tidak ada elemen yang tertutup bar;
+ *  - tanpa overflow horizontal, termasuk di dalam well (toolbar kanvas harus
+ *    muat supaya tombol "Tampilan" & "Keluar" tidak terpotong).
+ */
+const CANVAS_CASES = [
+  { width: 360, height: 640, topBar: 52, sticky: true },
+  { width: 390, height: 844, topBar: 52, sticky: true },
+  { width: 768, height: 900, topBar: 56, sticky: false },
+]
+
+/** Mode kanvas lewat sheet Menu TopBar (dipakai di bawah 1024px). */
+const toCanvasMode = async (page: Page): Promise<void> => {
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.locator('[data-probe="edit-mode-canvas"]:visible').click()
+  await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'canvas')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('[data-slot="sheet-content"]')).toHaveCount(0)
+}
+
+test.describe('responsive — mode kanvas layar penuh (FASE 13 Fase 4)', () => {
+  for (const item of CANVAS_CASES) {
+    test(`${item.width}×${item.height}: satu pane penuh, tinggi pas, tanpa celah & overflow`, async ({
+      page,
+    }) => {
+      await prepare(page, item.width, item.height)
+      await toCanvasMode(page)
+
+      // Satu pane: tab bar, rail, dan formulir hilang.
+      await expect(page.getByRole('tablist', { name: 'Mode tampilan' })).toHaveCount(0)
+      await expect(page.locator('aside[aria-label="Bagian"]')).toBeHidden()
+      await expect(page.locator('#pane-form')).toBeHidden()
+      await expect(page.locator('#pane-preview [data-probe="page-sheet"]').first()).toBeVisible()
+
+      // Kertas mengisi seluruh lebar layar.
+      const wellWidth = await page.locator('#pane-preview').evaluate((el) => el.clientWidth)
+      expect(wellWidth).toBe(item.width)
+
+      // Grid SATU kolom —-well tidak boleh menyusut ke track rail.
+      const gridColumns = await page
+        .locator('#workspace-main > div')
+        .evaluate((el) => getComputedStyle(el).gridTemplateColumns)
+      expect(gridColumns.split(' ').filter(Boolean)).toHaveLength(1)
+
+      // Tinggi workspace = 100dvh − chrome di atasnya (tab bar 44px hilang).
+      const wsHeight = await page
+        .locator('#workspace-main > div')
+        .evaluate((el) => Math.round(el.getBoundingClientRect().height))
+      expect(wsHeight).toBe(item.height - item.topBar)
+
+      // Tanpa overflow horizontal: dokumen maupun well.
+      expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0)
+      const wellOverflow = await page
+        .locator('#pane-preview')
+        .evaluate((el) => el.scrollWidth - el.clientWidth)
+      expect(wellOverflow, 'toolbar kanvas meluber dari kotak konten well').toBeLessThanOrEqual(0)
+
+      // Bawah kertas: tepat di tepi bar bawah (mobile) atau tepi lipatan (md).
+      // Tidak ada celah kosong, dan tidak ada elemen yang tertutup bar.
+      const edges = await page.evaluate(() => {
+        const well = document.querySelector('#pane-preview')
+        const bar = [...document.querySelectorAll('div')].find((el) => {
+          const style = getComputedStyle(el)
+          return (
+            style.position === 'fixed' &&
+            style.zIndex === '30' &&
+            style.display !== 'none' &&
+            el.querySelector('[data-probe="download-pdf"]')
+          )
+        })
+        if (!well) throw new Error('well pratinjau tidak ditemukan')
+        return {
+          wellBottom: Math.round(well.getBoundingClientRect().bottom),
+          barTop: bar ? Math.round(bar.getBoundingClientRect().top) : null,
+          innerHeight: window.innerHeight,
+        }
+      })
+      if (item.sticky) {
+        expect(edges.barTop, 'StickyActionBar harus tampil di <768px').not.toBeNull()
+        expect(edges.wellBottom, 'ada celah di bawah kertas').toBe(edges.barTop)
+      } else {
+        expect(edges.barTop, 'StickyActionBar tersembunyi di ≥768px').toBeNull()
+        expect(edges.wellBottom, 'kertas tidak sampai tepi lipatan').toBe(edges.innerHeight)
+      }
+
+      await page.screenshot({ path: `artifacts/fase13-f4/canvas-full-${item.width}.png` })
     })
   }
 })

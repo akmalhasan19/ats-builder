@@ -4,7 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { PreviewWell } from '@/app/shell/PreviewWell'
-import { ensureReadableZoom } from '@/features/canvas/canvasZoom'
+import {
+  MIN_READABLE_ZOOM,
+  RAISED_ZOOM,
+  effectiveScaleOf,
+  ensureReadableZoom,
+} from '@/features/canvas/canvasZoom'
+import { MAX_ZOOM, MAX_ZOOM_CANVAS, MIN_ZOOM } from '@/features/preview/previewZoom'
 import { useCanvasStore } from '@/store/canvasStore'
 import { useDocStore } from '@/store/docStore'
 import { scheduleHeight, usePreviewStore } from '@/store/previewStore'
@@ -270,14 +276,22 @@ describe('sesi & pembekuan repaginasi (C3.2)', () => {
     act(() => useUiStore.getState().setEditMode('canvas'))
     renderWell()
 
-    // Tunggu pengukuran awal (dua frame) supaya rencana halaman memakai tinggi
-    // terukur, bukan perkiraan.
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 250))
-    })
-    const sheetsBefore = document.querySelectorAll('[data-probe="page-sheet"]').length
+    // Tunggu pengukuran awal masuk store — kondisi nyata, bukan jeda tetap
+    // 250ms (T6.5): di mesin tertekan jeda itu pernah tidak cukup dan tes gagal
+    // dengan "expected undefined to be 120" (flake Fase 3/4, bukan regresi).
     const blockKey =
       document.querySelector('[data-probe="preview-block"]')?.getAttribute('data-block-key') ?? ''
+    await waitFor(() => expect(usePreviewStore.getState().heights[blockKey]).toBe(120), {
+      timeout: 5000,
+    })
+    // Snapshot settled (debounce 60ms) ikut terukur supaya rencana halaman
+    // memakai tinggi terukur, bukan perkiraan. Ini cooldown timer — syaratnya
+    // hanya "sudah menyala", jadi lebih lama selalu aman: tidak ada lagi yang
+    // berubah sebelum sesi edit dibuka di bawah.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 120))
+    })
+    const sheetsBefore = document.querySelectorAll('[data-probe="page-sheet"]').length
     expect(usePreviewStore.getState().heights[blockKey]).toBe(120)
 
     await user.click(fieldButton('profile.fullName')!)
@@ -359,6 +373,69 @@ describe('guard zoom (C3.3)', () => {
 
     expect(useUiStore.getState().zoom).toBe(1)
     expect(toast).not.toHaveBeenCalled()
+    host.remove()
+    spy.mockRestore()
+  })
+})
+
+/**
+ * FASE 13 — T2.4 — guard zoom mengikuti plafon zoom yang baru.
+ *
+ * Plafon mode kanvas naik ke 200% (D10), jadi guard bacaabilitas (60%→75%)
+ * tetap sahih dan tidak pernah bentrok dengan batas bawah zoom (30%).
+ */
+describe('guard zoom vs plafon baru (T2.4)', () => {
+  it('batas guard tetap sahih terhadap batas bawah & plafon zoom', () => {
+    expect(MIN_READABLE_ZOOM).toBe(0.6)
+    expect(MIN_READABLE_ZOOM).toBeGreaterThan(MIN_ZOOM)
+    expect(RAISED_ZOOM).toBe(0.75)
+    expect(RAISED_ZOOM).toBeGreaterThanOrEqual(MIN_READABLE_ZOOM)
+    expect(RAISED_ZOOM).toBeLessThanOrEqual(MAX_ZOOM)
+    expect(RAISED_ZOOM).toBeLessThanOrEqual(MAX_ZOOM_CANVAS)
+  })
+
+  it('effectiveScaleOf membaca matriks transform pada skala > 1,5', () => {
+    const spy = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockReturnValue({ transform: 'matrix(2, 0, 0, 2, 0, 0)' } as CSSStyleDeclaration)
+    const host = document.createElement('div')
+    host.setAttribute('data-probe', 'preview-content')
+    const target = document.createElement('div')
+    host.appendChild(target)
+    document.body.appendChild(host)
+
+    expect(effectiveScaleOf(target)).toBe(2)
+
+    // Skala 200% di layar penuh sudah jauh di atas ambang bacaabilitas, jadi
+    // toast "zoom dinaikkan" tidak boleh muncul sia-sia di desktop.
+    ensureReadableZoom(target)
+    expect(toast).not.toHaveBeenCalled()
+    expect(useUiStore.getState().zoom).toBe(1)
+
+    host.remove()
+    spy.mockRestore()
+  })
+
+  it('skala 1,69 (fit layar penuh di 1440px) juga tidak memicu toast', () => {
+    const spy = vi
+      .spyOn(window, 'getComputedStyle')
+      .mockReturnValue({ transform: 'matrix(1.69, 0, 0, 1.69, 0, 0)' } as CSSStyleDeclaration)
+    const host = document.createElement('div')
+    host.setAttribute('data-probe', 'preview-content')
+    const target = document.createElement('div')
+    host.appendChild(target)
+    document.body.appendChild(host)
+    act(() => {
+      useUiStore.getState().setFitMode(true)
+      useUiStore.getState().setZoom(1)
+    })
+
+    ensureReadableZoom(target)
+
+    expect(toast).not.toHaveBeenCalled()
+    expect(useUiStore.getState().fitMode).toBe(true)
+    expect(useUiStore.getState().zoom).toBe(1)
+
     host.remove()
     spy.mockRestore()
   })

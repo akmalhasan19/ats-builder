@@ -82,6 +82,12 @@ const chromeBases = [
   { name: 'sunken', hex: sunken },
 ]
 
+/**
+ * FASE 13 (T5.4) — latar efektif toolbar kanvas: kaca putih 86% di atas
+ * workbench. Sumber kebenarannya tetap tokens.css, bukan angka di test.
+ */
+const toolbarGlassOverWorkbench = blendOver('toolbar-glass', hexFor('workbench'))
+
 const pairs: Pair[] = [
   ...chromeBases.map((base) => ({
     text: hexFor('ink'),
@@ -142,6 +148,28 @@ const pairs: Pair[] = [
   { text: hexFor('ink'), background: highlighter, min: 4.5, role: 'teks di atas stabilo' },
   { text: DEFAULT_PALETTE.accentInk, background: raised, min: 3, role: 'ring fokus' },
   { text: hexFor('ink-tertiary'), background: raised, min: 3, role: 'ikon redup' },
+  // FASE 13 (T5.4) — toolbar kanvas adalah kaca putih 86% di atas latar
+  // workbench. Di mode kanvas layar penuh well jauh lebih lebar, jadi
+  // kontrasnya diaudit di atas worst case: kaca di atas workbench (latar
+  // paling gelap yang pernah muncul di belakang toolbar).
+  {
+    text: hexFor('ink'),
+    background: toolbarGlassOverWorkbench,
+    min: 4.5,
+    role: 'teks toolbar kanvas di atas workbench',
+  },
+  {
+    text: hexFor('ink-secondary'),
+    background: toolbarGlassOverWorkbench,
+    min: 4.5,
+    role: 'teks pendukung toolbar kanvas di atas workbench',
+  },
+  {
+    text: hexFor('ink-tertiary'),
+    background: toolbarGlassOverWorkbench,
+    min: 4.5,
+    role: 'caption toolbar kanvas di atas workbench',
+  },
 ]
 
 describe('audit kontras token (§2.2, T2.5)', () => {

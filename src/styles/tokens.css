@@ -519,6 +519,21 @@
   min-height: 44px;
 }
 
+/* ==========================================================================
+   FASE 13 (T5.1) — fokus di kertas layar penuh (D13).
+
+   `#pane-preview` jadi tujuan fokus saat masuk mode kanvas. Cincin fokus
+   global (2px, offset 2px) terlalu berat untuk satu pane penuh — dan
+   digambar di luar kotak, jadi terpotong oleh `overflow: hidden` workspace.
+   Digantikan garis aksen 2px yang digambar DI DALAM tepi well, jadi tidak
+   pernah terpotong dan tetap kelihatan jelas di atas kertas.
+   ========================================================================== */
+
+[data-edit-mode='canvas'] #pane-preview:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: -2px;
+}
+
 /* ---- Motion (§2.6) — keyframes & state Radix ------------------------------ */
 
 @keyframes overlay-in {

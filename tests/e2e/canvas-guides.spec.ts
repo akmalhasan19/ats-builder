@@ -41,10 +41,9 @@ const toCanvasMode = async (page: Page): Promise<void> => {
   // Popover/sheet menutupi target di kertas — tutup supaya interaksi kanvas
   // berikutnya tidak tertahan overlay (desktop: popover Tampilan; mobile:
   // sheet MobileMenu, lalu pindah ke tab Pratinjau tempat kertas hidup).
+  // FASE 13 (D1, §4) — di mode kanvas kertas langsung jadi satu pane: tab bar
+  // mobile tidak dirender lagi, jadi tidak ada tab Pratinjau untuk diklik.
   await page.keyboard.press('Escape')
-  if (!isDesktop(page)) {
-    await page.getByRole('tab', { name: /Pratinjau/ }).click()
-  }
 }
 
 const applyTemplate = async (page: Page, name: string): Promise<void> => {

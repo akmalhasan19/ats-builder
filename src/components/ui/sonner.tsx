@@ -39,8 +39,13 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       toastOptions={{
         classNames: {
+          // FASE 13 — toast murni informatif, jadi tidak pernah boleh menelan
+          // klik. Tanpa `pointer-events-none`, toast yang menimpa chrome kerja
+          // membuat tombol di bawahnya mati selama 3,5 detik: di mode kanvas
+          // layar penuh tab bar hilang, jadi toolbar pratinjau naik ke bawah
+          // TopBar — tepat di zona toast.
           toast:
-            'bg-machine text-machine-text border-0 rounded-lg px-3.5 py-2.5 text-button items-start gap-2 shadow-[var(--shadow-dialog)]',
+            'bg-machine text-machine-text border-0 pointer-events-none rounded-lg px-3.5 py-2.5 text-button items-start gap-2 shadow-[var(--shadow-dialog)]',
           description: 'text-machine-dim',
           actionButton: 'bg-accent text-accent-on',
           cancelButton: 'bg-machine-dim text-machine-text',

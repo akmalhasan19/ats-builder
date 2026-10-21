@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { ArrowDown, ArrowUp, Check, List, Plus } from 'lucide-react'
-import { cn } from 'cn'
+import { List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,37 +15,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { getSectionCompleteness, sectionRegistry } from '@/features/sections/registry'
+import { sectionRegistry } from '@/features/sections/registry'
 import { SECTION_ORDER } from '@/schema/resume'
 import { useDocStore } from '@/store/docStore'
 import { usePdfExportStore } from '@/store/pdfExportStore'
 import { useUiStore } from '@/store/uiStore'
 import { t } from '@/lib/i18n'
 import { PdfDownloadButton } from '@/features/pdf/PdfDownloadButton'
-
-function CompletenessDots({ dots }: { dots: 0 | 1 | 2 | 3 }) {
-  return (
-    <div className="flex items-center gap-0.5" aria-hidden="true">
-      {[1, 2, 3].map((step) => {
-        const filled = dots >= step
-        const isOk = dots === 3
-        return (
-          <span
-            key={step}
-            className={cn(
-              'size-1 rounded-full transition-colors',
-              isOk
-                ? 'bg-signal-ok'
-                : filled
-                  ? 'bg-accent'
-                  : 'border-rule-strong border bg-transparent',
-            )}
-          />
-        )
-      })}
-    </div>
-  )
-}
+import { SectionAddButton, SectionListNav } from './SectionListNav'
 
 /** §5.7 — bar bawah mobile + sheet "Bagian" sebagai pengganti rail. */
 export function StickyActionBar() {
@@ -54,10 +30,6 @@ export function StickyActionBar() {
   const [catalogOpen, setCatalogOpen] = useState(false)
 
   const sections = useDocStore((state) => state.doc.sections)
-  const activeSectionId = useDocStore((state) => state.activeSectionId)
-  const setActiveSection = useDocStore((state) => state.setActiveSection)
-  const toggleSectionVisible = useDocStore((state) => state.toggleSectionVisible)
-  const reorderSection = useDocStore((state) => state.reorderSection)
   const addSection = useDocStore((state) => state.addSection)
   const setActiveTab = useUiStore((state) => state.setActiveTab)
   const isGenerating = usePdfExportStore((state) => state.isGenerating)
@@ -90,101 +62,15 @@ export function StickyActionBar() {
             <SheetDescription>{t('rail.visibleOf')}</SheetDescription>
           </SheetHeader>
 
-          <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4">
-            {sections.map((section, index) => {
-              const entry = sectionRegistry[section.kind]
-              const Icon = entry.icon
-              const active = section.id === activeSectionId
-              const label = t(entry.labelId)
-              const completeness = getSectionCompleteness(section)
-
-              return (
-                <div
-                  key={section.id}
-                  className={cn(
-                    'border-rule bg-raised flex h-12 items-center gap-2 rounded-md border px-3',
-                    active && 'border-accent-ink bg-accent-wash',
-                  )}
-                >
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={section.visible}
-                    aria-label={`${t('rail.toggleVisibility')}: ${label}`}
-                    onClick={() => toggleSectionVisible(section.id)}
-                    className={cn(
-                      'flex size-5 shrink-0 items-center justify-center rounded border transition-colors',
-                      section.visible
-                        ? 'border-accent-ink bg-accent text-accent-on'
-                        : 'border-rule-strong bg-raised text-transparent',
-                    )}
-                  >
-                    <Check className="size-3.5 stroke-[2.5]" aria-hidden="true" />
-                  </button>
-
-                  <button
-                    type="button"
-                    aria-current={active ? 'true' : undefined}
-                    onClick={() => {
-                      setActiveSection(section.id)
-                      setActiveTab('form')
-                      setOpen(false)
-                    }}
-                    className="flex min-w-0 flex-1 items-center gap-2 truncate py-2 text-left"
-                  >
-                    <Icon
-                      aria-hidden="true"
-                      className={cn(
-                        'size-4 shrink-0',
-                        active ? 'text-accent-ink' : 'text-ink-tertiary',
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        'text-rail-label truncate',
-                        !section.visible && 'text-ink-tertiary opacity-55',
-                      )}
-                    >
-                      {label}
-                    </span>
-                  </button>
-
-                  <CompletenessDots dots={completeness.dots} />
-
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      disabled={index === 0}
-                      aria-label={`${t('rail.moveUp')}: ${label}`}
-                      onClick={() => reorderSection(index, index - 1)}
-                      className="text-ink-tertiary hover:text-ink active:bg-hover flex size-8 items-center justify-center rounded disabled:opacity-20"
-                    >
-                      <ArrowUp className="size-4" aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={index === sections.length - 1}
-                      aria-label={`${t('rail.moveDown')}: ${label}`}
-                      onClick={() => reorderSection(index, index + 1)}
-                      className="text-ink-tertiary hover:text-ink active:bg-hover flex size-8 items-center justify-center rounded disabled:opacity-20"
-                    >
-                      <ArrowDown className="size-4" aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </nav>
+          {/* FASE 13 (T3.4) — daftarnya pindah ke `SectionListNav` karena menu
+              "Bagian" di toolbar kanvas memakai baris yang sama persis. */}
+          <SectionListNav
+            onSelected={() => setOpen(false)}
+            className="min-h-0 flex-1 overflow-y-auto p-4"
+          />
 
           <div className="border-rule border-t p-3">
-            <button
-              type="button"
-              onClick={() => setCatalogOpen(true)}
-              className="border-rule-strong text-button text-ink-secondary hover:border-accent-ink hover:text-accent-ink hover:bg-accent-wash flex h-10 w-full items-center justify-center gap-1.5 rounded-md border border-dashed transition-colors"
-            >
-              <Plus className="size-4" aria-hidden="true" />
-              <span>{t('rail.addSection')}</span>
-            </button>
+            <SectionAddButton onClick={() => setCatalogOpen(true)} />
           </div>
         </SheetContent>
       </Sheet>

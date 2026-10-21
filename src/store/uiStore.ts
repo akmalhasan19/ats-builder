@@ -11,6 +11,12 @@ export type UiStore = {
   panelMode: PanelMode
   activeTab: 'form' | 'preview'
   editMode: EditMode
+  /**
+   * FASE 13 (D2) — "kertas layar penuh" saat mode kanvas: rail & panel formulir
+   * disembunyikan. Default `true` sesuai permintaan; bisa dimatikan lewat menu
+   * Tampilan bagi yang tetap ingin rail di mode kanvas.
+   */
+  canvasFullscreen: boolean
   showMarginGuides: boolean
   showKeywordMarks: boolean
   atsDrawerOpen: boolean
@@ -29,6 +35,7 @@ export type UiStore = {
   setPanelMode: (panelMode: PanelMode) => void
   setActiveTab: (activeTab: 'form' | 'preview') => void
   setEditMode: (editMode: EditMode) => void
+  setCanvasFullscreen: (canvasFullscreen: boolean) => void
   setShowMarginGuides: (showMarginGuides: boolean) => void
   setShowKeywordMarks: (showKeywordMarks: boolean) => void
   setAtsDrawerOpen: (atsDrawerOpen: boolean) => void
@@ -44,6 +51,7 @@ export const useUiStore = create<UiStore>((set) => ({
   panelMode: '3col',
   activeTab: 'form',
   editMode: 'form',
+  canvasFullscreen: true,
   showMarginGuides: true,
   showKeywordMarks: true,
   atsDrawerOpen: false,
@@ -56,6 +64,7 @@ export const useUiStore = create<UiStore>((set) => ({
   setPanelMode: (panelMode) => set({ panelMode }),
   setActiveTab: (activeTab) => set({ activeTab }),
   setEditMode: (editMode) => set({ editMode }),
+  setCanvasFullscreen: (canvasFullscreen) => set({ canvasFullscreen }),
   setShowMarginGuides: (showMarginGuides) => set({ showMarginGuides }),
   setShowKeywordMarks: (showKeywordMarks) => set({ showKeywordMarks }),
   setAtsDrawerOpen: (atsDrawerOpen) => set({ atsDrawerOpen }),

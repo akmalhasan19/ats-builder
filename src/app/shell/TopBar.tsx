@@ -115,7 +115,12 @@ function MobileMenu() {
           <SheetTitle>{t('topbar.menuTitle')}</SheetTitle>
           <SheetDescription>{t('topbar.menuPending')}</SheetDescription>
         </SheetHeader>
-        <div className="flex flex-col gap-2 px-4 pb-4">
+        {/* FASE 13 Fase 4 (T4.1) — isi menu harus bisa digulir di layar pendek.
+            `SheetContent`_side="right"_ tidak punya `overflow`, jadi pada
+            360×640 isinya (1120px) meluber keluar viewport dan opsi "Langsung
+            di CV" — satu-satunya jalan ke mode kanvas — praktis tak terjangkau.
+            Tubuh menu jadi wadah gulir sendiri; judul sheet tetap menempel. */}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4">
           <p className="text-eyebrow">{t('topbar.templateTitle')}</p>
           {TEMPLATE_IDS.map((id) => {
             const active = id === activeId

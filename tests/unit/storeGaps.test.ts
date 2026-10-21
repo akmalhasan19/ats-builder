@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, renderHook } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { buildReport } from '@/features/ats/engine'
 import {
   createEmptyDoc,
@@ -820,26 +820,27 @@ describe('previewStore — pengukuran tinggi (T4.2)', () => {
     })
     expect(usePreviewStore.getState().heights.e).toBe(5)
     // Pemanggilan layout masih membaca snapshot lama: pemecahan halaman ditahan.
+    // Timer debounce baru DIJADWALKAN pada frame di atas dan mustahil menyala
+    // sinkron, jadi assertion ini deterministik tanpa jeda tetap (T6.5).
     expect(result.current).toBe(initial)
 
-    await act(async () => {
-      await wait(90)
-    })
+    // Setelah debounce 60ms, snapshot settled memuat nilai baru. Kondisi
+    // nyata ditunggu dengan waitFor — jeda tetap 90ms di posisi ini adalah
+    // flake yang tercatat di Fase 3/4 (gagal di mesin tertekan, lolos sendiri;
+    // diperbaiki di T6.5 sesuai catatan Fase 3, bukan dengan menaikkan angka).
+    await waitFor(() => expect(result.current.e).toBe(5))
     expect(result.current).not.toBe(initial)
-    expect(result.current.e).toBe(5)
 
     const settled = result.current
     await act(async () => {
       scheduleHeight('e', 6)
       await frame()
-      await wait(20)
     })
+    // Masih di dalam jendela debounce — timer belum menyala, snapshot belum
+    // bergerak. Deterministik: yang dijaga adalah urutan timer, bukan waktu.
     expect(result.current).toBe(settled)
 
-    await act(async () => {
-      await wait(90)
-    })
-    expect(result.current.e).toBe(6)
+    await waitFor(() => expect(result.current.e).toBe(6))
   })
 
   it('perubahan state lain bukan tinggi tidak menggerakkan settled', async () => {

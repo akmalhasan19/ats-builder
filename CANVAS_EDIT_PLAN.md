@@ -158,6 +158,14 @@ Ringkasan verifikasi codebase per 2026-10-20; nomor baris sesuai commit `9fee60e
   `usePreviewPrefs.ts` (:5-10, :49). Default `'form'` (UI hari ini tidak berubah bagi user lama).
 - `activeTab` tetap ortogonal: di mobile, `editMode='canvas'` + tab `Pratinjau` = kertas editable;
   tab `Isi data` tetap form.
+- **Amandemen FASE 13 (kertas layar penuh, 2026-10-21)** — ortogonalitas itu kini punya satu
+  pengecualian: saat `canvasFull = editMode === 'canvas' && canvasFullscreen`
+  (`src/app/useWorkspaceLayout.ts`), `workspaceLayoutFor()` mengembalikan
+  `showTabs = false` dan `previewClass = 'block'`, sehingga **tab bar tidak dirender dan
+  `activeTab` diabaikan** — kertas mengisi satu pane penuh, tanpa rail & formulir.
+  Di luar keadaan itu (`editMode='form'`, atau `canvasFullscreen = false`) perilaku
+  `activeTab` **persis** seperti sebelum FASE 13; tidak ada perubahan di mode form.
+  Rincian: `PLAN_F13_CANVAS_FULLSCREEN.md` §2 D1/D2/D4 dan §4 (matriks breakpoint).
 
 ### D2 — Fitur "Tampilan" = popover berlabel di toolbar pratinjau (+ padanan mobile)
 

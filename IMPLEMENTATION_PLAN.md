@@ -203,6 +203,15 @@ Tiga peran, tiga keluarga. Semua self-host (WOFF2 untuk layar, **TTF untuk PDF**
 | 768–1023px | **Dual-tab**: `Isi data` / `Pratinjau`. Rail jadi bottom-sheet "Bagian". |
 | < 768px | Satu kolom. Top bar h52. Sticky bottom action bar h64 + safe-area. Segment control sticky di bawah top bar. |
 
+**Varian tata letak: "kertas layar penuh" (FASE 13A, 2026-10-21)** — matriks di atas adalah
+tata letak **mode form**, dan tetap berlaku tanpa perubahan satu piksel pun. Saat
+`editMode = 'canvas'` **dan** preferensi `canvasFullscreen = true` (default), workspace menjadi
+**satu pane penuh** di semua breakpoint: rail & panel formulir tidak dirender (`hidden`), tab bar
+mobile hilang, dan kertas mengisi seluruh lebar workspace dengan plafon zoom 200% (mode form tetap
+150%). Yang tersisa di layar: TopBar, toolbar pratinjau (termasuk menu **Bagian** pengganti rail dan
+tombol **Keluar**), `StickyActionBar` di <768px, dan — bila dibuka — drawer ATS sebagai **overlay**
+walau ≥1600px. Matriks & angka terukur: `PLAN_F13_CANVAS_FULLSCREEN.md` §4 dan §10.3.
+
 **Kedalaman & elevasi**
 
 | Level | Surface | Shadow | Radius |
@@ -1159,6 +1168,56 @@ Urutan mengikuti `plan.md` §3C. Semua section memakai `content-visibility: auto
 
 ---
 
+### ☑ FASE 13A — Mode "Langsung di CV" = Kertas Layar Penuh *(2026-10-21 — semua task Fase 0–7 & Gate Fase 7 hijau; realisasi rinci di [PLAN_F13_CANVAS_FULLSCREEN.md](PLAN_F13_CANVAS_FULLSCREEN.md))*
+
+> **Catatan penomoran — perlu keputusan owner.** Dokumen pengerjaan fase ini
+> (`PLAN_F13_CANVAS_FULLSCREEN.md`) memakai nomor **FASE 13**, tetapi slot `FASE 13` di dokumen
+> ini sudah terisi *AI Assistant & Fitur Lanjutan* yang ditangguhkan atas keputusan owner
+> 2026-10-20. Supaya tidak ada dua fase bernomor sama, entri ini didaftarkan sebagai **FASE 13A**;
+> penomoran final (13A tetap, atau AI Assistant digeser ke 14) menunggu keputusan owner.
+>
+> Master plan & keputusan desain mengikat: `PLAN_F13_CANVAS_FULLSCREEN.md` §2 (D1–D14) dan
+> §4 (matriks breakpoint). Fondasi edit langsung di atas kertas (D3–D10 FASE 12) tidak dibangun
+> ulang — fase ini **hanya mengubah tata letak**.
+
+- [x] **Fase 0 — Fondasi: ekstraksi & pengukuran** — konstanta & rumus zoom dipindah ke
+  `src/features/preview/previewZoom.ts` (`MAX_ZOOM_CANVAS = 2.0`), baseline lebar kertas di
+  1024/1280/1440/1920 tercatat, jebakan auto-placement grid dibuktikan lewat spike
+  *(bukti: `artifacts/fase13/spike-hasil.json`, `measure-baseline.json`)*
+- [x] **Fase 1 — Layout satu pane (desktop)** — `workspaceLayoutFor()` (fungsi murni, diuji tanpa
+  DOM) menurunkan grid & tinggi; `AppShell.tsx` memakainya; rail & `FormPane` disembunyikan
+  berpasangan dengan `grid-cols-1` *(nol regresi mode form di kelima rentang lebar)*
+- [x] **Fase 2 — Zoom & skala kertas** — plafon fit mengikuti mode; terukur **1360 px (skala
+  1,7128)** di 1440 px vs plafon mode form 1191 px *(kertas benar-benar membesar, bukan sekadar
+  ruang kosong)*
+- [x] **Fase 3 — Jalan keluar & kontrol yang hilang** — preferensi `canvasFullscreen` (default
+  `true`, persistensi `ats:prefs:v1`), tombol "Keluar dari layar penuh", menu **Bagian** di toolbar
+  pengganti rail (pilih/sembunyikan/urut/hapus/tambah), ATS jadi overlay walau ≥1600 px
+- [x] **Fase 4 — Mobile & tablet** — tab bar hilang, tinggi `100dvh − 52px` (mobile) /
+  `−56px` (md), toolbar dirampingkan di <640 px; dua cacat pre-existing diperbaiki (sheet Menu
+  TopBar tidak bisa digulir; toolbar meluber 67 px di 360 px)
+- [x] **Fase 5 — Aksesibilitas & i18n** — `useCanvasFocus` (D13: fokus masuk ke `#pane-preview`,
+  kembali ke pemicu saat keluar), live region "kertas layar penuh", `aria-label` & tooltip dari
+  kamus, cincin fokus di dalam tepi well, axe 0 violation serius di 360 & 1440 px
+- [x] **Fase 6 — Pengujian** — matriks penuh `workspaceLayoutFor()` (20 kombinasi),
+  `previewZoom` lima lebar well, 3 tes E2E baru (skala kertas, editor swap-in tanpa rail, ghost
+  row tanpa rail); dua tes ber-jeda tetap diperkuat jadi `waitFor`
+- [x] **Fase 7 — QA, performa, dokumentasi** — sweep 8 breakpoint × 5 template × zoom 0,3–2,0;
+  CLS pergantian mode = 0; nol loop `ResizeObserver`; `pnpm build` tanpa chunk baru; dokumen rumah
+  diperbarui
+
+**Gate Fase 13A**
+- [x] `pnpm build && pnpm typecheck && pnpm lint && pnpm test` hijau
+- [x] `pnpm test:e2e` hijau (chromium + mobile-chrome)
+- [x] `pnpm pdf:verify` **174/174** — paritas PDF tidak tersentuh
+- [x] Nol regresi mode form di 1024/1280/1440/1920/2560 (kolom grid & lebar kertas identik sebelum
+  dan sesudah pergantian mode)
+- [x] Mode kanvas layar penuh bekerja di 360/390/768/1024/1280/1440/1920/2560
+- [x] Dokumentasi diperbarui (`IMPLEMENTATION_PLAN.md`, `CANVAS_EDIT_PLAN.md` D1,
+  `PLAN_F13_CANVAS_FULLSCREEN.md` §Realisasi)
+
+---
+
 ### ☐ FASE 13 — AI Assistant & Fitur Lanjutan *(ditangguhkan atas keputusan owner 2026-10-20 — Edit Langsung di CV diprioritaskan sebagai FASE 12)*
 
 - [ ] **T13.1 Infrastruktur AI**
@@ -1282,6 +1341,9 @@ Sebuah fase dianggap selesai **hanya bila semua** benar:
 | 2026-10-20 | 12 | T12.5 (C5.1–C5.6) + Gate C5 (2/3) | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm test` **1023 test / 57 file** hijau · `pnpm pdf:verify` **174/174** · `pnpm build` exit 0 (index 860,53 kB / **257,94 kB gzip**) · `pnpm test:e2e` **157/157** (chromium + mobile-chrome; `canvas-a11y` 4/4, `canvas-ats` 2/2, `canvas-mobile` 4/4, `a11y.spec` 6/6) · `node scripts/evidence-fase12-c5.mjs` **19/19** (bundle 290,89 kB gzip = +11,88 vs Fase 9; Profiler 10 ketikan: form 1340 render/486 ms/82 blok vs kanvas 20 render/14,5 ms/1 blok; commit kanvas 243 render/219 ms; 5 template × 2 mode: form 0 segmen/0 ghost, kanvas 46/11; PDF mode kanvas bebas guide & ghost; kanvas mobile 46 segmen) · `pnpm lhci` exit 0: **a11y/BP/SEO 1,00 · CLS ≤0,0003 · TBT 61–271 ms**, Perf 0,51–0,65 & LCP 3,77–3,94 s (`warn`). Realisasi: `canvasAts.ts` (ATS → sesi kanvas + fallback form), live region `tampilan.modeAnnounce`, `canvas-a11y.spec.ts`, `PLAN_F12_CANVAS_EDIT.md`, §5.2/5.5/5.6/5.7/§7 UI inventory & QA matrix. | ✅ Selesai & terverifikasi |
 | 2026-10-20 | 12 | Bug nyata & flake yang ditemukan C5, semuanya diperbaiki | (1) `testIgnore` tingkat proyek menimpa `testIgnore` global → `offline.spec` ikut jalan di dev server dan timeout; pola `offline` diulang di setiap proyek. (2) Toast mobile menutupi tombol Menu (sonner `top-center` di y=16) → `offset`/`mobileOffset` `{top:104}` sesuai §5.11. (3) `waitForStored` desktop memakai pill status yang bisa bertahan dari commit sebelumnya → polling dokumen IndexedDB di kedua project. (4) `a11y.spec` 5 rute × axe kena timeout 30 s di bawah beban penuh → `test.slow()`. (5) Penutupan sheet template mobile lewat Escape bisa gagal setelah render ulang memindahkan fokus → tombol "Tutup" + tunggu sheet hidden. (6) Lazy split editor diukur lalu ditolak (291,53 vs 290,89 kB gzip). Rincian angka di `CANVAS_EDIT_PLAN.md` §10. | ✅ Selesai & terverifikasi |
 | 2026-10-20 | 12 | ⛔ Gate performa C5 tidak terpenuhi — butuh keputusan owner | Dua run `pnpm lhci` berturut-turut (median 3 run/URL): `/` Perf **0,51** vs baseline Fase 9 **0,64**, LCP 3,94 vs 3,72 s, TBT 271 vs 0–35 ms; `/templates` 0,63 vs 0,65; `/privacy` 0,65 vs 0,66. A11y/BP/SEO 1,00 & CLS ≤0,0003 identik baseline; semua assertion `error` lolos (`lhci` exit 0) karena Perf/LCP memang `warn` sejak keputusan Fase 9 no. 1. Kandidat penyebab: +34,32 kB gzip JS di jalur kritis (C1–C5). Opsi: (A) terima & tutup gate dengan catatan, (B) buka task diet bundle lintas fase (lazy `CanvasBlock`, split zod, diet lucide), (C) turunkan preset Lighthouse (tidak disarankan). | ⛔ Menunggu owner |
+
+| 2026-10-21 | 13A | FASE 13A "kertas layar penuh" selesai — Fase 0–7 & Gate hijau | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm build` exit 0 (entry `index` 866,97 kB / **259,56 kB gzip**, vs 860,53 kB / 257,94 kB di Fase 12 = **+6,44 kB / +1,62 kB gzip**; **nol chunk baru** — `CanvasSectionMenu` ikut entry, `HomeSections` tetap chunk lazy terpisah) · `pnpm test` **62 berkas / 1116 tes hijau** · `pnpm test:e2e` **185/185** (chromium + mobile-chrome) · `pnpm pdf:verify` **174/174**. Angka kunci: kertas 1360 px (**skala 1,7128**) di 1440 px vs plafon mode form 1191 px (1,5); satu pane di 1024/1280/1440/1920/2560/360/390/768; mode form identik sebelum & sesudah di kelima rentang lebar. Bukti: `artifacts/fase13-f7/` (skrip + JSON + 32 tangkapan layar) dan `artifacts/fase13-f6/skala-kertas-1440.png`. | ✅ Selesai & terverifikasi |
+| 2026-10-21 | 13A | Temuan yang **tidak** ditutup fase ini (butuh keputusan owner) | **(1) Cold load dengan `canvasFullscreen` tersimpan = 1 layout-shift 0,5001** pada t=1085 ms (FCP 836 ms) dan chunk `HomeSections` tetap diminta (t=801 ms) lalu di-unmount — karena prefs dibaca async dari IndexedDB **setelah** paint (mekanisme pre-existing, dampaknya membesar karena fase ini mengubah tata letak); ditambah `modulepreload HomeSections-*.js` di `dist/index.html` (Fase 8, untuk crawler). Perbaikan butuh mekanisme baru (mirror sinkron), di luar plan. **(2) Mode kanvas berpanel (`canvasFullscreen=false`) di 360/390 px meluber 36/21 px** karena chip "3 HAL" (rencana kanvas 1 halaman lebih banyak dari mode form) — terbukti **pre-existing FASE 12**: dua kontrol baru (menu Bagian, tombol Keluar) tidak dirender di keadaan itu dan perampingan `max-sm:hidden` hanya aktif saat `canvasFull` (HEAD `b95b48a` tidak punya perampingan sama sekali). **(3) Bentrok nomor fase**: dokumen plan memakai "FASE 13" sementara slot itu sudah terisi AI Assistant (ditangguhkan 2026-10-20) → didaftarkan sebagai **FASE 13A** menunggu keputusan owner. | ⛔ Menunggu owner |
 
 #### Arsip akar masalah T0.4 — `@react-pdf/renderer` membuang teks saat wrap (RESOLVED: pindah ke pdf-lib)
 

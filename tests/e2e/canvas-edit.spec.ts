@@ -29,11 +29,11 @@ const toCanvasMode = async (page: Page): Promise<void> => {
   await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'canvas')
   // Popover/sheet menutupi target di kertas — tutup supaya interaksi kanvas
   // berikutnya tidak tertahan overlay (desktop: popover Tampilan; mobile:
-  // sheet MobileMenu, lalu pindah ke tab Pratinjau tempat kertas hidup).
+  // sheet MobileMenu).
+  //
+  // FASE 13 (D1, §4) — di mode kanvas kertas langsung jadi satu pane: tab bar
+  // mobile tidak dirender lagi, jadi tidak ada tab Pratinjau untuk diklik.
   await page.keyboard.press('Escape')
-  if (!isDesktop(page)) {
-    await page.getByRole('tab', { name: /Pratinjau/ }).click()
-  }
 }
 
 const startApp = async (page: Page): Promise<void> => {
@@ -108,8 +108,9 @@ test.describe('edit langsung di CV (C3)', () => {
 
     await page.reload()
     await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'canvas')
-    // Mobile: tab kembali ke "Isi data" setelah reload — buka tab Pratinjau.
-    if (!isDesktop(page)) await page.getByRole('tab', { name: /Pratinjau/ }).click()
+    // FASE 13 (D1) — di mode kanvas kertas tetap jadi satu pane setelah reload:
+    // tidak ada tab yang perlu dibuka, panel formulir tidak dirender.
+    await expect(page.locator('#pane-form')).toBeHidden()
     await expect(segment(page, 'profile.fullName')).toHaveText('Budi Santoso')
   })
 
@@ -183,8 +184,9 @@ test.describe('edit langsung di CV (C3)', () => {
 
     // Menu Tampilan di toolbar pratinjau tersedia di kedua panel mode:
     // popover Radix berjangkar pada toolbar, cukup lebar di Pixel 7.
+    // `exact` wajib: di mode kanvas ada preset 150% yang teksnya memuat "50%".
     await page.locator('[data-probe="tampilan-menu"]').click()
-    await page.getByRole('radio', { name: '50%' }).click()
+    await page.getByRole('radio', { name: '50%', exact: true }).click()
     await page.keyboard.press('Escape')
 
     await segment(page, 'profile.fullName').click()

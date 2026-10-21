@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { Check, SlidersHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from 'cn'
@@ -8,8 +9,8 @@ import { t } from '@/lib/i18n'
 import { useAtsStore } from '@/store/atsStore'
 import { useCanvasStore } from '@/store/canvasStore'
 import { useUiStore, type EditMode } from '@/store/uiStore'
-
-const PRESET_ZOOMS = [0.5, 0.75, 1] as const
+import { zoomPresetsFor } from '@/features/preview/previewZoom'
+import { useCanvasFull, useCanvasFullscreen } from '../useCanvasFull'
 
 const MODES: {
   id: EditMode
@@ -22,15 +23,23 @@ const MODES: {
 
 function ToggleRow({
   label,
+  description,
   checked,
   disabled,
   onCheckedChange,
 }: {
   label: string
+  /** Keterangan singkat di bawah label (FASE 13 T5.3). */
+  description?: string
   checked: boolean
   disabled?: boolean
   onCheckedChange: (checked: boolean) => void
 }) {
+  // FASE 13 (T5.2) — switch memakai `aria-label` supaya nama aksesibelnya
+  // tetap persis labelnya, dan keterangan tambahan dibaca lewat
+  // `aria-describedby` (bukan digabung ke nama — nama yang memanjang
+  // "Kertas layar penuh Rail dan formulir…" tidak enak didengar).
+  const descriptionId = useId()
   return (
     <label
       className={cn(
@@ -38,8 +47,24 @@ function ToggleRow({
         disabled && 'text-ink-tertiary',
       )}
     >
-      <span className="min-w-0 flex-1">{label}</span>
-      <Switch checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />
+      <span className="min-w-0 flex-1">
+        {label}
+        {description ? (
+          <span
+            id={descriptionId}
+            className="text-caption text-ink-secondary mt-0.5 block font-normal"
+          >
+            {description}
+          </span>
+        ) : null}
+      </span>
+      <Switch
+        aria-label={label}
+        aria-describedby={description ? descriptionId : undefined}
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={onCheckedChange}
+      />
     </label>
   )
 }
@@ -52,6 +77,8 @@ function ToggleRow({
 export function TampilanMenuContent() {
   const editMode = useUiStore((state) => state.editMode)
   const setEditMode = useUiStore((state) => state.setEditMode)
+  const canvasFullscreen = useCanvasFullscreen()
+  const setCanvasFullscreen = useUiStore((state) => state.setCanvasFullscreen)
   const showMarginGuides = useUiStore((state) => state.showMarginGuides)
   const setShowMarginGuides = useUiStore((state) => state.setShowMarginGuides)
   const showKeywordMarks = useUiStore((state) => state.showKeywordMarks)
@@ -65,6 +92,10 @@ export function TampilanMenuContent() {
   const hasKeywords = useAtsStore((state) => state.keywords.length > 0)
   const modeHintSeen = useCanvasStore((state) => state.modeHintSeen)
   const markModeHintSeen = useCanvasStore((state) => state.markModeHintSeen)
+  // T2.5 — di mode kanvas layar penuh tersedia preset zoom tambahan (125% &
+  // 150%); mode form tetap tiga preset seperti sebelumnya.
+  const canvasFull = useCanvasFull()
+  const zoomPresets = zoomPresetsFor(canvasFull)
 
   const chooseMode = (mode: EditMode) => {
     if (mode === editMode) return
@@ -113,6 +144,20 @@ export function TampilanMenuContent() {
             )
           })}
         </div>
+        {/* T3.2 (D2) — jalan keluar layar penuh tanpa perlu keluar mode kanvas.
+            Dimatikan di mode form: preferensinya hanya berlaku di kertas, jadi
+            switch yang bisa digeser di sana cuma membingungkan.
+            FASE 13 (T5.3) — `canvas.fullscreenDesc` menjelaskan efeknya: rail
+            & formulir disembunyikan, kertas CV mengisi layar. */}
+        <div className="mt-1.5">
+          <ToggleRow
+            label={t('canvas.fullscreenLabel')}
+            description={t('canvas.fullscreenDesc')}
+            checked={canvasFullscreen}
+            disabled={editMode === 'form'}
+            onCheckedChange={setCanvasFullscreen}
+          />
+        </div>
       </div>
 
       <div>
@@ -143,7 +188,7 @@ export function TampilanMenuContent() {
           aria-label={t('tampilan.zoomTitle')}
           className="grid grid-cols-4 gap-1.5"
         >
-          {PRESET_ZOOMS.map((preset) => {
+          {zoomPresets.map((preset) => {
             const active = !fitMode && zoomPercent === Math.round(preset * 100)
             return (
               <button
@@ -182,8 +227,15 @@ export function TampilanMenuContent() {
   )
 }
 
-/** Menu Tampilan di toolbar pratinjau (D2). */
-export function TampilanMenu() {
+/**
+ * Menu Tampilan di toolbar pratinjau (D2).
+ *
+ * `iconOnlyBelowSm` dipakai **hanya** di mode kanvas layar penuh: di bawah
+ * 640px isi toolbar penuh tidak muat di kotak konten well, sehingga pemicunya
+ * jadi ikon saja. Mode form tidak memakai prop ini — layoutnya wajib tetap
+ * persis seperti sebelum Fase 13.
+ */
+export function TampilanMenu({ iconOnlyBelowSm = false }: { iconOnlyBelowSm?: boolean }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -192,10 +244,11 @@ export function TampilanMenu() {
           variant="ghost"
           size="sm"
           data-probe="tampilan-menu"
+          aria-label={iconOnlyBelowSm ? t('tampilan.open') : undefined}
           className="gap-1.5 px-2"
         >
           <SlidersHorizontal aria-hidden="true" className="size-3.5" />
-          {t('tampilan.open')}
+          <span className={cn(iconOnlyBelowSm && 'max-sm:hidden')}>{t('tampilan.open')}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[288px] p-3">

@@ -102,6 +102,28 @@ describe('TampilanMenu (C1.3)', () => {
     expect(screen.getByRole('switch', { name: t('preview.highlighter') })).toBeDisabled()
     expect(screen.getByRole('switch', { name: t('ats.marksInPdf') })).toBeDisabled()
   })
+
+  /**
+   * FASE 13 Fase 4 (T4.1/T4.2) — toolbar kanvas di bawah 640px tidak muat
+   * di kotak konten well, jadi pemicunya jadi ikon saja. Mode form TIDAK
+   * memakai perampingan itu — labelnya tetap terlihat sebagai teks.
+   */
+  it('mode kanvas layar penuh: pemicu jadi ikon saja di bawah 640px', () => {
+    const { rerender } = render(<TampilanMenu />)
+    const form = screen.getByRole('button', { name: t('tampilan.open') })
+    // Mode form: nama aksesibel berasal dari teks yang terlihat.
+    expect(form).not.toHaveAttribute('aria-label')
+    expect(form.querySelector('span')?.textContent).toBe(t('tampilan.open'))
+    expect(form.querySelector('span')?.className).toBe('')
+
+    rerender(<TampilanMenu iconOnlyBelowSm />)
+    const compact = screen.getByRole('button', { name: t('tampilan.open') })
+    // Ikon saja: nama aksesibel pindah ke aria-label, teks disembunyikan
+    // lewat utility responsif (Tailwind tidak dimuat di jsdom, jadi kelasnya
+    // yang dikunci di sini).
+    expect(compact).toHaveAttribute('aria-label', t('tampilan.open'))
+    expect(compact.querySelector('span')?.className).toContain('max-sm:hidden')
+  })
 })
 
 describe('editMode di preferensi preview (C1.2)', () => {

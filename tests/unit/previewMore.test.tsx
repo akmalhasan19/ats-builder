@@ -319,6 +319,8 @@ describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => 
       showMarginGuides: true,
       showKeywordMarks: true,
       editMode: 'form',
+      // FASE 13 (D2) — kunci baru; default true ikut tersimpan.
+      canvasFullscreen: true,
     })
     unmount()
   })
@@ -347,6 +349,8 @@ describe('usePreviewPrefs — simpan/pulihkan preferensi (ats:prefs:v1)', () => 
       showMarginGuides: false,
       showKeywordMarks: false,
       editMode: 'form',
+      // FASE 13 (D2) — kunci baru; default true ikut tersimpan.
+      canvasFullscreen: true,
     })
     expect(writeValue).toHaveBeenCalledWith(PREFS_KEY, saved.at(-1))
     unmount()
