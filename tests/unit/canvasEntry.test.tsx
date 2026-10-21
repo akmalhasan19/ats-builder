@@ -144,7 +144,7 @@ describe('kepala entri editable di kertas (C4.1)', () => {
     expect(withoutMeta(viaCanvas)).toEqual(withoutMeta(viaForm))
   })
 
-  it('field wajib entri dikosongkan: revert + toast', async () => {
+  it('field wajib entri dikosongkan: nilai kosong ditulis, guide tampil lagi', async () => {
     const user = userEvent.setup()
     await openCanvas()
     const entryId = firstEntryId('experience')
@@ -153,11 +153,11 @@ describe('kepala entri editable di kertas (C4.1)', () => {
     await user.clear(editor()!)
     await user.keyboard('{Enter}')
 
-    expect(toast).toHaveBeenCalledWith(t('canvas.emptyRequired', { field: 'peran' }))
-    expect((entriesOf('experience')[0] as Record<string, unknown>).role).toBe(
-      'Senior Software Engineer',
-    )
+    expect((entriesOf('experience')[0] as Record<string, unknown>).role).toBe('')
     expect(useCanvasStore.getState().session).toBeNull()
+    const slot = fieldButton(`entries.experience.${entryId}.role`)
+    expect(slot).toHaveAttribute('data-canvas-guide', 'true')
+    expect(slot?.textContent).toBe(t('canvas.guide.role'))
   })
 
   it('judul pendidikan memakai separator ", " dan tiap field punya target sendiri', async () => {

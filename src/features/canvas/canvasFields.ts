@@ -1,13 +1,11 @@
 import { normalizeUrlInput } from '@/lib/text'
-import { sectionRegistry } from '@/features/sections/registry'
 import { entryBulletListKey } from '@/features/templates/fieldSegments'
 import type { EntriesSectionKind } from '@/features/templates/contentLines'
 import type { GuideId } from '@/features/templates/fieldSegments'
 import type { ProfileData, ResumeDoc, SkillGroup } from '@/types/resume'
 
 /**
- * Peta field kanvas: path model → target tulis, widget editor, dan aturan
- * wajib/tidak.
+ * Peta field kanvas: path model → target tulis dan widget editornya.
  *
  * Path-nya sama persis dengan atribut `data-field` di DOM (D4/C2), jadi
  * segmentasi (C2) dan penulisan (C3/C4) membaca satu sumber yang sama. Target
@@ -53,8 +51,6 @@ export type CanvasFieldSpec = {
   target: CanvasFieldTarget
   /** Widget editor yang dipakai (D3). */
   widget: CanvasWidget
-  /** Field wajib — kosong berarti revert + toast, bukan dihapus (D3). */
-  required: boolean
   /** Guide yang jadi placeholder editor (D5). */
   guideId: GuideId
   /**
@@ -131,15 +127,12 @@ export const GUIDE_GROUP_ID = 'new'
  */
 export const GUIDE_ENTRY_ID = 'new'
 
-const PROFILE_FIELDS: Record<
-  ProfileFieldKey,
-  { widget: CanvasWidget; required: boolean; guideId: GuideId }
-> = {
-  fullName: { widget: 'input', required: true, guideId: 'fullName' },
-  headline: { widget: 'input', required: true, guideId: 'headline' },
-  email: { widget: 'input', required: true, guideId: 'email' },
-  phone: { widget: 'input', required: true, guideId: 'phone' },
-  location: { widget: 'input', required: false, guideId: 'location' },
+const PROFILE_FIELDS: Record<ProfileFieldKey, { widget: CanvasWidget; guideId: GuideId }> = {
+  fullName: { widget: 'input', guideId: 'fullName' },
+  headline: { widget: 'input', guideId: 'headline' },
+  email: { widget: 'input', guideId: 'email' },
+  phone: { widget: 'input', guideId: 'phone' },
+  location: { widget: 'input', guideId: 'location' },
 }
 
 /**
@@ -153,7 +146,6 @@ export const canvasFieldSpecOf = (sectionId: string, path: string): CanvasFieldS
     return {
       target: { kind: 'profile-link', sectionId, index: Number(link[1]) },
       widget: 'input',
-      required: false,
       guideId: 'link',
       enterCommits: false,
     }
@@ -174,7 +166,6 @@ export const canvasFieldSpecOf = (sectionId: string, path: string): CanvasFieldS
     return {
       target: { kind: 'summary', sectionId },
       widget: 'textarea',
-      required: true,
       guideId: 'summary',
       enterCommits: false,
     }
@@ -188,7 +179,6 @@ export const canvasFieldSpecOf = (sectionId: string, path: string): CanvasFieldS
       return {
         target: { kind: 'skill-name', sectionId, groupId },
         widget: 'input',
-        required: true,
         guideId: 'skillGroupName',
         enterCommits: false,
       }
@@ -196,7 +186,6 @@ export const canvasFieldSpecOf = (sectionId: string, path: string): CanvasFieldS
     return {
       target: { kind: 'skill-items', sectionId, groupId },
       widget: 'chips',
-      required: true,
       guideId: 'skillGroupItems',
       enterCommits: false,
     }
@@ -218,7 +207,6 @@ export const canvasFieldSpecOf = (sectionId: string, path: string): CanvasFieldS
     return {
       target: { kind: 'entry-dates', sectionId, entryKind, entryId },
       widget: 'dates',
-      required: false,
       guideId: 'dates',
       enterCommits: false,
     }
@@ -236,7 +224,6 @@ export const canvasFieldSpecOf = (sectionId: string, path: string): CanvasFieldS
         index: Number(bullet[2]),
       },
       widget: 'textarea',
-      required: false,
       guideId: 'bullet',
       // OQ6 — satu bullet adalah satu baris: Enter langsung commit.
       enterCommits: true,
@@ -247,7 +234,6 @@ export const canvasFieldSpecOf = (sectionId: string, path: string): CanvasFieldS
   return {
     target: { kind: 'entry-text', sectionId, entryKind, entryId, field: rest },
     widget: 'input',
-    required: sectionRegistry[entryKind].requiredFields.includes(rest),
     guideId: rest as GuideId,
     enterCommits: false,
   }

@@ -219,7 +219,7 @@ describe('editor in-place di atas kertas (C3.1)', () => {
     expect(profileData().email).toBe('alex.morgan@mail.com')
   })
 
-  it('field wajib dikosongkan: revert + toast, nilai lama bertahan', async () => {
+  it('field wajib dikosongkan: nilai kosong ditulis, guide tampil lagi', async () => {
     const user = userEvent.setup()
     load(createSampleDoc())
     act(() => useUiStore.getState().setEditMode('canvas'))
@@ -230,9 +230,12 @@ describe('editor in-place di atas kertas (C3.1)', () => {
     await user.clear(control)
     await user.keyboard('{Enter}')
 
-    expect(toast).toHaveBeenCalledWith(t('canvas.emptyRequired', { field: 'nama lengkap' }))
-    expect(profileData().fullName).toBe('Alex Morgan')
+    expect(profileData().fullName).toBe('')
     expect(editor()).toBeNull()
+    const slot = fieldButton('profile.fullName')
+    expect(slot).not.toBeNull()
+    expect(slot).toHaveAttribute('data-canvas-guide', 'true')
+    expect(slot?.textContent).toBe(t('canvas.guide.fullName'))
   })
 
   it('ringkasan: textarea auto-grow, Ctrl+Enter commit', async () => {

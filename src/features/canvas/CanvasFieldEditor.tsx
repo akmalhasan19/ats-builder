@@ -7,18 +7,12 @@ import {
   type KeyboardEvent,
 } from 'react'
 import { AlertCircle } from 'lucide-react'
-import { toast } from 'sonner'
 import { t } from '@/lib/i18n'
 import { fieldLabelOf } from '@/features/templates/fieldSegments'
 import { useCanvasStore } from '@/store/canvasStore'
 import { useDocStore } from '@/store/docStore'
 import { validateCanvasField, writeCanvasField } from './canvasCommit'
-import {
-  normalizeCanvasValue,
-  parseChips,
-  readCanvasFieldValue,
-  type CanvasFieldSpec,
-} from './canvasFields'
+import { normalizeCanvasValue, readCanvasFieldValue, type CanvasFieldSpec } from './canvasFields'
 
 /**
  * C3.1 — editor in-place di atas kertas (D3).
@@ -28,6 +22,10 @@ import {
  * per koma saat commit. Siklusnya: klik/Enter pada segmen → control
  * menggantikan teks (guide jadi placeholder) dengan fokus + select; Enter
  * commit (Ctrl/Cmd+Enter untuk textarea), Escape batal, blur commit.
+ *
+ * Field wajib boleh dikosongkan: nilai kosong tetap ditulis (validasi zod
+ * memang mengizinkannya) dan slotnya menampilkan guide lagi — bukan revert
+ * + toast.
  *
  * Penulisan memakai jalur yang sama dengan form — `docStore.updateSection` —
  * sehingga autosave, validasi zod, dan undo punya satu sumber (D8). Jendela
@@ -81,13 +79,6 @@ export function CanvasFieldEditor({ spec, guideText, style }: CanvasFieldEditorP
   const commit = () => {
     if (settledRef.current) return
     const value = normalizeCanvasValue(spec.target, draft)
-    const empty = spec.widget === 'chips' ? parseChips(value).length === 0 : value.trim() === ''
-    // Field wajib yang dikosongkan: revert + toast (D3, pola DocumentTitle).
-    if (spec.required && empty) {
-      toast(t('canvas.emptyRequired', { field: fieldLabelOf(spec.guideId) }))
-      close()
-      return
-    }
     const message = validateCanvasField(spec.target, value)
     if (message) {
       // Validasi gagal: editor tetap terbuka + pesan error + aria-invalid (D3).

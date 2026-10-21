@@ -258,7 +258,6 @@ export const id = {
   'canvas.field.bullet': 'bullet',
 
   /* ---- FASE 12 (C3): editor in-place di atas kertas ---- */
-  'canvas.emptyRequired': '{field} wajib diisi.',
   'canvas.zoomRaised': 'Zoom dinaikkan ke 75% supaya teksnya mudah dibaca.',
 
   /* ---- FASE 12 (C4): entri, tanggal, bullet, dan ghost row ---- */
