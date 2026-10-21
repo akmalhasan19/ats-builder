@@ -43,6 +43,17 @@ const HISTORY_LIMIT = 50
 const EDIT_COALESCE_MS = 150
 let lastEditCommitAt = -Infinity
 
+/**
+ * D9 — memutus jendela coalesce 150 ms. Jendela itu ada untuk burst ketikan
+ * di form; sesi edit on-canvas menulis satu nilai dalam satu commit, jadi
+ * jendela harus diputus sebelum & sesudah commit kanvas — kalau tidak, dua
+ * commit berdekatan (atau ketikan form berikutnya) menyatu menjadi satu
+ * langkah undo.
+ */
+export function breakEditCoalesce(): void {
+  lastEditCommitAt = -Infinity
+}
+
 const move = <T>(items: T[], from: number, to: number): T[] => {
   if (from < 0 || from >= items.length || to < 0 || to >= items.length || from === to) return items
   const next = [...items]

@@ -34,6 +34,10 @@ const describeViolations = (
 
 test.describe('a11y — T9.5', () => {
   test('axe: 0 violation serius di semua rute publik', async ({ page }) => {
+    // C5.6 — lima rute × axe dalam satu test; di bawah beban suite penuh
+    // (57 berkas unit + e2e paralel) 30 detik tidak cukup. Timeout dilonggarkan,
+    // assertion tidak berubah.
+    test.slow()
     await page.setViewportSize({ width: 1440, height: 900 })
     for (const route of ROUTES) {
       await page.goto(route)

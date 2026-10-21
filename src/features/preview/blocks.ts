@@ -14,6 +14,7 @@ import {
 } from '@/features/templates/contentLines'
 import {
   displayLineOf,
+  entryBodyLines,
   entryHeadGroups,
   entryLineGroups,
   headerGroups,
@@ -294,20 +295,21 @@ export function buildBlocks(
         let headHeight = linePx(spec.typeScale.title, headLineCount)
         if (metaLines > 0)
           headHeight += mmToPx(spec.gapMm.titleToMeta) + linePx(spec.typeScale.meta, metaLines)
+        const bodyLines = guides ? entryBodyLines(section.kind, entry) : content.bodyLines
         body.push({
           ...base,
           key: `${section.id}:${itemId}:head`,
           kind: 'entry-head',
           itemId,
-          entryLineCount: content.bodyLines.length,
+          entryLineCount: bodyLines.length,
           estimatePx:
             headHeight > 0
               ? headHeight
               : entryHeadGuidePx(section.kind, spec, contentWidthPx, lang),
           padAfterMm: 0,
-          minWithNext: Math.min(2, content.bodyLines.length),
+          minWithNext: Math.min(2, bodyLines.length),
         })
-        content.bodyLines.forEach((line, lineIndex) => {
+        bodyLines.forEach((line, lineIndex) => {
           const role = spec.typeScale.body
           const count = linesFor(line.text, role.sizePt, contentWidthPx, line.bullet ? indentPx : 0)
           body.push({
@@ -316,13 +318,15 @@ export function buildBlocks(
             kind: 'entry-line',
             itemId,
             lineIndex,
-            entryLineCount: content.bodyLines.length,
-            estimatePx: linePx(role, count),
+            entryLineCount: bodyLines.length,
+            // Baris kosong hanya muncul di rencana kanvas dan isinya guide,
+            // jadi tingginya diperkirakan dari teks pemandunya.
+            estimatePx: count > 0 ? linePx(role, count) : entryLineGuidePx(spec, contentWidthPx),
             padAfterMm: 0,
             minWithNext: 0,
           })
         })
-        if (guides && content.bodyLines.length === 0) {
+        if (guides && bodyLines.length === 0) {
           body.push({
             ...base,
             key: `${section.id}:${itemId}:l0`,

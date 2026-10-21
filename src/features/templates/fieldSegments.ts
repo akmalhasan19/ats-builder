@@ -404,17 +404,41 @@ export type EntryBodyLine = {
   modelIndex: number | null
 }
 
-/** Baris isi entri, disusun ulang dari dokumen (identik dengan `bodyLines`). */
+/**
+ * Nama array bullet pada model entri. Pendidikan memakai `notes`, sertifikasi /
+ * bahasa / penghargaan tidak punya bullet (barisnya teks bebas milik field lain
+ * dan tidak editable di kanvas), sisanya memakai `bullets`.
+ */
+export const entryBulletListKey = (kind: EntriesSectionKind): 'bullets' | 'notes' | null => {
+  if (kind === 'education') return 'notes'
+  if (kind === 'certifications' || kind === 'languages' || kind === 'awards') return null
+  return 'bullets'
+}
+
+const rawBulletItems = (kind: EntriesSectionKind, entry: EntryRecord | null): string[] => {
+  const list = entryBulletListKey(kind)
+  if (!list) return []
+  const raw = entry?.[list]
+  return Array.isArray(raw) ? raw.filter((item): item is string => typeof item === 'string') : []
+}
+
+/**
+ * Baris isi entri untuk layar. Sama seperti `bodyLines` milik `contentLines`,
+ * kecuali satu hal: bullet kosong **tetap dihitung** di sini.
+ *
+ * Alasannya (§5.2, D10): ghost row "+ Tambahkan bullet" mendorong slot kosong
+ * supaya user langsung punya baris untuk diketik. Slot itu butuh blok sendiri di
+ * rencana kanvas, dan kunci blok harus tetap `{sectionId}:{itemId}:l{indeks
+ * model}` — satu-satunya angka yang juga bisa diturunkan `canvasFields` dari
+ * path field. PDF tidak pernah melihat daftar ini: jalur ekspor tetap memakai
+ * `contentLines` yang membuang baris kosong (D12).
+ */
 export const entryBodyLines = (
   kind: EntriesSectionKind,
   entry: EntryRecord | null,
 ): EntryBodyLine[] => {
   const lines: EntryBodyLine[] = []
-  const raw = kind === 'education' ? entry?.notes : entry?.bullets
-  const items = Array.isArray(raw) ? (raw as unknown[]) : []
-  items.forEach((item, index) => {
-    const text = typeof item === 'string' ? item : ''
-    if (text.trim() === '') return
+  rawBulletItems(kind, entry).forEach((text, index) => {
     lines.push({ text, bullet: true, modelIndex: index })
   })
   if (kind === 'experience' || kind === 'projects') {
@@ -441,8 +465,9 @@ export const entryBodyLines = (
 }
 
 /**
- * Baris-baris satu blok `entry-line`. `lineIndex` di luar daftar baris berarti
- * blok guide: bullet yang belum ada — path-nya menunjuk slot bullet berikutnya.
+ * Baris-baris satu blok `entry-line`. `lineIndex` yang tidak tampil sebagai baris
+ * berarti blok guide: bullet yang belum ada isinya — slot berikutnya, atau slot
+ * bullet kosong yang baru dibuat ghost row (D10).
  */
 export const entryLineGroups = (
   kind: EntriesSectionKind,
@@ -453,13 +478,12 @@ export const entryLineGroups = (
   const base = `entries.${kind}.${id}`
   const lines = entryBodyLines(kind, entry)
   const line = lines[lineIndex]
-  const field = kind === 'education' ? 'notes' : 'bullets'
+  const field = entryBulletListKey(kind)
   if (!line) {
-    // Blok guide: bullet yang belum ada — path-nya menunjuk slot bullet berikutnya.
-    const raw = kind === 'education' ? entry?.notes : entry?.bullets
-    const bulletCount = Array.isArray(raw) ? raw.length : 0
-    return [group('body', 0, '', [seg(`${base}.${field}[${bulletCount}]`, '', 'bullet')])]
+    if (!field) return [group('body', 0, '', [seg('', '')])]
+    // Slot bullet yang belum ada sama sekali: path menunjuk indeks berikutnya.
+    return [group('body', 0, '', [seg(`${base}.${field}[${lineIndex}]`, '', 'bullet')])]
   }
-  if (!line.bullet) return [group('body', 0, '', [seg('', line.text)])]
+  if (!line.bullet || field === null) return [group('body', 0, '', [seg('', line.text)])]
   return [group('body', 0, '', [seg(`${base}.${field}[${line.modelIndex}]`, line.text, 'bullet')])]
 }

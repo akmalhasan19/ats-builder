@@ -63,6 +63,15 @@ export function AppShell() {
         <MobileTabBar />
         <ErrorBanner />
 
+        {/* C5.4 (D11) — live region: pergantian mode pengerjaan diumumkan ke
+            pembaca layar. Commit yang gagal sudah punya `role="alert"` sendiri
+            di editor; ini menutup sisi yang tadinya hanya terlihat. */}
+        <p aria-live="polite" className="sr-only" data-probe="edit-mode-announce">
+          {t('tampilan.modeAnnounce', {
+            mode: t(editMode === 'canvas' ? 'tampilan.modeCanvas' : 'tampilan.modeForm'),
+          })}
+        </p>
+
         <main
           id="workspace-main"
           aria-label={t('workspace.heading')}

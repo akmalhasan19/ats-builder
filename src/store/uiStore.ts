@@ -17,6 +17,12 @@ export type UiStore = {
   atsTab: 'issues' | 'tape'
   /** T7.5 — stabilo ikut ke PDF? Default mati: berkas unduhan tetap netral. */
   includeMarksInPdf: boolean
+  /**
+   * C4.4 — dialog katalog bagian. State hidup di store (bukan di `Rail`) karena
+   * dua pemanggilnya: tombol "+ Tambah bagian" di rail dan ghost row
+   * "+ Tambahkan bagian" di kertas (D10) memakai dialog yang sama.
+   */
+  sectionCatalogOpen: boolean
   firstRunSeen: boolean
   setZoom: (zoom: number) => void
   setFitMode: (fitMode: boolean) => void
@@ -28,6 +34,7 @@ export type UiStore = {
   setAtsDrawerOpen: (atsDrawerOpen: boolean) => void
   setAtsTab: (atsTab: 'issues' | 'tape') => void
   setIncludeMarksInPdf: (includeMarksInPdf: boolean) => void
+  setSectionCatalogOpen: (sectionCatalogOpen: boolean) => void
   setFirstRunSeen: (firstRunSeen: boolean) => void
 }
 
@@ -42,6 +49,7 @@ export const useUiStore = create<UiStore>((set) => ({
   atsDrawerOpen: false,
   atsTab: 'issues',
   includeMarksInPdf: false,
+  sectionCatalogOpen: false,
   firstRunSeen: false,
   setZoom: (zoom) => set({ zoom }),
   setFitMode: (fitMode) => set({ fitMode }),
@@ -53,5 +61,6 @@ export const useUiStore = create<UiStore>((set) => ({
   setAtsDrawerOpen: (atsDrawerOpen) => set({ atsDrawerOpen }),
   setAtsTab: (atsTab) => set({ atsTab }),
   setIncludeMarksInPdf: (includeMarksInPdf) => set({ includeMarksInPdf }),
+  setSectionCatalogOpen: (sectionCatalogOpen) => set({ sectionCatalogOpen }),
   setFirstRunSeen: (firstRunSeen) => set({ firstRunSeen }),
 }))

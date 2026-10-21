@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { useSyncExternalStore } from 'react'
 import type { HeightMap } from '@/features/preview/pagination'
+import { useCanvasStore } from '@/store/canvasStore'
 
 /**
  * Tinggi blok hasil pengukuran DOM (T4.2). Disimpan di store supaya blok bisa
@@ -42,10 +43,34 @@ const flush = () => {
   })
 }
 
+// Laporan tinggi yang ditahan selama sesi edit kanvas (D6).
+let heldHeights = new Map<string, number>()
+
+const releaseHeldHeights = () => {
+  if (heldHeights.size === 0) return
+  const pending = heldHeights
+  heldHeights = new Map()
+  for (const [key, value] of pending) buffer.set(key, value)
+  if (frame === null) frame = requestAnimationFrame(flush)
+}
+
 export function scheduleHeight(key: string, heightPx: number): void {
+  // D6 — selama sesi edit kanvas aktif, laporan tinggi ditahan: rencana
+  // halaman membeku sehingga blok yang sedang diedit tidak berpindah halaman
+  // (dan tidak unmount) saat user mengetik. Laporan yang ditahan dilepas
+  // begitu sesi ditutup — pengukuran ulang & repaginasi berjalan normal
+  // sesudah commit.
+  if (useCanvasStore.getState().session !== null) {
+    heldHeights.set(key, heightPx)
+    return
+  }
   buffer.set(key, heightPx)
   if (frame === null) frame = requestAnimationFrame(flush)
 }
+
+useCanvasStore.subscribe((state, prevState) => {
+  if (prevState.session !== null && state.session === null) releaseHeldHeights()
+})
 
 // T4.5 — teks di preview berubah instan karena tiap blok berlangganan potongannya
 // sendiri; yang ditahan 60ms hanya pemecahan ulang halaman. Snapshot `settled`

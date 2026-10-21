@@ -45,7 +45,14 @@ const openMoreMenu = async (user: ReturnType<typeof userEvent.setup>, name: stri
 
 beforeEach(() => {
   store().loadDoc(sampleResume())
-  useUiStore.setState({ panelMode: '3col', activeTab: 'form', atsDrawerOpen: false })
+  useUiStore.setState({
+    panelMode: '3col',
+    activeTab: 'form',
+    atsDrawerOpen: false,
+    // C4.4 — dialog katalog kini state store (dipakai juga ghost row), jadi
+    // harus dinolkan di sini; sebelumnya state lokal komponen.
+    sectionCatalogOpen: false,
+  })
   useSyncStore.setState({ status: 'saved-local', storageMode: 'idb' })
 })
 

@@ -5,11 +5,16 @@
  * menampilkan teks pemandu yang mengikuti layout template aktif. Spec ini
  * membuktikan guide muncul pada kelima template, tidak muncul di mode form,
  * dan tidak merusak aksesibilitas (axe).
+ *
+ * C5.1 — dijalankan di kedua project: desktop kanvas popover Tampilan menu,
+ * mobile (<1024px) mode kertas dibuka lewat tab Pratinjau + sheet MobileMenu.
  */
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
 const TEMPLATES = ['Classic ATS', 'Ledger', 'Executive', 'Minimal', 'Technician'] as const
+
+const isDesktop = (page: Page) => (page.viewportSize()?.width ?? 1440) >= 1024
 
 const sheet = (page: Page) => page.locator('#pane-preview [data-probe="page-sheet"]').first()
 const canvasFields = (page: Page) => page.locator('#pane-preview [data-canvas-field]')
@@ -26,20 +31,45 @@ const startEmptyDoc = async (page: Page): Promise<void> => {
 }
 
 const toCanvasMode = async (page: Page): Promise<void> => {
-  await page.locator('[data-probe="tampilan-menu"]').click()
+  if (isDesktop(page)) {
+    await page.locator('[data-probe="tampilan-menu"]').click()
+  } else {
+    await page.getByRole('button', { name: 'Menu' }).click()
+  }
   await page.locator('[data-probe="edit-mode-canvas"]').click()
   await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'canvas')
+  // Popover/sheet menutupi target di kertas — tutup supaya interaksi kanvas
+  // berikutnya tidak tertahan overlay (desktop: popover Tampilan; mobile:
+  // sheet MobileMenu, lalu pindah ke tab Pratinjau tempat kertas hidup).
+  await page.keyboard.press('Escape')
+  if (!isDesktop(page)) {
+    await page.getByRole('tab', { name: /Pratinjau/ }).click()
+  }
 }
 
 const applyTemplate = async (page: Page, name: string): Promise<void> => {
-  await page.locator('[data-probe="template-trigger"]').click()
-  const option = page
-    .locator('[data-radix-popper-content-wrapper] button')
-    .filter({ hasText: name })
-    .first()
+  if (isDesktop(page)) {
+    await page.locator('[data-probe="template-trigger"]').click()
+    const option = page
+      .locator('[data-radix-popper-content-wrapper] button')
+      .filter({ hasText: name })
+      .first()
+    await expect(option).toBeVisible()
+    await option.click()
+    await expect(page.locator('[data-probe="template-trigger"]')).toContainText(name)
+    return
+  }
+  // Mobile: pilihan template hidup di sheet MobileMenu (D2).
+  await page.getByRole('button', { name: 'Menu' }).click()
+  const sheetBody = page.locator('[data-slot="sheet-content"]')
+  const option = page.getByRole('button', { name }).filter({ hasText: name }).first()
   await expect(option).toBeVisible()
   await option.click()
-  await expect(page.locator('[data-probe="template-trigger"]')).toContainText(name)
+  // C5.6 — klik opsi memicu render ulang pratinjau, sehingga fokus bisa
+  // berpindah dan Escape tidak selalu sampai ke handler dialog. Tutup lewat
+  // tombol Tutup (deterministik) lalu pastikan sheet benar-benar hilang.
+  await sheetBody.getByRole('button', { name: 'Tutup' }).click()
+  await expect(sheetBody).toBeHidden()
 }
 
 const axeViolations = async (page: Page) => {
@@ -49,10 +79,15 @@ const axeViolations = async (page: Page) => {
   return results.violations.filter((v) => ['critical', 'serious'].includes(v.impact ?? 'unknown'))
 }
 
+/** Viewport desktop eksplisit di project desktop; project mobile memakai Pixel 7. */
+const openWorkspace = async (page: Page): Promise<void> => {
+  if (isDesktop(page)) await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/')
+}
+
 test.describe('guide placeholder di atas kertas (C2)', () => {
   test('dokumen kosong di mode kanvas menampilkan kerangka guide lengkap', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/')
+    await openWorkspace(page)
     await startEmptyDoc(page)
     await toCanvasMode(page)
 
@@ -79,8 +114,7 @@ test.describe('guide placeholder di atas kertas (C2)', () => {
   })
 
   test('guide mengikuti layout template: gaya nama berubah antar template', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/')
+    await openWorkspace(page)
     await startEmptyDoc(page)
     await toCanvasMode(page)
 
@@ -98,26 +132,35 @@ test.describe('guide placeholder di atas kertas (C2)', () => {
   })
 
   test('mode form: nol guide di kertas dan thumbnail', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/')
+    await openWorkspace(page)
     await startEmptyDoc(page)
+    if (!isDesktop(page)) await page.getByRole('tab', { name: /Pratinjau/ }).click()
 
     await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'form')
     await expect(canvasFields(page)).toHaveCount(0)
     expect(await sheet(page).innerText()).not.toContain('Nama lengkap')
 
     // Thumbnail template juga selalu memakai jalur form (D4).
-    await page.locator('[data-probe="template-trigger"]').click()
+    if (isDesktop(page)) {
+      await page.locator('[data-probe="template-trigger"]').click()
+    } else {
+      // Mobile: popover thumbnail tidak ada; template diganti dari sheet menu.
+      await page.getByRole('button', { name: 'Menu' }).click()
+      await page.getByRole('button', { name: 'Ledger' }).click()
+      await page.keyboard.press('Escape')
+    }
     await expect(page.locator('[data-probe="page-sheet"]').first()).toBeVisible()
     await expect(page.locator('[data-canvas-field]')).toHaveCount(0)
   })
 
   test('axe: 0 violation serius di mode kanvas', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.goto('/')
+    await openWorkspace(page)
     await startEmptyDoc(page)
     await toCanvasMode(page)
     await expect(guideFields(page).first()).toBeVisible()
+
+    // Beri waktu reflow konsolidasi antre re-render sebelum pengukuran axe.
+    await page.waitForTimeout(400)
 
     const violations = await axeViolations(page)
     expect(violations.map((v) => `${v.impact}/${v.id}`)).toEqual([])

@@ -204,6 +204,8 @@ export const id = {
     'Klik teks di kertas untuk mengedit; bagian kosong menampilkan pemandu.',
   'tampilan.previewTitle': 'Pratinjau',
   'tampilan.zoomTitle': 'Zoom',
+  /* C5.4 — live region (D11): pergantian mode diumumkan, bukan hanya terlihat. */
+  'tampilan.modeAnnounce': 'Mode pengerjaan: {mode}.',
   'canvas.modeHint':
     'Mode langsung aktif: klik teks mana pun di kertas untuk mengeditnya. Kembali ke Form terpandu lewat menu Tampilan.',
 
@@ -254,6 +256,16 @@ export const id = {
   'canvas.field.organization': 'organisasi',
   'canvas.field.dates': 'rentang tanggal',
   'canvas.field.bullet': 'bullet',
+
+  /* ---- FASE 12 (C3): editor in-place di atas kertas ---- */
+  'canvas.emptyRequired': '{field} wajib diisi.',
+  'canvas.zoomRaised': 'Zoom dinaikkan ke 75% supaya teksnya mudah dibaca.',
+
+  /* ---- FASE 12 (C4): entri, tanggal, bullet, dan ghost row ---- */
+  'canvas.datesRange': 'Rentang tanggal',
+  'canvas.ghost.addEntry': '+ Tambahkan entri',
+  'canvas.ghost.addBullet': '+ Tambahkan bullet',
+  'canvas.ghost.addSection': '+ Tambahkan bagian',
 
   'theme.open': 'Tema warna',
   'theme.title': 'Tema warna',
@@ -326,6 +338,10 @@ export const id = {
   'mobile.tabList': 'Mode tampilan',
   'mobile.tabForm': 'Isi data',
   'mobile.tabPreview': 'Pratinjau',
+  /* §5.3 — badge tab Pratinjau saat mode kanvas aktif. Nama aksesibel tab
+     tetap memuat label yang terlihat ("Pratinjau") agar aturan "label in
+     name" axe lulus; titik badge sendiri aria-hidden. */
+  'mobile.tabPreviewCanvas': 'Pratinjau (mode kanvas aktif)',
   'mobile.sections': 'Bagian',
   'mobile.sectionsTitle': 'Pilih bagian',
 

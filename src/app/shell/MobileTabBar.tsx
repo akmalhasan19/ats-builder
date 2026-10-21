@@ -2,14 +2,28 @@ import { cn } from 'cn'
 import { useUiStore } from '@/store/uiStore'
 import { t } from '@/lib/i18n'
 
-/** §5.7 — dua tab, indikator geser; hanya di bawah 1024px. */
+/**
+ * §5.7 — dua tab, indikator geser; hanya di bawah 1024px.
+ *
+ * §5.3 — saat mode kanvas aktif, tab Pratinjau mendapat badge titik kecil
+ * (`data-probe="mobile-badge-canvas"`) sebagai tanda bahwa ada target edit
+ * langsung di kertas. Titik aria-hidden; nama aksesibel tab diperluas lewat
+ * `aria-label` yang tetap memuat label yang terlihat ("Pratinjau") supaya
+ * aturan "label in name" axe tetap lulus.
+ */
 export function MobileTabBar() {
   const activeTab = useUiStore((state) => state.activeTab)
   const setActiveTab = useUiStore((state) => state.setActiveTab)
+  const editMode = useUiStore((state) => state.editMode)
 
   const tabs = [
     { id: 'form' as const, label: t('mobile.tabForm'), controls: 'pane-form' },
-    { id: 'preview' as const, label: t('mobile.tabPreview'), controls: 'pane-preview' },
+    {
+      id: 'preview' as const,
+      label: t('mobile.tabPreview'),
+      controls: 'pane-preview',
+      badge: editMode === 'canvas',
+    },
   ]
 
   return (
@@ -36,6 +50,7 @@ export function MobileTabBar() {
               id={`tab-${tab.id}`}
               aria-selected={selected}
               aria-controls={tab.controls}
+              aria-label={tab.badge ? t('mobile.tabPreviewCanvas') : undefined}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 'text-button relative z-10 flex h-8 flex-1 items-center justify-center rounded-md transition-colors duration-[var(--dur-fast)]',
@@ -43,6 +58,13 @@ export function MobileTabBar() {
               )}
             >
               {tab.label}
+              {tab.badge ? (
+                <span
+                  data-probe="mobile-badge-canvas"
+                  aria-hidden="true"
+                  className="bg-accent-ink absolute right-1.5 top-1/2 size-1.5 -translate-y-1/2 rounded-full"
+                />
+              ) : null}
             </button>
           )
         })}

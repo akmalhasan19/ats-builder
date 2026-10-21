@@ -8,24 +8,49 @@ const pixel7 = devices['Pixel 7']
 // T9.2 — matriks browser. `webkit` tidak terpasang di mesin pengembangan
 // (butuh `playwright install webkit`), jadi proyeknya didefinisikan di sini
 // dan baru aktif saat `E2E_WEBKIT=1` — misalnya di CI Linux.
+// C5.1 — spec kanvas kini juga masuk proyek mobile-chrome (§5.3): alur edit
+// langsung di kertas wajib usable di Pixel 7, bukan hanya di desktop.
 const mobileSpecs =
-  /(?:first-visit|editor-flow|template-switch|download-pdf|ats-check|responsive)\.spec\.ts/
+  /(?:first-visit|editor-flow|template-switch|download-pdf|ats-check|responsive|canvas-mode|canvas-guides|canvas-edit|canvas-entry|canvas-mobile)\.spec\.ts/
+
+// Spec yang khusus menguji perilaku panel mobile (<1024px).
+const mobileOnlySpecs = [/canvas-mobile\.spec\.ts/]
+
+// C5.1 — `offline.spec` butuh service worker (hanya hidup di build produksi;
+// dijalankan lewat `playwright.preview.config.ts`). Penting: `testIgnore` di
+// tingkat proyek **menggantikan** `testIgnore` global, jadi pola ini wajib ikut
+// di setiap proyek — kalau tidak, spec offline ikut jalan di server dev dan
+// timeout menunggu `serviceWorker.ready`.
+const devIgnoredSpecs = [/offline\.spec\.ts/]
 
 const projects = [
-  ...(desktopChrome ? [{ name: 'chromium', use: { ...desktopChrome } }] : []),
+  ...(!desktopChrome
+    ? []
+    : [
+        {
+          name: 'chromium',
+          use: { ...desktopChrome },
+          testIgnore: [...devIgnoredSpecs, ...mobileOnlySpecs],
+        },
+      ]),
   ...(pixel7
     ? [
         {
           name: 'mobile-chrome',
           use: { ...pixel7 },
           testMatch: mobileSpecs,
+          testIgnore: devIgnoredSpecs,
         },
       ]
     : []),
 ]
 
 if (process.env.E2E_WEBKIT === '1' && devices['Desktop Safari']) {
-  projects.push({ name: 'webkit', use: { ...devices['Desktop Safari'] } })
+  projects.push({
+    name: 'webkit',
+    use: { ...devices['Desktop Safari'] },
+    testIgnore: [...devIgnoredSpecs, ...mobileOnlySpecs],
+  })
 }
 
 export default defineConfig({

@@ -1,7 +1,8 @@
-import { Fragment, memo, type CSSProperties } from 'react'
+import { Fragment, memo, useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { t } from '@/lib/i18n'
 import { useDocStore } from '@/store/docStore'
+import { useCanvasStore } from '@/store/canvasStore'
 import { sectionLabel } from '@/features/templates/contentLines'
 import {
   displaysContent,
@@ -17,6 +18,11 @@ import {
 } from '@/features/templates/fieldSegments'
 import { headingLabel, type TemplateSpec } from '@/features/templates/specs'
 import { screenStylesOf } from '@/features/templates/screen/screenStyles'
+import { CanvasDatesEditor } from './CanvasDatesEditor'
+import { CanvasFieldEditor } from './CanvasFieldEditor'
+import { CANVAS_BUTTON_RESET } from './canvasButtonStyle'
+import { blockKeyForField, canvasFieldSpecOf } from './canvasFields'
+import { ensureReadableZoom } from './canvasZoom'
 import type { BlockKind } from '@/features/preview/pagination'
 import type { SectionKind } from '@/schema/resume'
 import type { ResumeDoc, TemplateId } from '@/types/resume'
@@ -25,25 +31,14 @@ import type { ResumeDoc, TemplateId } from '@/types/resume'
  * Render mode kanvas (C2): isi dokumen di atas kertas dipecah jadi segmen
  * field, field kosong menampilkan guide, dan tiap segmen jadi target klik.
  *
- * Batas fase ini: segmen belum membuka editor (klik = no-op, C2.3) — editor
- * in-place menyusul di C3. Yang dipatuhi sekarang: urutan teks + separator
- * identik dengan `contentLines` (D4), guide hanya di layar (D5/D12), dan
- * affordance lewat CSS attribute selector supaya `BlockView` tak perlu prop
- * baru (D13/D15).
+ * C3 — klik sebuah segmen membuka sesi edit dan menukar teksnya
+ * dengan editor in-place (D3). Segmen di luar matriks C3 (kepala entri,
+ * tanggal, bullet — C4) tetap tombol tanpa aksi, persis seperti pada C2.
+ *
+ * Yang dipatuhi sekarang: urutan teks + separator identik dengan
+ * `contentLines` (D4), guide hanya di layar (D5/D12), dan affordance lewat
+ * CSS attribute selector supaya `BlockView` tak perlu prop baru (D13/D15).
  */
-
-const BUTTON_RESET: CSSProperties = {
-  appearance: 'none',
-  background: 'none',
-  border: 'none',
-  padding: 0,
-  margin: 0,
-  display: 'inline',
-  font: 'inherit',
-  textAlign: 'inherit',
-  cursor: 'text',
-  borderRadius: 2,
-}
 
 /** Slot visual menentukan peran tipografi template untuk segmen. */
 type CanvasFieldProps = {
@@ -51,24 +46,73 @@ type CanvasFieldProps = {
   role: CSSProperties
   guideColor: string
   templateId: TemplateId
+  /** Id section pemilik segmen — dipakai untuk menulis ke dokumen (C3). */
+  sectionId: string
 }
 
 /**
  * Satu segmen field: tombol ber-gaya teks. Field kosong menampilkan guide
  * dengan warna muted dokumen; nilai terisi memakai warna slot aslinya.
+ *
+ * C3 — segmen yang masuk matriks §4 fase ini membuka sesi edit saat diklik;
+ * editor menukar teks segmen dengan control yang bisa diisi (D3).
  */
 const CanvasField = memo(function CanvasField({
   segment,
   role,
   guideColor,
   templateId,
+  sectionId,
 }: CanvasFieldProps) {
+  const openSession = useCanvasStore((state) => state.openSession)
+  const session = useCanvasStore((state) =>
+    state.session &&
+    state.session.sectionId === sectionId &&
+    state.session.fieldPath === segment.fieldPath
+      ? state.session
+      : null,
+  )
+  const spec = useMemo(
+    () => canvasFieldSpecOf(sectionId, segment.fieldPath),
+    [sectionId, segment.fieldPath],
+  )
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const wasEditing = useRef(false)
+
+  // D11 — fokus kembali ke tombol pemicu begitu sesi ditutup (commit/batal).
+  useEffect(() => {
+    if (wasEditing.current && !session) buttonRef.current?.focus()
+    wasEditing.current = Boolean(session)
+  }, [session])
+
   if (!segment.guideId) return <span>{segment.text}</span>
+
+  if (session && spec) {
+    if (spec.target.kind === 'entry-dates') {
+      return (
+        <CanvasDatesEditor
+          target={spec.target}
+          valueText={segment.text}
+          guideText={guideTextOf(segment.guideId, templateId)}
+          style={{ ...role, color: segment.text === '' ? guideColor : 'inherit' }}
+        />
+      )
+    }
+    return (
+      <CanvasFieldEditor
+        spec={spec}
+        guideText={guideTextOf(segment.guideId, templateId)}
+        style={role}
+      />
+    )
+  }
+
   const guideId = segment.guideId
   const isGuide = segment.text === ''
   const visible = isGuide ? guideTextOf(guideId, templateId) : segment.text
   return (
     <button
+      ref={buttonRef}
       type="button"
       data-field={segment.fieldPath}
       data-canvas-field="true"
@@ -80,8 +124,19 @@ const CanvasField = memo(function CanvasField({
           ? t('canvas.fillField', { field: fieldLabelOf(guideId), value: visible })
           : t('canvas.editField', { field: fieldLabelOf(guideId), value: visible })
       }
+      onClick={(event) => {
+        if (!spec) return
+        // D7 — zoom terlalu kecil bikin editor tak terbaca; naikkan sekali saja.
+        ensureReadableZoom(event.currentTarget)
+        openSession({
+          blockKey: blockKeyForField(sectionId, segment.fieldPath),
+          sectionId,
+          fieldPath: segment.fieldPath,
+          kind: spec.widget,
+        })
+      }}
       style={{
-        ...BUTTON_RESET,
+        ...CANVAS_BUTTON_RESET,
         ...role,
         color: isGuide ? guideColor : 'inherit',
       }}
@@ -101,9 +156,11 @@ const CanvasField = memo(function CanvasField({
 const SegmentLine = memo(function SegmentLine({
   group,
   spec,
+  sectionId,
 }: {
   group: SegmentGroup
   spec: TemplateSpec
+  sectionId: string
 }) {
   const styles = screenStylesOf(spec)
   const role = styles.roleOf[group.slot]
@@ -118,6 +175,7 @@ const SegmentLine = memo(function SegmentLine({
             role={role}
             guideColor={styles.guideColor}
             templateId={spec.id}
+            sectionId={sectionId}
           />
         </Fragment>
       ))}
@@ -161,13 +219,13 @@ const CanvasHeader = ({ sectionId, spec }: { sectionId: string; spec: TemplateSp
   return (
     <header>
       <div style={styles.name}>
-        <SegmentLine group={groups[0]!} spec={spec} />
+        <SegmentLine group={groups[0]!} spec={spec} sectionId={sectionId} />
       </div>
       <div style={styles.headline}>
-        <SegmentLine group={groups[1]!} spec={spec} />
+        <SegmentLine group={groups[1]!} spec={spec} sectionId={sectionId} />
       </div>
       <div style={styles.contact}>
-        <SegmentLine group={groups[2]!} spec={spec} />
+        <SegmentLine group={groups[2]!} spec={spec} sectionId={sectionId} />
       </div>
     </header>
   )
@@ -192,7 +250,7 @@ const CanvasSummary = ({ sectionId, spec }: { sectionId: string; spec: TemplateS
   const groups = summaryGroups(text)
   return (
     <p style={styles.body}>
-      <SegmentLine group={groups[0]!} spec={spec} />
+      <SegmentLine group={groups[0]!} spec={spec} sectionId={sectionId} />
     </p>
   )
 }
@@ -218,10 +276,10 @@ const CanvasSkillGroup = ({
   return (
     <div>
       <div style={styles.entryTitle}>
-        <SegmentLine group={groups[0]!} spec={spec} />
+        <SegmentLine group={groups[0]!} spec={spec} sectionId={sectionId} />
       </div>
       <div style={styles.body}>
-        <SegmentLine group={groups[1]!} spec={spec} />
+        <SegmentLine group={groups[1]!} spec={spec} sectionId={sectionId} />
       </div>
     </div>
   )
@@ -259,15 +317,15 @@ const CanvasEntryHead = ({
       <div>
         <div style={styles.entryHeadRow}>
           <span style={styles.entryHeadTitle}>
-            {title ? <SegmentLine group={title} spec={spec} /> : null}
+            {title ? <SegmentLine group={title} spec={spec} sectionId={sectionId} /> : null}
           </span>
           <span style={styles.entryHeadDates}>
-            {dates ? <SegmentLine group={dates} spec={spec} /> : null}
+            {dates ? <SegmentLine group={dates} spec={spec} sectionId={sectionId} /> : null}
           </span>
         </div>
         {meta ? (
           <div style={styles.entryMeta}>
-            <SegmentLine group={meta} spec={spec} />
+            <SegmentLine group={meta} spec={spec} sectionId={sectionId} />
           </div>
         ) : null}
       </div>
@@ -277,12 +335,12 @@ const CanvasEntryHead = ({
     <div>
       {title ? (
         <div style={styles.entryTitle}>
-          <SegmentLine group={title} spec={spec} />
+          <SegmentLine group={title} spec={spec} sectionId={sectionId} />
         </div>
       ) : null}
       {meta ? (
         <div style={styles.entryMeta}>
-          <SegmentLine group={meta} spec={spec} />
+          <SegmentLine group={meta} spec={spec} sectionId={sectionId} />
         </div>
       ) : null}
     </div>
@@ -315,7 +373,7 @@ const CanvasEntryLine = ({
   if (!isBullet) {
     return (
       <div style={{ ...styles.body, ...styles.bodyIndent }}>
-        <SegmentLine group={group} spec={spec} />
+        <SegmentLine group={group} spec={spec} sectionId={sectionId} />
       </div>
     )
   }
@@ -325,7 +383,7 @@ const CanvasEntryLine = ({
         {styles.bulletGlyph}
       </span>
       <span style={styles.lineText}>
-        <SegmentLine group={group} spec={spec} />
+        <SegmentLine group={group} spec={spec} sectionId={sectionId} />
       </span>
     </div>
   )

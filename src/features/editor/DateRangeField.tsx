@@ -15,6 +15,12 @@ export type DateRangeFieldProps = {
   endLabel?: string
   currentLabel?: string
   error?: string
+  /**
+   * Entri yang tidak punya status "masih berjalan" (proyek) memakai kontrol
+   * yang sama tanpa baris sakelar — dipakai kembali oleh editor tanggal
+   * on-canvas (C4.2).
+   */
+  showCurrent?: boolean
 }
 
 export function DateRangeField({
@@ -29,6 +35,7 @@ export function DateRangeField({
   endLabel,
   currentLabel,
   error,
+  showCurrent = true,
 }: DateRangeFieldProps) {
   const startId = `${idPrefix}-start`
   const endId = `${idPrefix}-end`
@@ -77,12 +84,14 @@ export function DateRangeField({
         </div>
       </div>
 
-      <div className="border-rule bg-raised flex h-10 items-center justify-between rounded-md border px-3">
-        <Label htmlFor={currentId} className="cursor-pointer font-normal">
-          {resolvedCurrentLabel}
-        </Label>
-        <Switch id={currentId} checked={current} onCheckedChange={onCurrentChange} />
-      </div>
+      {showCurrent ? (
+        <div className="border-rule bg-raised flex h-10 items-center justify-between rounded-md border px-3">
+          <Label htmlFor={currentId} className="cursor-pointer font-normal">
+            {resolvedCurrentLabel}
+          </Label>
+          <Switch id={currentId} checked={current} onCheckedChange={onCurrentChange} />
+        </div>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-caption text-signal-bad">

@@ -95,6 +95,10 @@ export const skillGroupSchema = z.object({
   items: z.array(z.string()),
 })
 
+export const summarySchema = z.object({
+  text: z.string().max(DOC_LIMITS.summaryChars, SUMMARY_LIMIT_ERROR),
+})
+
 export const projectSchema = z.object({
   id: idField(),
   name: z.string(),
@@ -150,9 +154,7 @@ const sectionSchemas = [
     id: idField(),
     kind: z.literal('summary'),
     visible: z.boolean(),
-    data: z.object({
-      text: z.string().max(DOC_LIMITS.summaryChars, SUMMARY_LIMIT_ERROR),
-    }),
+    data: summarySchema,
   }),
   z.object({
     id: idField(),

@@ -10,6 +10,7 @@ import { getSpec, resolveSpec } from '@/features/templates/specs'
 import { t } from '@/lib/i18n'
 import { simulateParseOrder } from '../parseTape'
 import { focusTarget } from '../focusTarget'
+import { canvasPathForAtsTarget, openCanvasSessionForAts } from '@/features/canvas/canvasAts'
 import { runAtsCheck } from '../runCheck'
 import { clockLabel } from '../clock'
 import type { AtsTarget } from '../types'
@@ -38,6 +39,7 @@ export function AtsPanel({ onClose, showClose }: AtsPanelProps) {
   const panelMode = useUiStore((state) => state.panelMode)
   const includeMarksInPdf = useUiStore((state) => state.includeMarksInPdf)
   const setIncludeMarksInPdf = useUiStore((state) => state.setIncludeMarksInPdf)
+  const editMode = useUiStore((state) => state.editMode)
 
   const plan = usePagination(doc, doc.templateId)
   const spec = useMemo(
@@ -50,6 +52,15 @@ export function AtsPanel({ onClose, showClose }: AtsPanelProps) {
   const actionable = report?.issues.filter((issue) => issue.severity !== 'ok').length ?? 0
 
   const fix = (target: AtsTarget | undefined): void => {
+    // C5.2 — di mode kanvas, `Perbaiki →` membuka field target langsung di atas
+    // kertas. Field di luar matriks §4 tetap jatuh ke form (perilaku T7.4).
+    if (editMode === 'canvas' && canvasPathForAtsTarget(doc, target)) {
+      // Drawer modal di bawah 1280px menutupi kertas & menahan fokus, jadi
+      // ditutup lebih dulu — sama seperti jalur form.
+      if (panelMode !== '3col') onClose()
+      openCanvasSessionForAts(target)
+      return
+    }
     focusTarget(target, {
       setActiveSection,
       setActiveTab,

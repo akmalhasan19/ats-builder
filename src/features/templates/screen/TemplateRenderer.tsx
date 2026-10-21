@@ -1,13 +1,16 @@
-import { memo } from 'react'
+import { Fragment, memo, useMemo } from 'react'
 import { useUiStore } from '@/store/uiStore'
 import { PageSheet } from '@/features/preview/PageSheet'
 import { MarginRuler } from '@/features/preview/MarginRuler'
+import { CanvasGhostRow } from '@/features/canvas/CanvasGhostRow'
+import { canvasGhostsAfterBlock } from '@/features/canvas/canvasGhosts'
 import { t } from '@/lib/i18n'
 import type { TemplateSpec } from '../specs'
 import type { PagePlan } from '@/features/preview/pagination'
 import { BlockView } from './BlockView'
 
 const NO_KEYWORDS: readonly string[] = []
+const NO_GHOSTS = new Map<string, never[]>()
 
 export type TemplateRendererProps = {
   plan: PagePlan
@@ -31,6 +34,14 @@ export const TemplateRenderer = memo(function TemplateRenderer({
   scope,
 }: TemplateRendererProps) {
   const showMarginGuides = useUiStore((state) => state.showMarginGuides)
+  // C4.4 — ghost row hanya di pratinjau mode kanvas. Salinan ber-`scope`
+  // (thumbnail, halaman pembanding) tetap non-interaktif dan tidak boleh
+  // menampilkan affordance edit (§5.2, D15).
+  const ghostMode = useUiStore((state) => state.editMode === 'canvas' && !scope)
+  const ghosts = useMemo(
+    () => (ghostMode ? canvasGhostsAfterBlock(plan.blocks) : NO_GHOSTS),
+    [ghostMode, plan.blocks],
+  )
 
   return (
     <div
@@ -50,20 +61,24 @@ export const TemplateRenderer = memo(function TemplateRenderer({
               marginPx={plan.marginPx}
             >
               {pageBlocks.map((block) => (
-                <BlockView
-                  key={block.key}
-                  scope={scope}
-                  blockKey={block.key}
-                  kind={block.kind}
-                  sectionKind={block.sectionKind}
-                  sectionId={block.sectionId}
-                  itemId={block.itemId}
-                  lineIndex={block.lineIndex}
-                  padAfterMm={block.padAfterMm}
-                  spec={spec}
-                  keywords={keywords}
-                  showMarks={showMarks}
-                />
+                <Fragment key={block.key}>
+                  <BlockView
+                    scope={scope}
+                    blockKey={block.key}
+                    kind={block.kind}
+                    sectionKind={block.sectionKind}
+                    sectionId={block.sectionId}
+                    itemId={block.itemId}
+                    lineIndex={block.lineIndex}
+                    padAfterMm={block.padAfterMm}
+                    spec={spec}
+                    keywords={keywords}
+                    showMarks={showMarks}
+                  />
+                  {ghosts.get(block.key)?.map((ghost, ghostIndex) => (
+                    <CanvasGhostRow key={`${ghost.kind}-${ghostIndex}`} ghost={ghost} />
+                  ))}
+                </Fragment>
               ))}
             </PageSheet>
             {showMarginGuides ? <MarginRuler marginPx={plan.marginPx} /> : null}

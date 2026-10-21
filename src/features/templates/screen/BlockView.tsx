@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { mmToPx } from '@/lib/units'
 import { useDocStore } from '@/store/docStore'
 import { useUiStore } from '@/store/uiStore'
+import { useCanvasStore } from '@/store/canvasStore'
 import { useMeasuredHeight } from '@/features/preview/useMeasuredHeight'
 import { withRenderProbe } from '@/features/preview/renderProbe'
 import { CanvasBlock } from '@/features/canvas/CanvasBlock'
@@ -249,6 +250,11 @@ export const BlockView = memo(function BlockView(props: BlockViewProps) {
   // pratinjau utama (thumbnail, halaman pembanding) selalu memakai jalur form:
   // keduanya non-interaktif dan tidak boleh menampilkan guide.
   const canvasMode = useUiStore((state) => state.editMode === 'canvas')
+  // D6 — blok yang sedang diedit ditandai untuk CSS & test hook. Selector-nya
+  // sempit: satu blok = satu perbandingan string, tanpa langganan dokumen.
+  const editing = useCanvasStore((state) =>
+    canvasMode && !props.scope ? state.session?.blockKey === props.blockKey : false,
+  )
   const slice = {
     sectionId: props.sectionId,
     itemId: props.itemId ?? '',
@@ -285,6 +291,7 @@ export const BlockView = memo(function BlockView(props: BlockViewProps) {
       data-probe="preview-block"
       data-block-key={heightKey}
       data-block-kind={props.kind}
+      data-canvas-editing={editing ? 'true' : undefined}
       style={{ display: 'flow-root', paddingBottom: mmToPx(props.padAfterMm) }}
     >
       {inner}

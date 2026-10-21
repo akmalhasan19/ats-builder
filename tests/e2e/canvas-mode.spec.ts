@@ -1,9 +1,29 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 /**
  * FASE 12 / C1 — mode pengerjaan lewat menu Tampilan dan undo/redo dokumen.
- * Desktop saja: kanvas mobile milik C5.
+ * C5.1 — dijalankan di kedua project: desktop memakai popover Tampilan menu,
+ * mobile (<1024px) memakai entri yang sama di sheet MobileMenu (D2, §5.3).
  */
+
+const isDesktop = (page: Page) => (page.viewportSize()?.width ?? 1440) >= 1024
+
+/** §5.3 — pemicu menu Tampilan mengikuti panel mode. */
+const openTampilan = async (page: Page): Promise<void> => {
+  if (isDesktop(page)) {
+    await page.locator('[data-probe="tampilan-menu"]').click()
+  } else {
+    await page.getByRole('button', { name: 'Menu' }).click()
+  }
+}
+
+const toCanvasMode = async (page: Page): Promise<void> => {
+  await openTampilan(page)
+  await page.locator('[data-probe="edit-mode-canvas"]').click()
+  await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'canvas')
+  // Popover/sheet tidak menutupi target kertas — selalu ditutup.
+  await page.keyboard.press('Escape')
+}
 
 test.describe('menu Tampilan & mode pengerjaan', () => {
   test('mode Langsung di CV terpilih dari menu Tampilan dan bertahan setelah reload', async ({
@@ -13,9 +33,7 @@ test.describe('menu Tampilan & mode pengerjaan', () => {
     const shell = page.locator('[data-edit-mode]')
     await expect(shell).toHaveAttribute('data-edit-mode', 'form')
 
-    await page.locator('[data-probe="tampilan-menu"]').click()
-    await page.locator('[data-probe="edit-mode-canvas"]').click()
-    await expect(shell).toHaveAttribute('data-edit-mode', 'canvas')
+    await toCanvasMode(page)
 
     await page.reload()
     await expect(page.locator('[data-edit-mode]')).toHaveAttribute('data-edit-mode', 'canvas')

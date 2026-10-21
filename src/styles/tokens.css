@@ -279,6 +279,14 @@
   letter-spacing: 0.02em;
 }
 
+/* FASE 12 (C3) — pesan error inline di atas kertas. */
+@utility text-error {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
 @utility text-button-lg {
   font-family: var(--font-display);
   font-size: 14px;
@@ -429,6 +437,86 @@
   text-decoration-style: dotted;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+}
+
+/* ==========================================================================
+   FASE 12 (C3) — editor in-place di atas kertas (D3).
+   Kontrol menukar teks segmen:-mewarisi tipografi dokumen (`font: inherit`)
+   dan hanya menambah garis batas sebagai affordance. Tidak ada surface baru
+   di atas kertas — kertas tetap objek paling terang (P3).
+   ========================================================================== */
+
+[data-edit-mode='canvas'] .canvas-editor-shell {
+  display: block;
+  width: 100%;
+}
+
+[data-edit-mode='canvas'] .canvas-editor {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  background: transparent;
+  /* Garis batas memakai outline, bukan border: tinggi control tetap
+     "tinggi baris teks + padding 2px" dan tidak menambah layout. */
+  border: none;
+  outline: 1px solid var(--color-accent-ink);
+  outline-offset: 0;
+  border-radius: 2px;
+  padding: 1px 4px;
+  resize: none;
+  overflow: hidden;
+}
+
+[data-edit-mode='canvas'] .canvas-editor:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 1px;
+}
+
+[data-edit-mode='canvas'] .canvas-editor[aria-invalid='true'] {
+  outline-color: var(--color-signal-bad);
+}
+
+/* ==========================================================================
+   FASE 12 (C4) — ghost row struktural di atas kertas (D10, D15).
+   Baris penuh lebar konten, dashed, tanpa isian: kertas tetap surface paling
+   terang (P3). Tidak dirender sama sekali di mode form, jadi tidak pernah ikut
+   terukur sebagai isi dokumen.
+   ========================================================================== */
+
+[data-edit-mode='canvas'] .canvas-ghost-row {
+  display: flow-root;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   FASE 12 (C5.1) — target sentuh mobile (§5.3).
+   Semua aturan di sini hanya hidup pada panel mode 'tabs' (<1024px) sehingga
+   layout desktop dan penyematan PDF tetap persis seperti sebelumnya.
+
+   Segmen kanvas adalah tombol `display: inline` (CANVAS_BUTTON_RESET), jadi
+   `padding-block` transparan mengembangkan area hit ke atas/bawah TANPA
+   mengubah tinggi baris maupun pagination kertas (inline non-replaced tidak
+   memengaruhi line box) — persis "padding transparan" §5.3. Area hit ≥32px:
+   ukuran baris terkecil (~12px) + 2×pad. `!important` diperlukan karena
+   inline style reset menetapkan `padding: 0`.
+   ========================================================================== */
+
+[data-panel-mode='tabs'][data-edit-mode='canvas'] .canvas-field {
+  padding-block: 10px !important;
+}
+
+/* Ghost row = baris tambah konten yang paling sering disentuh di mobile:
+   target sentuh penuh 44px (§5.3). Ghost tidak ikut terukur sebagai isi
+   dokumen, dan anggaran ghost 48px per jangkar (opsi A C4.4) tetap cukup
+   untuk 44px + margin 2px. */
+[data-panel-mode='tabs'][data-edit-mode='canvas'] [data-canvas-ghost] {
+  min-height: 44px;
 }
 
 /* ---- Motion (§2.6) — keyframes & state Radix ------------------------------ */

@@ -495,81 +495,280 @@ template; tidak muncul di mode form).
 
 ---
 
-### ☐ FASE C3 — Edit inline field sederhana (header, summary, skill)
+### ☑ FASE C3 — Edit inline field sederhana (header, summary, skill) *(2026-10-20 — semua gate hijau)*
 
-- [ ] **C3.1 Komponen editor** — `src/features/canvas/CanvasFieldEditor.tsx`: swap-in
+- [x] **C3.1 Komponen editor** — `src/features/canvas/CanvasFieldEditor.tsx`: swap-in
       input/textarea (D3), commit/batal/blur, validasi zod + error inline, fokus kembali ke
       trigger, toast field-wajib-kosong.
-- [ ] **C3.2 Sesi & pembekuan repaginasi** — wiring `canvasStore.openSession/closeSession`;
+      *Realisasi: kontrol swap-in = `<input>` (baris tunggal & daftar skill), `<textarea>`
+      auto-grow (ringkasan); guide jadi **placeholder**, draft awal = nilai sebenarnya dari
+      store. Enter commit (Ctrl/Cmd+Enter untuk textarea), Escape batal, blur commit.
+      Validasi memakai schema zod yang sudah ada (`schema/resume.ts`: `profileSchema`,
+      `linkItemSchema`, `summarySchema` — baru diekspor di C3 — `skillGroupSchema`); error
+      milik field lain diabaikan supaya editor menolak **hanya** nilai yang sedang diedit.
+      Gagal → editor tetap terbuka + `role="alert"` (11px, utilitas `text-error` baru) +
+      `aria-invalid` + `aria-describedby`. Field wajib kosong → revert + toast
+      `canvas.emptyRequired` (pola `DocumentTitle.tsx`); daftar field wajib diambil dari
+      `registry.requiredFields` (`fullName`, `headline`, `email`, `phone`, `summary.text`,
+      nama & items kelompok skill). Fokus kembali ke tombol pemicu saat sesi ditutup.*
+  - [x] validasi error inline (satuan validasi dipakai bersama form — `canvasCommit.ts`)
+  - [x] toast field-wajib-kosong + revert
+- [x] **C3.2 Sesi & pembekuan repaginasi** — wiring `canvasStore.openSession/closeSession`;
       gate `scheduleHeight` selama sesi (D6); `data-canvas-editing`.
-  - [ ] unit test: tinggi settle tidak berubah selama sesi; plan stabil
-- [ ] **C3.3 Guard zoom** — auto-raise ke 0.75 bila <0.6 saat openSession + toast (D7).
-- [ ] **C3.4 Field tercakup C3** — `fullName`, `headline`, `email`, `phone`, `location`,
+      *Realisasi: gate ada di **satu tempat** — `scheduleHeight` (`previewStore.ts`): selama
+      `canvasStore.session != null` laporan tinggi **ditahan** (bukan dibuang) dan dilepas
+      begitu sesi ditutup, sehingga rencana halaman membeku saat mengetik dan repaginasi
+      normal berjalan sesudah commit. `data-canvas-editing="true"` pada wrapper blok
+      (`BlockView`, selector sempit `s.session?.blockKey === props.blockKey` — D13). Kunci
+      blok diturunkan dari path field (`canvasFields.blockKeyForField`) supaya tidak ada
+      prop baru.*
+  - [x] unit test: tinggi settle tidak berubah selama sesi; plan stabil
+        — `tests/unit/canvasEdit.test.tsx` "laporan tinggi ditahan selama sesi": tinggi
+        100.000 px tidak masuk store selama sesi, jumlah lembar tetap, node blok tidak
+        berganti (tidak unmount), dan setelah sesi ditutup tinggi masuk & halaman
+        repaginasi.
+- [x] **C3.3 Guard zoom** — auto-raise ke 0.75 bila <0.6 saat openSession + toast (D7).
+      *Realisasi: guard di `canvasZoom.ts`, dipanggil saat segmen diklik (sebelum
+      `openSession`). Skala yang dibaca = **skala efektif** pohon pratinjau
+      (`transform: scale()` pada `[data-probe="preview-content"]`), bukan nilai preferensi
+      `uiStore.zoom` — mode Fit memakai skala yang dihitung dari lebar well, jadi nilai
+      preferensi tidak bisa dipakai sebagai penentu. Naikkan **sekali** per sesi aplikasi
+      (`canvasStore.zoomRaised`), jadi user yang memperkecil sesudahnya tidak dipaksa
+      balik. Toast `canvas.zoomRaised`.*
+- [x] **C3.4 Field tercakup C3** — `fullName`, `headline`, `email`, `phone`, `location`,
       `links[i].url`, `summary.text`, `skills.groups[i].name`, `skills.groups[i].items` (chips).
-  - [ ] commit menulis lewat `updateSection` (autosave & save pill terbukti)
-  - [ ] undo membatalkan satu commit field
-- [ ] **C3.5 e2e alur edit** — `tests/e2e/canvas-edit.spec.ts`: klik guide nama → ketik → Enter →
+      *Realisasi: peta field di `canvasFields.ts` (path model = atribut `data-field`, D4) →
+      target tulis + widget + aturan wajib. Penulisan lewat `docStore.updateSection` —
+      jalur yang sama dengan form — sehingga autosave & save pill ikut (D8). Daftar skill
+      dipecah per koma dengan semantik `ChipsInput` (trim, buang kosong, tanpa duplikat).
+      Tautan dinormalkan seperti blur di form (`normalizeUrlInput`). Blok guide kelompok
+      skill **tanpa grup** belum bisa diedit: menambah kelompok skill tidak ada di ghost
+      row D10, jadi menambahnya tetap milik form.*
+  - [x] commit menulis lewat `updateSection` (autosave & save pill terbukti)
+  - [x] undo membatalkan satu commit field — jendela coalesce 150 ms diputus sebelum &
+        sesudah commit kanvas (`docStore.breakEditCoalesce`), jadi satu sesi = satu langkah
+        undo (D9) dan ketikan form berikutnya tidak menyatu dengan commit kanvas.
+- [x] **C3.5 e2e alur edit** — `tests/e2e/canvas-edit.spec.ts`: klik guide nama → ketik → Enter →
       nilai render + tersimpan setelah reload; Escape batal; commit invalid menampilkan error.
+      *8 test: commit + reload (tersimpan) · Escape batal · commit invalid (error + `aria-invalid`) ·
+      field wajib kosong (toast + revert) · undo satu langkah · guard zoom 50% → 75% + toast ·
+      dokumen hasil edit kanvas identik dengan hasil edit form (snapshot IndexedDB) · axe 0
+      serious saat editor terbuka.*
 
 **Gate Fase C3**
 
-- [ ] Edit semua field C3 dari kertas menghasilkan doc identik dengan mengisinya dari form
+- [x] Edit semua field C3 dari kertas menghasilkan doc identik dengan mengisinya dari form
       (bandingkan snapshot doc).
-- [ ] Tidak ada unmount/reflow saat mengetik (sesi beku terbukti via probe tinggi).
-- [ ] `pnpm test`, `pnpm test:e2e --grep canvas`, axe hijau kedua mode.
+      *Bukti unit `tests/unit/canvasEdit.test.tsx`: 9 field C3 diisi lewat editor kanvas,
+      dokumen dibandingkan dengan dokumen yang diisi lewat `updateSection` (jalur form) —
+      identik setelah `meta` (updatedAt) dibuang. Bukti e2e: profil diisi lewat form,
+      lalu diisi lagi lewat kanvas → snapshot IndexedDB sama.*
+- [x] Tidak ada unmount/reflow saat mengetik (sesi beku terbukti via probe tinggi).
+      *Bukti unit: laporan tinggi 100.000 px selama sesi tidak masuk store, jumlah lembar
+      tidak berubah, node blok yang diedit tetap sama (tidak unmount); setelah sesi ditutup
+      pengukuran dilepas & halaman repaginasi.*
+- [x] `pnpm test`, `pnpm test:e2e --grep canvas`, axe hijau kedua mode.
+      *`pnpm test` **979 test / 54 file** hijau · `pnpm test:e2e` **122/122** (desktop +
+      mobile-chrome; 8 test baru `canvas-edit.spec.ts`) · `pnpm typecheck` 0 error ·
+      `pnpm lint` 0 warning · `pnpm pdf:verify` **174/174** · axe 0 serious di mode kanvas
+      (editor terbuka, e2e baru) & mode form (e2e `a11y.spec.ts` tetap hijau).*
 
 **Verifikasi:** `pnpm test`, `pnpm test:e2e`, `pnpm pdf:verify`.
 
 ---
 
-### ☐ FASE C4 — Entry: segment title/meta, bullet, tanggal, ghost row
+### ☑ FASE C4 — Entry: segment title/meta, bullet, tanggal, ghost row
+*(2026-10-20 — Gate 3/3 hijau. Temuan ghost row terpotong diselesaikan di **C5.1** dengan opsi A
+yang disetujui owner: ruang ghost masuk anggaran halaman rencana kanvas saja.)*
 
-- [ ] **C4.1 Segment entry-head** — title & meta per kind sesuai matriks §4 (role/company,
+- [x] **C4.1 Segment entry-head** — title & meta per kind sesuai matriks §4 (role/company,
       degree/field/institution, dst) termasuk separator literal.
-- [ ] **C4.2 Editor tanggal** — popover `DateRangeField`+`MonthPicker` dipakai ulang; mobile =
+      *Realisasi: segmentasinya sudah dibangun di C2 (`entryHeadGroups`); fase ini menyambung
+      sisi tulisnya — `canvasFields.ts` mengenal path `entries.<kind>.<id>.<field>` → target
+      `{ kind: 'entry-text', entryKind, entryId, field }` dengan whitelist field **persis**
+      matriks §4, wajib diambil dari `sectionRegistry[].requiredFields`, dan menulis lewat
+      `docStore.updateEntry` (jalur form, D8). Separator literal tidak berubah (`compositeOf`
+      tetap == `contentLines`, dijaga `fieldSegments.test.ts`).
+      **Entri maya** pada kerangka guide (`itemId = 'new'`, bagian yang masih kosong) sengaja
+      tidak editable — entri itu belum ada di dokumen; pembuatannya lewat ghost row
+      `+ Tambahkan entri` (D10), sama seperti kelompok skill maya pada C3.*
+- [x] **C4.2 Editor tanggal** — popover `DateRangeField`+`MonthPicker` dipakai ulang; mobile =
       Sheet bawah; commit `startDate/endDate/current`.
-- [ ] **C4.3 Bullet** — `entry-line` editable (textarea satu baris auto-grow); Enter commit.
-- [ ] **C4.4 Ghost row** — "+ Tambahkan entri" per section entry, "+ Tambahkan bullet" per entry,
+      *Realisasi: `CanvasDatesEditor.tsx` — segmen tanggal bertukar jadi pemicu popover Radix
+      yang berisi kontrol form yang sama. Bentuk popover ikut tanggal yang digambar dokumen
+      (`datesShapeOf`): range+sakelar (pengalaman, kerelawanan), range tanpa sakelar (proyek —
+      `DateRangeField` dapat prop baru `showCurrent`, default `true` sehingga form tidak
+      berubah), satu tanggal memakai `MonthPicker` langsung (sertifikasi `issuedAt`,
+      penghargaan `awardedAt`); pendidikan & bahasa tidak menampilkan tanggal → tidak ada
+      target edit di kertas. Draft hidup di state lokal (D6/D13); tulis lewat `updateEntry`
+      dengan `endDate` dibuang saat `current`, pers seperti form.*
+      **Deviasi kecil dari D3**: siklus `blur commit` tidak berlaku untuk popover —
+      commit = **Simpan** / **Enter**, batal = **Batal** / **Escape** / klik di luar
+      (pola popover rumah: `ThemeMenu`, `TampilanMenu`). Menulis setiap perubahan tanggal
+      langsung ke store akan memecah satu sesi jadi banyak langkah undo (bertentangan D9).*
+- [x] **C4.3 Bullet** — `entry-line` editable (textarea satu baris auto-grow); Enter commit.
+      *Realisasi: path `entries.<kind>.<id>.bullets[i]` / `.notes[i]` (pendidikan) → widget
+      `textarea` dengan `enterCommits: true` (keputusan owner OQ6; ringkasan tetap
+      Ctrl/Cmd+Enter sesuai D3). Commit kosong **membuang** baris dari model — sama seperti
+      tombol hapus di `BulletListEditor`, dan barisnya memang tidak pernah digambar bila kosong.
+      Supaya slot hasil ghost row punya blok sendiri di layar, daftar baris sisi kanvas
+      (`fieldSegments.entryBodyLines`) ikut menghitung bullet kosong; `contentLines` (mesin
+      isi → ATS, ekspor PDF) tidak disentuh, jadi `pdf:verify` tetap 174/174. Kunci blok
+      bullet memakai indeks model (`{sectionId}:{itemId}:l{index}`) sehingga `blockKeyForField`
+      dan marker `data-canvas-editing` tetap satu sumber (D6/D13).*
+- [x] **C4.4 Ghost row** — "+ Tambahkan entri" per section entry, "+ Tambahkan bullet" per entry,
       "+ Tambahkan bagian" akhir dokumen (Dialog katalog `Rail.tsx:553` dipakai ulang); add →
       buka sesi edit field pertama.
-  - [ ] hormati `DOC_LIMITS` (`schema/resume.ts:20`) — ghost disabled + tooltip saat limit
-- [ ] **C4.5 e2e** — tambah entri dari kanvas → isi role/company/dates/bullet → PDF unduh
+      *Realisasi: `canvasGhosts.ts` (jangkar = blok TERAKHIR milik entri/bagian/dokumen,
+      dihitung dari `plan.blocks` jadi tetap benar saat bagian berpindah halaman) +
+      `CanvasGhostRow.tsx` yang dirender `TemplateRenderer` hanya saat mode kanvas tanpa
+      `scope` (thumbnail & halaman pembanding bersih, §5.2). Entri baru → `addEntry` lalu sesi
+      dibuka di field pertama matriks; bullet → dorong string kosong lalu sesi di slotnya;
+      bagian → `uiStore.sectionCatalogOpen` yang baru, sehingga Dialog katalog rail (bukan
+      duplikatnya) yang terbuka.*
+  - [x] hormati `DOC_LIMITS` (`schema/resume.ts:20`) — ghost disabled + tooltip saat limit
+        (`limits.entries` / `limits.bullets` milik form dipakai lagi; `addCanvasEntry`/
+        `addCanvasBullet` juga menolak menulis, bukan cuma mematikan tombol)
+  - ⛔ **Temuan (menunggu keputusan owner):** ghost row duduk *di dalam* kotak konten lembar
+        (`overflow: hidden`), sedang halaman yang sudah penuh tidak menyisakan ruang — di
+        dokumen kosong terukur ghost terakhir turun **77–136 px** melewati dasar kotak konten
+        pada kelima template, dan di dokumen contoh blok terakhirnya sendiri sudah lewat
+        **121 px** (efek tinggi terukur mode kanvas yang memuat teks guide — catatan parity di
+        Gate C2; mode form: −16 px, aman). Angka bukti: `scripts/evidence-fase12-c4.mjs`
+        23/28. Opsi yang bisa dipilih owner: (A) sisakan ruang ghost di anggaran halaman
+        rencana kanvas, (B) render ghost di luar lembar (area well), (C) ghost hanya di halaman
+        terakhir + aksi per-section pindah ke overlay hover rail, (D) terima apa adanya dan
+        rapikan di C5. Tidak ada satu pun yang dikerjakan diam-diam di fase ini.
+        *Keputusan owner 2026-10-20: **(A)** — diimplementasi di FASE 12 C5: pada pass kanvas,
+        footprint blok yang menjadi jangkar ghost diperbesar estimasi tinggi ghost+marginnya,
+        sehingga blok terakhir yang tidak muat pindah ke halaman baru bersama ghost-nya
+        (rencana isi untuk ATS/PDF tidak tersentuh; lihat C5.1).*
+- [x] **C4.5 e2e** — tambah entri dari kanvas → isi role/company/dates/bullet → PDF unduh
       memuat isi yang sama (`pdf:verify` teks).
+      *Realisasi: `tests/e2e/canvas-entry.spec.ts` 5/5 — CV dari nol disusun sepenuhnya di
+      kanvas (header+ringkasan+entri: role/company/dates/bullet) lalu bertahan setelah reload;
+      isi entri hasil kanvas ada di teks PDF dan teks ghost/guide tidak; nol ghost & nol segmen
+      interaktif di mode form; axe 0 serius dengan popover tanggal terbuka; ghost bagian
+      membuka dialog katalog. Plus unit `tests/unit/canvasEntry.test.tsx` 25 test.*
 
 **Gate Fase C4**
 
-- [ ] CV lengkap bisa dibuat dari nol **sepenuhnya di kanvas** (tanpa menyentuh form), kecuali
+- [x] CV lengkap bisa dibuat dari nol **sepenuhnya di kanvas** (tanpa menyentuh form), kecuali
       reorder/hide/delete section-entry (memang v2, OQ1).
-- [ ] Paritas: doc hasil kanvas == doc hasil form untuk skrip isi yang sama.
-- [ ] `pnpm test`, `pnpm test:e2e --grep canvas`, `pnpm pdf:verify` hijau.
+      *Bukti: e2e `canvas-entry.spec.ts` (dokumen kosong → header+ringkasan+entri pengalaman
+      lengkap dengan tanggal & bullet, bertahan setelah reload) dan
+      `scripts/evidence-fase12-c4.mjs` PASS A untuk **kelima** template.*
+      Batas yang tercatat (bukan diam-diam): yang editable = **matriks §4** saja — `stack`,
+      `url` proyek, `credentialId`, IPK, kemahiran bahasa, dan **tanggal pendidikan** tidak punya
+      segmen di kertas (dokumen tidak menampilkannya / di luar matriks) sehingga tetap milik
+      form; kelompok skill baru juga tetap dibuat di form (lihat catatan C3.4).
+- [x] Paritas: doc hasil kanvas == doc hasil form untuk skrip isi yang sama.
+      *Bukti unit `tests/unit/canvasEntry.test.tsx`: entri yang dibuat ghost row lalu diisi di
+      kanvas (role/company/dates/bullet) dibandingkan dengan entri yang dibuat `addEntry` +
+      `updateEntry` (jalur form) — identik setelah `id` dibuang, dan bagian dokumen lain tidak
+      tersentuh. Bukti ujung-ke-ujung: teks yang diketik di kanvas muncul di PDF unduhan
+      (`canvas-entry.spec.ts` + bukti PASS B `scripts/evidence-fase12-c4.mjs`).*
+- [x] `pnpm test`, `pnpm test:e2e --grep canvas`, `pnpm pdf:verify` hijau.
+      *`pnpm test` **1005 test / 55 file** · `pnpm test:e2e --grep canvas` **20/20** ·
+      `pnpm test:e2e` penuh **127/127** (desktop + mobile-chrome) · `pnpm pdf:verify` **174/174** ·
+      `pnpm typecheck` 0 error · `pnpm lint` 0 warning.*
 
-**Verifikasi:** `pnpm test:e2e`, `pnpm pdf:verify`, manual lintas kelima template.
+**Verifikasi:** `pnpm test:e2e`, `pnpm pdf:verify`, manual lintas kelima template
+(`scripts/evidence-fase12-c4.mjs` → `artifacts/evidence/c4-entry-<template>.png`,
+`c4-canvas-export.pdf`, `fase12-c4.json`; **23/28** — lima pemeriksaan tambahan gagal karena
+temuan ⛔ ghost row terpotong di halaman penuh, lihat catatan C4.4).
 
 ---
 
-### ☐ FASE C5 — Mobile, lintas-fitur, hardening & dokumentasi rumah
+### ☑ FASE C5 — Mobile, lintas-fitur, hardening & dokumentasi rumah *(2026-10-20 — sub-task 6/6 & Gate 3/3 hijau; item performa dibuktikan lewat A/B baseline pada mesin yang sama — lihat §10)*
 
-- [ ] **C5.1 Mobile canvas** — target sentuh §5.3, badge tab, Sheet tanggal, Menu Tampilan mobile;
+- [x] **C5.1 Mobile canvas** — target sentuh §5.3, badge tab, Sheet tanggal, Menu Tampilan mobile;
       e2e project `mobile-chrome` diperluas spec canvas.
-- [ ] **C5.2 Integrasi ATS** — "Perbaiki →" (`focusTarget.ts:33`) bila `editMode='canvas'`:
+      *Realisasi: `canvas-mobile.spec.ts` 4/4 di project `mobile-chrome` (badge tab Pratinjau
+      ber-`aria-label` yang tetap memuat label terlihat; segmen ≥32px & ghost 44px diukur pada
+      **ruang kertas**, jadi nilai §5.3 tidak terdistorsi zoom Fit; Sheet tanggal `data-side="bottom"`
+      dengan probe & tombol yang sama seperti popover desktop; entri Tampilan di sheet Menu memakai
+      `TampilanMenuContent` yang sama). Anggaran ghost opsi A (keputusan C4.4) ikut di fase ini:
+      `canvasGhostExtraPxOf` → `paginateBlocks(…, extraPx)` membuat blok jangkar yang tidak muat
+      pindah halaman **bersama** ghost-nya; rencana isi (ATS/PDF) tidak tersentuh sehingga
+      `pdf:verify` tetap 174/174. Bukti: `tests/unit/canvasGhostBudget.test.ts`.*
+- [x] **C5.2 Integrasi ATS** — "Perbaiki →" (`focusTarget.ts:33`) bila `editMode='canvas'`:
       set section aktif + buka sesi edit field target di kanvas (fallback form bila field tidak
       tercakup matriks).
-- [ ] **C5.3 Performa** — benchmark `renderProbe`/Profiler mode canvas vs baseline form; tidak ada
+      *Realisasi: `src/features/canvas/canvasAts.ts` — id field ATS diterjemahkan ke path model
+      (`profile-email|phone|location`, `profile-link-url-<n>`, `skill-group-<id>-items`,
+      `<exp|edu|proj|vol|cert|award>-<id>-bullet-<i>`, `<…>-<id>-dates-<start|end>`), lalu
+      **divalidasi `canvasFieldSpecOf`** sehingga matriks §4 tetap satu-satunya otoritas. Target
+      rusak (jenis bagian tidak cocok, entri tidak ada) dan field di luar matriks (tanggal
+      pendidikan, IPB/stack/credentialId, dsb.) mengembalikan `null` → `AtsPanel.fix` memakai
+      jalur form seperti T7.4. Sesi membuka tab pratinjau (penting di mobile), mengaktifkan bagian
+      di rail/form, menggulir blok bersesi ke tengah well, dan tetap menghormati guard zoom (D7).
+      Bukti: `tests/unit/canvasAts.test.tsx` 10 test (termasuk "setiap isu ber-field: resolusi
+      kanvas hanya untuk path di matriks §4") + `tests/e2e/canvas-ats.spec.ts` 2/2 (isu tanggal
+      membuka popover tanggal di kertas lalu commit menulis dokumen; tanggal pendidikan tetap
+      berfokus di form).*
+- [x] **C5.3 Performa** — benchmark `renderProbe`/Profiler mode canvas vs baseline form; tidak ada
       regression commit duration; bundle: `canvasStore`+editor tidak menambah chunk initial
       (lazy bila perlu).
-- [ ] **C5.4 A11y penuh** — keyboard end-to-end di kanvas (Tab/Enter/Esc/Ctrl+Z), live region,
+      *Realisasi & angka (`scripts/evidence-fase12-c5.mjs` PASS A/B, dev server, dokumen contoh):
+      Profiler 10 ketikan — **form 1340 render / 486 ms / 82 blok** vs **kanvas 20 render /
+      14,5 ms / 1 blok dokumen** (draft hidup di komponen editor, store tidak disentuh per
+      ketikan — D6/D13); **commit kanvas 243 render / 219 ms** (repaginasi setelah commit, wajar).
+      Bundle awal (metode `evidence-fase9.mjs`) **290,89 KB gzip** — Δ **+11,88 KB** vs baseline
+      Fase 9 (279,01 KB). **Lazy split editor diuji lebih dulu dan ditolak dengan angka**:
+      index turun 249,79 → 216,36 KB tapi chunk bersama (`resume`/`docStore`/`registry`) tetap
+      di-preload, total **291,53 KB** = +0,64 KB lebih berat; jadi editor tetap statis dan tidak
+      ada `React.lazy`/Suspense yang menunda kemunculan kontrol (D3 tetap instan).*
+- [x] **C5.4 A11y penuh** — keyboard end-to-end di kanvas (Tab/Enter/Esc/Ctrl+Z), live region,
       axe kedua mode + reduced-motion.
-- [ ] **C5.5 Dokumentasi rumah** — daftarkan realisasi FASE 12 di `IMPLEMENTATION_PLAN.md` (§6 +
+      *Realisasi: `tests/e2e/canvas-a11y.spec.ts` 4/4 — (1) keyboard penuh tanpa mouse: Tab dari
+      kontrol terakhir toolbar masuk ke segmen pertama (`profile.fullName`), Enter membuka editor,
+      ketik, Enter commit, fokus kembali ke pemicu, Tab lanjut ke segmen berikutnya, Ctrl+Z
+      membatalkan satu commit; (2) live region `data-probe="edit-mode-announce"` di `AppShell`
+      mengumumkan "Mode pengerjaan: …" untuk kedua arah (kunci baru `tampilan.modeAnnounce`);
+      commit gagal tetap diumumkan `role="alert"` milik editor (D11); (3) `prefers-reduced-motion`
+      mematikan durasi animasi/transisi segmen, ghost, dan kertas (<0,01 s); (4) axe WCAG2 A/AA
+      0 critical/serious di mode kanvas (guide + ghost). Mode form tetap diaudit `a11y.spec.ts`
+      (rute publik + drawer + keyboard + reduced-motion).*
+- [x] **C5.5 Dokumentasi rumah** — daftarkan realisasi FASE 12 di `IMPLEMENTATION_PLAN.md` (§6 +
       §5 UI inventory: Menu Tampilan, affordance kanvas), tulis `PLAN_F12_CANVAS_EDIT.md` berisi
       realisasi per task, isi Execution Log kedua dokumen.
-- [ ] **C5.6 QA sweep** — matriks §7 dijalankan penuh; screenshot bukti per template per mode ke
+      *Realisasi: `PLAN_F12_CANVAS_EDIT.md` (peta modul, realisasi C1–C5, deviasi terukur, batas
+      cakupan, cara menjalankan ulang bukti) · `IMPLEMENTATION_PLAN.md` §5.2 (Undo/Redo), §5.5
+      (menu Tampilan + mode kanvas), §5.6 (`Perbaiki →` di kanvas), §5.7 (kanvas mobile) · §6
+      FASE 12 ditutup ☑ + T12.5 · §9 Execution Log (baris C4, C5, deviasi).*
+- [x] **C5.6 QA sweep** — matriks §7 dijalankan penuh; screenshot bukti per template per mode ke
       `artifacts/evidence/`.
+      *Realisasi: `scripts/evidence-fase12-c5.mjs` **19/19** → `artifacts/evidence/c5-<template>-<mode>.png`
+      (5 template × 2 mode), `c5-mobile-canvas.png`, `c5-canvas-export.pdf`, `fase12-c5.json`.
+      Pemeriksaan: mode form 0 segmen & 0 ghost di kelima template, mode kanvas 46 segmen + 11 ghost,
+      PDF hasil unduhan mode kanvas bebas teks guide/ghost tapi memuat isi dokumen, kanvas mobile
+      Pixel 7 punya 46 segmen. Baris matriks §7 yang tidak mungkin difoto (fungsional, paginasi,
+      paritas, persistensi, undo, i18n) dibuktikan suite otomatis: `canvas-edit`/`canvas-entry`/
+      `canvas-ats`/`canvas-a11y`/`canvas-mobile`, `fieldSegments.test.ts`, `pdf:verify` 174/174,
+      `a11y.spec.ts`.*
 
 **Gate Fase C5**
 
-- [ ] e2e full suite hijau (desktop + mobile-chrome), termasuk a11y.
-- [ ] `pnpm build && pnpm lhci` tidak regress vs baseline Fase 9.
-- [ ] Execution Log & UI inventory rumah terupdate; fitur tertutup sebagai FASE 13 ☑.
+- [x] e2e full suite hijau (desktop + mobile-chrome), termasuk a11y.
+- [x] `pnpm build && pnpm lhci` tidak regress vs baseline Fase 9.
+      **Terpenuhi — dibuktikan A/B pada mesin & jam yang sama** (worktree `9018a04` = baseline C1–C2
+      vs working copy C1–C5, `pnpm build` + `pnpm lhci` bergantian, median 3 run/URL):
+
+      | URL | C1–C5 (Perf · LCP · TBT) | C1–C2 (Perf · LCP · TBT) |
+      | :-- | :-- | :-- |
+      | `/` | **64** · 3.744 ms · **39 ms** | 63 · 3.889 ms · 33 ms |
+      | `/templates` | 62 · 4.102 ms · 0 ms | 64 · 3.820 ms · 0 ms |
+      | `/privacy` | 66 · 3.655 ms · 0 ms | 65 · 3.657 ms · 0 ms |
+
+      A11y/BP/SEO **1,00** dan CLS ≤0,0003 di kedua sisi. Selisih yang tersisa ada di dalam noise
+      run-to-run (±2 poin Perf, ±300 ms LCP). **Catatan penting:** dua run `lhci` sebelumnya di sesi
+      yang sama terbaca Perf 0,51 / TBT 271 ms untuk `/` — angka itu **drift lingkungan** (mesin
+      sedang menjalankan suite e2e/unit/rebuild berturut-turut), bukan regresi kode; run A/B di atas
+      membantahnya dengan baseline yang diukur ulang hari itu juga.
+- [x] Execution Log & UI inventory rumah terupdate; fitur tertutup sebagai FASE 12 ☑
+      *(revisi redaksi disetujui owner 2026-10-20 — frasa "FASE 13" adalah sisa draft v1;
+      AI Assistant tetap FASE 13 yang ditangguhkan).*
 
 **Verifikasi:** `pnpm test:e2e`, `pnpm build`, `pnpm lhci`, `pnpm pdf:verify`.
 
@@ -628,6 +827,13 @@ template; tidak muncul di mode form).
 | 2026-10-20 | — | keputusan owner atas OQ 1–6 | jawaban tertulis owner di sesi chat; §11 ditandai RESOLVED; renumber FASE 12 + penangguhan AI Assistant dicatat di `IMPLEMENTATION_PLAN.md` §6/§9/§11 | ✅ Keputusan |
 | 2026-10-20 | C1 | C1.1–C1.4 + Gate C1 | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm test` **942 test / 51 file** hijau (baru: undo/redo docStore 7 test, tampilanMenu 5 test, prefs `editMode` diperluas) · `pnpm build` exit 0 (index 220,89 KB gzip) · e2e `canvas-mode.spec.ts` **3/3** (mode bertahan setelah reload; tombol undo/redo; Ctrl+Z di luar field) · rerun `shell.spec`+`responsive.spec` **39/39**. Run e2e penuh pertama: 104 lulus + 6 gagal yang semuanya infra (`net::ERR_NETWORK_IO_SUSPENDED` / timeout `page.goto` pada run 48,8 menit saat beban mesin tidak wajar) — spec terkait hijau saat rerun. Deviasi tercatat: undo/redo snapshot `history`+`future` (kapasitas 50), tanpa toast batal; test prefs round-trip hidup di `tampilanMenu.test.tsx`. | ✅ Selesai & terverifikasi |
 | 2026-10-20 | C2 | C2.1–C2.5 + Gate C2 | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm test` **965 test / 53 file** hijau (baru: `fieldSegments.test.ts` 19 test paritas komposit × 5 template · `canvasGuides.test.tsx` 4 test render guide) · `pnpm pdf:verify` **174/174** (guide tidak masuk jalur PDF) · `pnpm build` exit 0 (index 223,62 KB gzip, +2,73 KB vs C1 — pemecahan chunk lazy editor/coverage ditetapkan di C5.3) · e2e **114/114** (baru `canvas-guides.spec.ts` 4/4: kerangka guide di dokumen kosong × 5 template; guide mengikuti layout template; mode form & thumbnail nol guide; axe 0 serious di mode kanvas) · bukti Δ & PDF bebas guide: `scripts/evidence-fase12-c2.mjs` **13/13** → `artifacts/evidence/c2-*.png` + `fase12-c2.json` (Δ kiri 0 mm / executive 0,33 mm; atas 0 mm kelima template). Realisasi: `fieldSegments.ts` (pemisah dibawa per baris, bukan per segmen) · blok guide hanya di rencana kanvas (`buildBlocks(doc, spec, { guides: true })`); ATS & ekspor PDF tetap memakai rencana isi · `aria-label` diperluas `{value}` + kunci `canvas.fillField` agar aturan "label in name" axe lulus. Catatan parity PDF (tertulis di §6 C2): unduhan PDF dari mode kanvas bisa berbeda pemecahan halamannya dari mode form karena tinggi terukur di layar memuat teks guide — isi PDF tetap sama persis. | ✅ Selesai & terverifikasi |
+| 2026-10-20 | C3 | C3.1–C3.5 + Gate C3 | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm test` **979 test / 54 file** hijau (baru: `tests/unit/canvasEdit.test.tsx` 14 test — editor swap-in, Enter/Escape/blur commit, error zod inline, toast field wajib, guard zoom, pembekuan tinggi, undo satu langkah, paritas kanvas↔form) · `pnpm pdf:verify` **174/174** (guide & editor tidak masuk jalur PDF) · e2e **122/122** desktop + mobile-chrome (baru `tests/e2e/canvas-edit.spec.ts` 8/8: commit + reload, Escape batal, commit invalid, field wajib kosong, undo, guard zoom 50%→75%, snapshot doc kanvas == form, axe 0 serious dengan editor terbuka). Realisasi: `CanvasFieldEditor.tsx` (swap-in; guide jadi placeholder) + `canvasFields.ts` (peta path→target) + `canvasCommit.ts` (validasi zod & tulis lewat `updateSection`) + `canvasZoom.ts` (guard skala efektif dari `transform: scale()`) · gate tinggi di `scheduleHeight` (`previewStore.ts`) menahan laporan selama sesi & melepasnya saat sesi ditutup · `docStore.breakEditCoalesce()` agar satu sesi = satu langkah undo (D9) · `summarySchema` diekspor dari `schema/resume.ts` · utilitas `text-error` 11px baru di `tokens.css` · `sectionId` diteruskan ke segmen (konstan per blok; dibutuhkan untuk membedakan section duplikat) · blok guide kelompok skill tanpa grup belum editable (ghost row kelompok skill tidak ada di D10). | ✅ Selesai & terverifikasi |
+| 2026-10-20 | C4 | C4.1–C4.5 + Gate C4 | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm test` **1005 test / 55 file** hijau (baru: `tests/unit/canvasEntry.test.tsx` 25 test — kepala entri, popover tanggal, bullet, ghost row, batas `DOC_LIMITS`, paritas kanvas↔form; `tests/unit/fieldSegments.test.ts` +1 test pemetaan bullet kosong ke indeks model; `tests/unit/railMore.test.tsx` menormalkan `sectionCatalogOpen` yang kini state store) · `pnpm pdf:verify` **174/174** · `pnpm test:e2e --grep canvas` **20/20** · `pnpm test:e2e` penuh **127/127** desktop + mobile-chrome (baru `tests/e2e/canvas-entry.spec.ts` 5/5) · bukti lintas template: `scripts/evidence-fase12-c4.mjs` **23/28** → `artifacts/evidence/c4-entry-<template>.png` (5), `c4-canvas-export.pdf`, `fase12-c4.json`. Realisasi: `canvasFields.ts` (path `entries.<kind>.<id>.*` → target `entry-text`/`entry-dates`/`entry-bullet`, wajib dari `sectionRegistry`, entri maya `new` inert) · `canvasCommit.ts` (`updateEntry`, validasi via `parseEntry` per skema, `validateCanvasDates`/`writeCanvasDates`, `addCanvasEntry`/`addCanvasBullet` menolak lewat batas) · `CanvasDatesEditor.tsx` (popover memakai ulang `DateRangeField`+`MonthPicker`; `DateRangeField` dapat `showCurrent`; deviasi kecil D3: commit = Simpan/Enter, batal = Batal/Escape/klik-luar — bukan blur) · bullet: `entryBodyLines` sisi kanvas ikut menghitung baris kosong supaya slot hasil ghost punya blok sendiri, `contentLines`/PDF tak disentuh; Enter commit (OQ6); commit kosong membuang baris · `canvasGhosts.ts` + `CanvasGhostRow.tsx` (jangkar blok terakhir entri/bagian/dokumen; dialog katalog rail dipakai ulang lewat `uiStore.sectionCatalogOpen`; ghost disabled + tooltip `limits.*`) · `TemplateRenderer` merender ghost hanya untuk pratinjau mode kanvas tanpa `scope`. ⛔ Temuan (menunggu owner): ghost row di dalam kotak konten lembar terpotong saat halaman penuh — terukur 77–136 px di bawah dasar kotak konten pada dokumen kosong (kelima template) dan blok terakhir mode kanvas sendiri sudah lewat 121 px pada dokumen contoh (efek tinggi terukur yang memuat teks guide; mode form −16 px aman). Opsi: (A) sisakan ruang ghost di anggaran halaman rencana kanvas, (B) ghost di luar lembar, (C) ghost hanya halaman terakhir + aksi per-section ke overlay hover rail, (D) terima & rapikan di C5. | 🟡 Gate 3/3 hijau; 1 temuan kualitas ⛔ menunggu keputusan owner |
+| 2026-10-20 | C4 (tindak lanjut) | Temuan ghost row terpotong → opsi A | Owner memilih opsi **A** (ruang ghost masuk anggaran halaman rencana kanvas). Dikerjakan di C5.1: `canvasGhosts.ts` mengekspor `canvasGhostExtraPxOf(blocks)`, `paginateBlocks` menerima `extraPx(block)`, `createPagePlan` hanya mengaktifkannya saat `options.guides === true`. Pass isi (ATS tape & ekspor PDF) tidak memakai `guides`, jadi pembagian halaman PDF tidak berubah — `pnpm pdf:verify` tetap **174/174**. Bukti: `tests/unit/canvasGhostBudget.test.ts` (4 test) + `canvas-mobile.spec.ts` (ghost 44px di dalam kotak konten). | ✅ Selesai & terverifikasi |
+| 2026-10-20 | C5 | C5.1–C5.6 + Gate C5 (2/3) | `pnpm typecheck` 0 error · `pnpm lint` 0 warning · `pnpm test` **1023 test / 57 file** hijau · `pnpm pdf:verify` **174/174** · `pnpm build` exit 0 (index 860,53 kB / **257,94 kB gzip**; SW precache 52 URL) · `pnpm test:e2e` **157/157** (chromium + mobile-chrome; termasuk `canvas-a11y` 4/4, `canvas-ats` 2/2, `canvas-mobile` 4/4, `a11y.spec` 6/6) · `pnpm lhci` exit 0 dengan **a11y/BP/SEO 1,00 · CLS ≤0,0003 · TBT 61–271 ms** di `/`, `/templates`, `/privacy` (median 3 run; Perf 0,51–0,65 & LCP 3,77–3,94 s berstatus `warn`) · `node scripts/evidence-fase12-c5.mjs` **19/19** → `artifacts/evidence/c5-<template>-<mode>.png` (10), `c5-mobile-canvas.png`, `c5-canvas-export.pdf`, `fase12-c5.json`. Realisasi: `canvasAts.ts` (peta id field ATS → path model + validasi `canvasFieldSpecOf`; fallback form untuk field di luar matriks) · `AtsPanel.fix` memakai jalur kanvas saat `editMode='canvas'` · live region `tampilan.modeAnnounce` di `AppShell` (kunci kamus baru) · `canvas-a11y.spec.ts` (keyboard penuh, live region, reduced-motion, axe) · `canvas-ats.spec.ts` · `canvasAts.test.tsx` 10 test · `PLAN_F12_CANVAS_EDIT.md` + §5/§6/§7/§9 `IMPLEMENTATION_PLAN.md` · `evidence-fase12-c5.mjs` (bundle, Profiler, sapuan 5×2 template, PDF, mobile). | ✅ Selesai & terverifikasi (A/B membuktikan tidak ada regresi) |
+| 2026-10-20 | C5 | Bug & flake nyata yang ditemukan fase ini, semuanya diperbaiki | **(1) `testIgnore` tingkat proyek menimpa `testIgnore` global** — C5.1 menambahkan `testIgnore: mobileOnlySpecs` di project `chromium`, sehingga `offline.spec.ts` (butuh service worker, hanya hidup di build produksi) ikut berjalan di server dev dan timeout di `serviceWorker.ready`. Diperbaiki: pola `offline` diulang di setiap proyek (`devIgnoredSpecs`). **(2) Toast mobile menutupi tombol Menu** — sonner `top-center` menempel di y=16 sehingga `li` toast menelan klik Menu selama 3,5 detik (gagal di e2e `canvas-guides` mobile). Diperbaiki: `offset`/`mobileOffset` `{ top: 104 }` (52 top bar + 44 tab bar + 8), sesuai §5.11 "di bawah top bar". **(3) `waitForStored` desktop membaca pill status** yang bisa bertahan dari commit sebelumnya → pembacaan IndexedDB masih nilai lama (gagal "dokumen kanvas identik dengan form"). Diperbaiki: polling dokumen tersimpan di kedua project (assertion diperkuat, bukan dilemahkan). **(4) `a11y.spec` 5 rute × axe kena timeout 30 s** di bawah beban suite penuh → `test.slow()` (timeout 3×, assertion tidak berubah). **(5) Penutupan sheet template mobile** lewat Escape bisa gagal setelah render ulang pratinjau memindahkan fokus → ditutup lewat tombol "Tutup" + tunggu sheet hidden. **(6) Lazy split editor diukur lalu ditolak**: index turun 249,79 → 216,36 kB gzip tetapi chunk bersama (`resume`/`docStore`/`registry`) tetap di-preload → total 291,53 vs 290,89 kB (lebih berat 0,64 kB); editor tetap statis. | ✅ Selesai & terverifikasi |
+| 2026-10-20 | C5 | ⛔ Gate performa tidak terpenuhi — butuh keputusan owner | **Gejala (dua run `pnpm lhci` berturut-turut, median 3 run/URL):** `/` Perf **0,51** (baseline Fase 9 0,64) · LCP **3,94 s** (3,72 s) · TBT **271 ms** (0–35 ms); `/templates` 0,63 (0,65) · 3,88 s (3,66) · 124 ms; `/privacy` 0,65 (0,66) · 3,77 s (3,51) · 61 ms. A11y/BP/SEO 1,00 dan CLS ≤0,0003 sama seperti baseline. **Yang lolos:** semua assertion `error` di `lighthouserc.cjs` (a11y ≥0,95 · BP ≥0,95 · SEO ≥0,90 · TBT ≤300 ms · CLS ≤0,1) — `pnpm lhci` exit 0; Perf/LCP memang `warn` sejak keputusan owner Fase 9 no. 1. **Konteks:** bundle awal 290,89 kB gzip (+11,88 vs 279,01) dan TBT historis mesin ini pernah tercatat 50–270 ms (Fase 8) maupun 0–35 ms (Fase 9), jadi angka hari ini di ujung atas rentang yang pernah tercatat. **Kandidat penyebab:** +34,32 kB gzip JS (C1–C5) di jalur kritis. **Sudah dicoba:** lazy split editor (tidak menolong, lihat baris di atas). **Opsi untuk owner:** (A) terima — anggap regresi Perf/LCP masih dalam keputusan Fase 9 (budget itu tidak dikejar), gate ditutup dengan catatan; (B) buka task diet bundle lintas fase (lazy `CanvasBlock`, split zod, diet lucide) — menyentuh Fase 3/5/6, di luar fase ini; (C) turunkan `preset` Lighthouse ke desktop default (tidak disarankan: menyembunyikan realitas 4G). | ⛔ Menunggu owner |
+| 2026-10-20 | C5 | ✅ Resolusi item performa — A/B baseline pada mesin & jam yang sama | Worktree `9018a04` (baseline C1–C2) dibuat, `node_modules` di-junction, `pnpm build` + `pnpm lhci` dijalankan bergantian dengan working copy (median 3 run/URL). Hasil: `/` **C1–C5 Perf 64 · LCP 3.744 ms · TBT 39 ms** vs **C1–C2 Perf 63 · LCP 3.889 ms · TBT 33 ms**; `/templates` 62/4.102/0 vs 64/3.820/0; `/privacy` 66/3.655/0 vs 65/3.657/0 — a11y/BP/SEO 1,00 dan CLS ≤0,0003 di kedua sisi. Artinya **tidak ada regresi**: selisih yang tersisa ada di dalam noise run-to-run, dan angka Perf 0,51 / TBT 271 ms pada dua run sebelumnya adalah **drift lingkungan** (mesin baru saja menjalankan suite e2e/unit + beberapa rebuild berturut-turut), bukan efek kode FASE 12. Bundle awal memang +5,4 KB gzip pada transfer nyata (`total-byte-weight` 434.080 → 439.462 B; angka "+34 KB" sebelumnya membandingkan dua cara chunking yang berbeda), dan itu tidak menaikkan TBT secara terukur. Gate C5 kini 3/3. | ✅ Selesai & terverifikasi |
 
 ---
 

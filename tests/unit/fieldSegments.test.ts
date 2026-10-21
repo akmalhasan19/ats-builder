@@ -11,6 +11,7 @@ import { isEntriesSection } from '@/features/preview/blocks'
 import {
   compositeOf,
   displayLineOf,
+  entryBodyLines,
   entryHeadGroups,
   entryLineGroups,
   headerGroups,
@@ -112,6 +113,42 @@ describe('fieldSegments — paritas dengan contentLines (C2.1)', () => {
       }
     })
   }
+})
+
+describe('fieldSegments — bullet kosong & jalur tulis kanvas (C4)', () => {
+  it('daftar baris kanvas == contentLines bila kosong dibuang, dan path bullet memakai indeks model', () => {
+    const bulletKind = doc.sections.find((section) => section.kind === 'experience')
+    if (!bulletKind || !isEntriesSection(bulletKind)) throw new Error('section pengalaman hilang')
+    const entry: Record<string, unknown> = {
+      ...(entriesOf(bulletKind)[0] as Record<string, unknown>),
+      bullets: ['Satu.', '', 'Tiga.'],
+    }
+
+    const canvasLines = entryBodyLines(bulletKind.kind, entry)
+    // Baris kosong TETAP ada di sisi kanvas (slot edit), tapi tidak mengubah isi
+    // yang digambar: buang yang kosong == contentLines.
+    expect(
+      canvasLines
+        .filter((line) => line.text.trim() !== '')
+        .map(({ text, bullet }) => ({ text, bullet })),
+    ).toEqual(entryContentOf(bulletKind.kind, entry, lang).bodyLines)
+
+    // Path menunjuk indeks MODEL, jadi tulis ke slot ke-2 tidak menimpa yang ke-3;
+    // baris stack (bukan bullet) tidak punya path → bukan field kanvas.
+    expect(
+      canvasLines.map((_, index) => {
+        const groups = entryLineGroups(bulletKind.kind, entry, index)
+        return groups[0]?.segments[0]?.fieldPath
+      }),
+    ).toEqual([
+      `entries.experience.${String(entry.id)}.bullets[0]`,
+      `entries.experience.${String(entry.id)}.bullets[1]`,
+      `entries.experience.${String(entry.id)}.bullets[2]`,
+      '',
+    ])
+    // Slot bullet ke-2 kosong → pemandu yang tampil, bukan teks kosong.
+    expect(entryLineGroups(bulletKind.kind, entry, 1)[0]?.segments[0]?.guideId).toBe('bullet')
+  })
 })
 
 describe('fieldSegments — field kosong jadi guide (C2.2)', () => {

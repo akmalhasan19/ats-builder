@@ -362,9 +362,12 @@ export function Rail() {
   const removeSection = useDocStore((state) => state.removeSection)
   const panelMode = useUiStore((state) => state.panelMode)
   const setAtsDrawerOpen = useUiStore((state) => state.setAtsDrawerOpen)
+  // C4.4 — dialog katalog dikendalikan store supaya ghost row "+ Tambahkan
+  // bagian" di kertas memakai dialog yang sama (D10), bukan duplikasinya.
+  const catalogOpen = useUiStore((state) => state.sectionCatalogOpen)
+  const setCatalogOpen = useUiStore((state) => state.setSectionCatalogOpen)
 
   const [activeDragId, setActiveDragId] = useState<string | null>(null)
-  const [catalogOpen, setCatalogOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<SectionInstance | null>(null)
   const [announcement, setAnnouncement] = useState('')
 

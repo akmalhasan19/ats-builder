@@ -32,7 +32,7 @@ const store = () => useDocStore.getState()
 beforeEach(() => {
   store().loadDoc(createSampleDoc())
   useSyncStore.setState({ status: 'saved-local' })
-  useUiStore.setState({ panelMode: '3col', activeTab: 'form' })
+  useUiStore.setState({ panelMode: '3col', activeTab: 'form', editMode: 'form' })
 })
 
 describe('panelModeFor', () => {
@@ -127,6 +127,32 @@ describe('MobileTabBar', () => {
 
     expect(useUiStore.getState().activeTab).toBe('preview')
     await waitFor(() => expect(preview).toHaveAttribute('aria-selected', 'true'))
+  })
+
+  // §5.3 — badge tab Pratinjau saat mode kanvas aktif.
+  it('mode kanvas: badge pada tab Pratinjau saja, titik aria-hidden, nama tab memuat label terlihat', () => {
+    useUiStore.setState({ editMode: 'canvas' })
+    render(<MobileTabBar />)
+
+    const badge = document.querySelector('[data-probe="mobile-badge-canvas"]')
+    expect(badge).not.toBeNull()
+    expect(badge!.getAttribute('aria-hidden')).toBe('true')
+
+    // Nama aksesibel diperluas tapi tetap memuat label yang terlihat
+    // ("Pratinjau") — syarat aturan "label in name" axe.
+    const preview = screen.getByRole('tab', { name: t('mobile.tabPreviewCanvas') })
+    expect(preview.getAttribute('id')).toBe('tab-preview')
+    expect(preview.contains(badge!)).toBe(true)
+
+    // Hanya tab Pratinjau yang berbadge.
+    expect(document.querySelector('#tab-form [data-probe="mobile-badge-canvas"]')).toBeNull()
+  })
+
+  it('mode form: tanpa badge dan label tab kembali dari teks yang terlihat', () => {
+    render(<MobileTabBar />)
+
+    expect(document.querySelector('[data-probe="mobile-badge-canvas"]')).toBeNull()
+    expect(screen.getByRole('tab', { name: t('mobile.tabPreview') })).toBeInTheDocument()
   })
 })
 

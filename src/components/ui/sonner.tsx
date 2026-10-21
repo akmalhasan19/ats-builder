@@ -23,6 +23,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
       duration={3500}
       visibleToasts={3}
       position={compact ? 'top-center' : 'bottom-right'}
+      // §5.11 — di mobile toast duduk **di bawah top bar** (52px) + tab bar
+      // (44px). Tanpa offset, toast menutupi tombol Menu di kanan top bar dan
+      // menelan klik selama 3,5 detik (ditemukan oleh e2e C5.6). Sonner memakai
+      // `mobileOffset` untuk viewport sentuh, jadi keduanya diisi.
+      offset={compact ? { top: 104 } : undefined}
+      mobileOffset={compact ? { top: 104 } : undefined}
       closeButton={false}
       icons={{
         success: <CircleCheckIcon className="text-signal-ok size-4" />,

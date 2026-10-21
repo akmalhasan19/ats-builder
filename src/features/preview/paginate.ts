@@ -66,8 +66,10 @@ export function paginateBlocks(
   blocks: readonly DocBlock[],
   contentHeightPx: number,
   heights: HeightMap = {},
+  /** C5 (opsi A, temuan C4.4) — foot print tambahan per blok (ghost row kanvas). */
+  extraPx: (block: DocBlock) => number = () => 0,
 ): DocBlock[][] {
-  const footprint = (block: DocBlock): number => blockFootprintPx(block, heights)
+  const footprint = (block: DocBlock): number => blockFootprintPx(block, heights) + extraPx(block)
   const pages: DocBlock[][] = []
   let current: DocBlock[] = []
   let used = 0
