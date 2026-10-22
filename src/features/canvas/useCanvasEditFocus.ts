@@ -8,10 +8,11 @@ import { alignFocusStart, isNarrowLayout, restorePreviewZoom } from './canvasEdi
  *
  * Dua hal yang harus terjadi bersama-sama:
  *
- *  1. **Sesi dibuka** → field yang sedang diedit dijejarkan ke **tepi kiri**
- *     well pratinjau, supaya layar yang dilihat user persis tempat dia
- *     mengetik. Penataan ini berjalan di `useLayoutEffect` supaya terjadi
- *     sebelum browser menggambar frame berikutnya — tanpa kedipan.
+ *  1. **Sesi dibuka** → field yang sedang diedit ditata ke area yang
+ *     terlihat — tepi kiri kertas tetap diberi ruang (Addendum FASE 14),
+ *     dan field tetap tampak untuk mulai mengetik. Penataan ini berjalan di
+ *     `useLayoutEffect` supaya terjadi sebelum browser menggambar frame
+ *     berikutnya — tanpa kedipan.
  *  2. **Sesi ditutup** → zoom kembali ke skala ringkasan (30%/Fit), seperti
  *     sebelum user menyentuh field.
  *
@@ -33,9 +34,10 @@ export function useCanvasEditFocus(): void {
     wasEditing.current = Boolean(session)
   }, [session])
 
-  // Sesi terbuka → sejajarkan tepi kiri field yang diedit. Effect ini ikut
-  // jalan saat zoom berubah (mis. user memperbesar sendiri), supaya field
-  // tetap di tepi kiri layar.
+  // Sesi terbuka → sejajarkan posisi field yang diedit: ruang kiri kertas
+  // tetap terlihat, field sendiri tidak terdorong keluar layar (Addendum
+  // FASE 14). Effect ini ikut jalan saat zoom berubah (mis. user memperbesar
+  // sendiri), supaya penataan selalu diukur ulang terhadap skala terpakai.
   //
   // Penataan hanya berlaku di layar sempit: di desktop kertas muat di layar,
   // jadi guard zoom (D7, sekali per sesi aplikasi) tetap berlaku tanpa

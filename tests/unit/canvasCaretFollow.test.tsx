@@ -159,6 +159,14 @@ describe('pita gerak (K4)', () => {
   it('caret mundur di bawah margin kiri → geseran negatif', () => {
     expect(panDeltaFor(CARET_LEFT_MARGIN_PX - 30, 0, 412)).toBe(-30)
   })
+
+  it('ambang kiri bisa di-override pemanggil (pita adaptif)', () => {
+    // Ambang kiri diangkat ke 100: caret 50 di kiri ambang → mundur 50.
+    expect(panDeltaFor(50, 0, 412, 100)).toBe(-50)
+    // Caret di atas ambang kanan tetap digeser, parameter kiri diabaikan.
+    const right = 412 * CARET_RIGHT_RATIO
+    expect(panDeltaFor(right + 60, 0, 412, 100)).toBe(60)
+  })
 })
 
 describe('kamera mengikuti ketikan', () => {
@@ -206,6 +214,41 @@ describe('kamera mengikuti ketikan', () => {
     settle()
 
     expect(written[written.length - 1]).toBeLessThan(peak)
+  })
+
+  it('padding sisi sesi: wrap ke kiri menarik kamera sampai margin kertas penuh', () => {
+    const { scroller, control } = buildTree()
+    // Padding sisi yang dipasang `PreviewWell` selama sesi edit + padding
+    // well `p-6` yang dibaca `visibleGeometry`.
+    scroller.style.paddingLeft = '96px'
+    scroller.style.paddingRight = '96px'
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      borderLeftWidth: '0px',
+      borderTopWidth: '0px',
+      paddingLeft: '24px',
+    } as unknown as CSSStyleDeclaration)
+    const written = stubScrollLeft(scroller)
+
+    // Fase 1 — caret jauh di kanan: kamera mentok di penghujung kertas.
+    mockedCaret.mockImplementation(() => ({ x: 4000 - scroller.scrollLeft, y: 200, height: 18 }))
+    startCaretFollow(control)
+    control.dispatchEvent(new Event('input'))
+    settle()
+    expect(written[written.length - 1]).toBe(231)
+
+    // Fase 2 — caret wrap ke awal baris (x kertas 24 → 18px pada skala 0,75).
+    // Ambang kiri adaptif (tepi kiri kertas + margin kertas) menarik kamera
+    // sampai seluruh padding kiri tersimpan: scroll kembali ke 0, tepi kiri
+    // kertas di 24 + 96 = 120px dari tepi kiri layar (≈ 1,25 inci ruang).
+    mockedCaret.mockImplementation(() => ({
+      x: 24 + 96 + 18 - scroller.scrollLeft,
+      y: 240,
+      height: 18,
+    }))
+    control.dispatchEvent(new Event('input'))
+    settle()
+
+    expect(written[written.length - 1]).toBe(0)
   })
 
   it('kamera mentok di penghujung kertas', () => {

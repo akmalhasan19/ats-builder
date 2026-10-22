@@ -2,8 +2,10 @@ import { act, render } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import {
+  EDIT_SIDE_PAD_PX,
   EDIT_ZOOM,
   FOCUS_EDGE_MARGIN_PX,
+  PAPER_EDGE_MARGIN_PX,
   alignFocusStart,
   applyEditZoom,
   capturePreviewZoom,
@@ -28,7 +30,11 @@ import { t } from '@/lib/i18n'
  *  3. sesi ditutup → zoom kembali ke nilai ringkasan (kecuali user mengubah
  *     zoom sendiri selama sesi);
  *  4. penjajaran kiri: tepi kiri field yang diedit mendarat di margin kiri
- *     area terlihat, dan gulirnya dibatasi pada batas kiri/kanan kertas.
+ *     area terlihat, dan gulirnya dibatasi pada batas kiri/kanan kertas;
+ *  5. ruang napas kertas (Addendum FASE 14): selama lapisan gulir diberi
+ *     padding kiri (sesi edit), penjajaran tidak boleh menghabiskannya —
+ *     tepi kiri kertas tetap terlihat — kecuali field kolom kanan yang
+ *     harus tetap terlihat.
  */
 
 vi.mock('sonner', () => ({ toast: vi.fn() }))
@@ -90,6 +96,17 @@ const stubScrollLeft = (element: HTMLElement) => {
     },
   })
   return written
+}
+
+/** Pohon pratinjau tiruan pada skala edit 75% + ukuran lapisan gulir. */
+const buildEditTree = () => {
+  const tree = buildTree(0.75)
+  Object.defineProperty(tree.well, 'clientWidth', { configurable: true, value: 412 })
+  Object.defineProperty(tree.well, 'clientHeight', { configurable: true, value: 800 })
+  // Kertas 794 × 0,75 = 595px, area terlihat 364px → batas gulir 231px.
+  Object.defineProperty(tree.scroller, 'clientWidth', { configurable: true, value: 364 })
+  Object.defineProperty(tree.scroller, 'scrollWidth', { configurable: true, value: 595 })
+  return tree
 }
 
 /** Harness minimal untuk hook lifecycle sesi. */
@@ -326,17 +343,6 @@ describe('satu pintu masuk sesi edit', () => {
 })
 
 describe('penjajaran kiri field yang diedit', () => {
-  /** Pohon pratinjau tiruan pada skala edit 75% + ukuran lapisan gulir. */
-  const buildEditTree = () => {
-    const tree = buildTree(0.75)
-    Object.defineProperty(tree.well, 'clientWidth', { configurable: true, value: 412 })
-    Object.defineProperty(tree.well, 'clientHeight', { configurable: true, value: 800 })
-    // Kertas 794 × 0,75 = 595px, area terlihat 364px → batas gulir 231px.
-    Object.defineProperty(tree.scroller, 'clientWidth', { configurable: true, value: 364 })
-    Object.defineProperty(tree.scroller, 'scrollWidth', { configurable: true, value: 595 })
-    return tree
-  }
-
   it('tepi kiri field mendarat di margin kiri konten well', () => {
     const restore = stubScale(0.75)
     const { scroller, field } = buildEditTree()
@@ -382,6 +388,83 @@ describe('penjajaran kiri field yang diedit', () => {
     act(() => alignFocusStart(null))
 
     expect(written).toHaveLength(0)
+    restore()
+  })
+})
+
+describe('ruang napas kertas saat sesi edit (padding lapisan gulir)', () => {
+  /**
+   * Pohon sama dengan `buildEditTree`, plus padding kiri-kanan
+   * `EDIT_SIDE_PAD_PX` di lapisan gulir — seperti yang dipasang
+   * `PreviewWell` selama sesi edit.
+   */
+  const buildPaddedTree = () => {
+    const tree = buildEditTree()
+    tree.scroller.style.paddingLeft = `${EDIT_SIDE_PAD_PX}px`
+    tree.scroller.style.paddingRight = `${EDIT_SIDE_PAD_PX}px`
+    // Padding ikut tergulir: scrollWidth 595 + 2 × 96 = 787.
+    Object.defineProperty(tree.scroller, 'scrollWidth', { configurable: true, value: 787 })
+    const rect = (left: number, top: number, width: number, height: number) => ({
+      left,
+      top,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+      x: left,
+      y: top,
+      toJSON: () => ({}),
+    })
+    // Padding kiri menggeser konten 96px ke kanan saat scroll masih 0
+    // (24 padding well + 96 padding lapisan = 120), field mengikutinya.
+    tree.content.getBoundingClientRect = () => rect(120, 100, 794 * 0.75, 500)
+    tree.field.getBoundingClientRect = () => rect(120 + 68 * 0.75, 120, 100 * 0.75, 10)
+    return tree
+  }
+
+  it('penjajaran tidak menghabiskan ruang kiri kertas', () => {
+    const restore = stubScale(0.75)
+    const { scroller, field } = buildPaddedTree()
+    const written = stubScrollLeft(scroller)
+
+    act(() => alignFocusStart(measureFocusPoint(field)))
+
+    const scrollLeft = written[written.length - 1] ?? 0
+    // Gulir berhenti sebelum padding habis: tersisa PAPER_EDGE_MARGIN_PX.
+    expect(scrollLeft).toBeCloseTo(EDIT_SIDE_PAD_PX - PAPER_EDGE_MARGIN_PX, 5)
+    // Tepi kiri kertas di layar: 24 (padding well) + 40 (margin kertas) —
+    // jadi kertas tidak pernah terpotong di tepi paling kiri layar.
+    expect(120 - scrollLeft).toBeCloseTo(24 + PAPER_EDGE_MARGIN_PX, 5)
+    // Field tetap jauh di dalam area terlihat.
+    expect(120 - scrollLeft + 68 * 0.75).toBeLessThan(412 - 80)
+    restore()
+  })
+
+  it('field kolom kanan tetap didahulukan meski kertas kiri terpotong', () => {
+    const restore = stubScale(0.75)
+    const { scroller } = buildPaddedTree()
+    const written = stubScrollLeft(scroller)
+
+    act(() => alignFocusStart({ x: 600, y: 40 }))
+
+    const scrollLeft = written[written.length - 1] ?? 0
+    // Floor keterlihatan field menang atas batas tepi kertas: tepi kiri
+    // field mendarat di 24 + 364 − 80 = 308px dari tepi kiri well.
+    expect(scrollLeft).toBeCloseTo(120 + 600 * 0.75 - 308, 5)
+    expect(120 + 600 * 0.75 - scrollLeft).toBeCloseTo(308, 5)
+    restore()
+  })
+
+  it('padding kurang dari margin kertas dianggap tanpa padding', () => {
+    const restore = stubScale(0.75)
+    const tree = buildEditTree()
+    tree.scroller.style.paddingLeft = '8px'
+    const written = stubScrollLeft(tree.scroller)
+
+    act(() => alignFocusStart(measureFocusPoint(tree.field)))
+
+    // Perilaku lama: tepi kiri field tetap di FOCUS_EDGE_MARGIN_PX.
+    expect(written[written.length - 1]).toBeCloseTo(51, 5)
     restore()
   })
 })

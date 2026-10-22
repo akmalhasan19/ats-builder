@@ -12,8 +12,9 @@ import { expect, test, type Page } from '@playwright/test'
  * supaya caret selalu terlihat.
  *
  * Yang diuji:
- *  1. **posisi awal** (regresi FASE 14B): skala 75% dan tepi kiri field
- *     mendarat di margin kiri area terlihat;
+ *  1. **posisi awal** (regresi FASE 14B + Addendum FASE 14): skala 75%, tepi
+ *     kiri kertas masih punya ruang di kiri layar (tidak menempel/dipotong),
+ *     dan field yang diedit tetap terlihat;
  *  2. **mengikuti ke kanan**: `scrollLeft` naik bertahap, sementara isi input
  *     tetap diam (`control.scrollLeft === 0`) — yang bergerak adalah kamera,
  *     bukan teks di dalam kotak;
@@ -29,11 +30,15 @@ import { expect, test, type Page } from '@playwright/test'
  */
 
 /**
- * Jarak tepi kiri field dari tepi kiri konten well — cerminan
- * `FOCUS_EDGE_MARGIN_PX` di `src/features/canvas/canvasEditZoom.ts`. Disalin
- * literal supaya spec e2e tidak menarik modul aplikasi ke runner.
+ * Padding well `p-6` (24px) — jarak minimum tepi kiri kertas dari tepi kiri
+ * konten well saat sesi edit. Cerminan `FOCUS_EDGE_MARGIN_PX` di
+ * `src/features/canvas/canvasEditZoom.ts`. Disalin literal supaya spec e2e
+ * tidak menarik modul aplikasi ke runner.
  */
 const FOCUS_EDGE_MARGIN_PX = 24
+
+/** Lebar minimum tepi kiri field yang harus tetap terlihat. */
+const FIELD_VISIBLE_MIN_PX = 80
 
 const startApp = async (page: Page): Promise<void> => {
   await page.goto('/')
@@ -125,7 +130,7 @@ const openField = async (page: Page, field: string) => {
 }
 
 test.describe('kamera mengikuti caret di layar sempit (FASE 14)', () => {
-  test('posisi awal: skala 75% & tepi kiri field di margin kiri area terlihat', async ({
+  test('posisi awal: skala 75%, kertas punya ruang kiri, field tetap terlihat', async ({
     page,
   }) => {
     await startApp(page)
@@ -146,7 +151,9 @@ test.describe('kamera mengikuti caret di layar sempit (FASE 14)', () => {
 
     await expect.poll(() => scaleOf(page)).toBeCloseTo(0.75, 2)
 
-    // Tepi kiri field yang diedit mendarat di margin kiri area terlihat.
+    // Addendum FASE 14 — tepi kiri KERTAS masih punya ruang di kiri layar
+    // (tidak menempel/dipotong di tepi), dan field yang diedit tetap
+    // terlihat.
     const landed = await page.evaluate((paperX) => {
       const content = document.querySelector('[data-probe="preview-content"]')
       const well = document.querySelector('#pane-preview')
@@ -156,15 +163,19 @@ test.describe('kamera mengikuti caret di layar sempit (FASE 14)', () => {
       const wellRect = well.getBoundingClientRect()
       const borderLeft = Number.parseFloat(getComputedStyle(well).borderLeftWidth) || 0
       return {
+        paperLeft: contentRect.left,
         fieldLeft: contentRect.left + paperX * scale,
         wellLeft: wellRect.left + borderLeft,
       }
     }, paper!.x)
     expect(landed).not.toBeNull()
     expect(
-      Math.abs(landed!.fieldLeft - landed!.wellLeft - FOCUS_EDGE_MARGIN_PX),
-      'tepi kiri field di margin kiri area terlihat',
-    ).toBeLessThan(2)
+      landed!.paperLeft - landed!.wellLeft,
+      'tepi kiri kertas masih punya ruang di kiri layar',
+    ).toBeGreaterThanOrEqual(FOCUS_EDGE_MARGIN_PX - 2)
+    expect(landed!.fieldLeft - landed!.wellLeft, 'field yang diedit tetap terlihat').toBeLessThan(
+      page.viewportSize()!.width - FIELD_VISIBLE_MIN_PX + 2,
+    )
   })
 
   test('mengetik → kamera mengikuti ke kanan, isi input tetap diam', async ({ page }) => {

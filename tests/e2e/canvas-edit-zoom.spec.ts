@@ -8,9 +8,10 @@ import { expect, test, type Page } from '@playwright/test'
  * berarti mengetik di teks setinggi ±4px. Perilaku yang diuji:
  *
  *  1. menyentuh field → skala naik ke **75%**;
- *  2. **tepi kiri** field yang disentuh mendarat di margin kiri area terlihat
- *     (FASE 14B — urutan ketik selalu dari kiri), dan toolbar (nilai zoom,
- *     "Tampilan", "Keluar") tetap terlihat;
+ *  2. tepi kiri **kertas** masih punya ruang di kiri layar (Addendum FASE 14
+ *     — tidak menempel/dipotong di tepi), dan field yang disentuh tetap
+ *     terlihat di area yang sama; toolbar (nilai zoom, "Tampilan", "Keluar")
+ *     juga tetap terlihat;
  *  3. edit selesai (commit) atau dibatalkan (Escape) → skala **kembali** ke
  *     zoom ringkasan yang tadi dipakai.
  *
@@ -19,11 +20,15 @@ import { expect, test, type Page } from '@playwright/test'
  */
 
 /**
- * Jarak tepi kiri field dari tepi kiri konten well — cerminan
- * `FOCUS_EDGE_MARGIN_PX` di `src/features/canvas/canvasEditZoom.ts`.
- * Disalin literal supaya spec e2e tidak menarik modul aplikasi ke runner.
+ * Padding well `p-6` (24px) — jarak minimum tepi kiri kertas dari tepi kiri
+ * konten well saat sesi edit. Cerminan `FOCUS_EDGE_MARGIN_PX` di
+ * `src/features/canvas/canvasEditZoom.ts`. Disalin literal supaya spec e2e
+ * tidak menarik modul aplikasi ke runner.
  */
 const FOCUS_EDGE_MARGIN_PX = 24
+
+/** Lebar minimum tepi kiri field yang harus tetap terlihat. */
+const FIELD_VISIBLE_MIN_PX = 80
 
 const startApp = async (page: Page): Promise<void> => {
   await page.goto('/')
@@ -108,7 +113,7 @@ const setZoomPercent = async (page: Page, percent: number): Promise<void> => {
 }
 
 test.describe('zoom edit di layar sempit (addendum FASE 13)', () => {
-  test('sentuh field → skala 75% & tepi kiri field di margin kiri; selesai → kembali 30%', async ({
+  test('sentuh field → skala 75%, kertas punya ruang kiri, field terlihat; selesai → kembali 30%', async ({
     page,
   }) => {
     await startApp(page)
@@ -132,20 +137,25 @@ test.describe('zoom edit di layar sempit (addendum FASE 13)', () => {
       .toBeCloseTo(0.75, 2)
     await expect(page.locator('#pane-preview .canvas-editor')).toBeVisible()
 
-    // 2. Tepi kiri field yang disentuh mendarat di margin kiri area terlihat.
+    // 2. Addendum FASE 14 — tepi kiri KERTAS masih punya ruang di kiri
+    //    layar (tidak menempel/dipotong di tepi), dan field yang disentuh
+    //    tetap terlihat di area yang sama.
     const left = await wellLeft(page)
     const landed = await page.evaluate((paperX) => {
       const content = document.querySelector('[data-probe="preview-content"]')
       if (!content) return null
       const scale = new DOMMatrix(getComputedStyle(content).transform).a || 1
       const contentRect = content.getBoundingClientRect()
-      return contentRect.left + paperX * scale
+      return { paperLeft: contentRect.left, fieldLeft: contentRect.left + paperX * scale }
     }, paper!.x)
     expect(landed).not.toBeNull()
     expect(
-      Math.abs(landed! - left! - FOCUS_EDGE_MARGIN_PX),
-      'tepi kiri field di margin kiri area terlihat',
-    ).toBeLessThan(2)
+      landed!.paperLeft - left!,
+      'tepi kiri kertas masih punya ruang di kiri layar',
+    ).toBeGreaterThanOrEqual(FOCUS_EDGE_MARGIN_PX - 2)
+    expect(landed!.fieldLeft - left!, 'field yang disentuh tetap terlihat').toBeLessThan(
+      page.viewportSize()!.width - FIELD_VISIBLE_MIN_PX + 2,
+    )
 
     // Toolbar tetap terlihat walau kertas bergeser horizontal — nilai zoom
     // dan jalan keluar dari mode kanvas tidak boleh ikut hilang.

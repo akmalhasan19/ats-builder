@@ -11,6 +11,7 @@ import { t } from '@/lib/i18n'
 import { useDocStore } from '@/store/docStore'
 import { useUiStore } from '@/store/uiStore'
 import { useAtsStore } from '@/store/atsStore'
+import { useCanvasStore } from '@/store/canvasStore'
 import { resolveSpec } from '@/features/templates/specs'
 import { TemplateRenderer } from '@/features/templates/screen/TemplateRenderer'
 import { useAtsAutoCheck } from '@/features/ats/useAtsCheck'
@@ -30,6 +31,7 @@ import {
 } from '@/features/preview/previewZoom'
 import { useCanvasFull } from '../useCanvasFull'
 import { useCanvasEditFocus } from '@/features/canvas/useCanvasEditFocus'
+import { EDIT_SIDE_PAD_PX } from '@/features/canvas/canvasEditZoom'
 import { CanvasExitButton } from './CanvasExitButton'
 import { CanvasSectionMenu } from './CanvasSectionMenu'
 import { TampilanMenu } from './TampilanMenu'
@@ -141,15 +143,32 @@ export function PreviewWell({ className }: { className?: string }) {
   )
 
   const wellRef = useRef<HTMLElement>(null)
+  const scrollerRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const [fitScale, setFitScale] = useState(1)
   const [contentHeight, setContentHeight] = useState<number>(A4_PX.h)
   const [visiblePage, setVisiblePage] = useState(1)
   const [zoomMenuOpen, setZoomMenuOpen] = useState(false)
+  /** Lebar konten lapisan gulir — untuk memutuskan kapan kertas meluber. */
+  const [scrollerClient, setScrollerClient] = useState(0)
 
   const zoom = fitMode ? fitScale : clamp(zoomPref, MIN_ZOOM, maxZoom)
   const zoomPercent = Math.round(zoom * 100)
   const currentPage = Math.min(visiblePage, plan.pageCount)
+
+  // Addendum FASE 14 — "ruang napas" kertas saat sesi edit di layar sempit.
+  //
+  // Di 75% kertas A4 selalu lebih lebar daripada layar, jadi tepi kiri/kanan
+  // kertas menempel persis di tepi layar — teks tampak dipotong pisau.
+  // Selama sesi edit (dan hanya itu: mode ringkasan tidak berubah satu
+  // piksel pun), lapisan gulir diberi padding kiri-kanan supaya di kedua
+  // ujung gulir tepi kertas masih punya ruang terlihat. Padding hanya untuk
+  // kertas yang benar-benar meluber — kertas yang muat sudah dipusatkan
+  // `mx-auto` dan tidak butuh apa pun.
+  const sessionOpen = useCanvasStore((state) => state.session !== null)
+  const narrowLayout = useUiStore((state) => state.panelMode === 'tabs')
+  const paperOverflows = A4_PX.w * zoom > scrollerClient
+  const editSidePad = sessionOpen && narrowLayout && paperOverflows ? EDIT_SIDE_PAD_PX : 0
 
   // T2.2 — hitung ulang skala Fit **sebelum** browser menggambar ulang
   // (`useLayoutEffect`), supaya pergantian ke mode kanvas tidak sempat
@@ -174,6 +193,20 @@ export function PreviewWell({ className }: { className?: string }) {
       observer.disconnect()
     }
   }, [fitMode, maxZoom])
+
+  // Addendum FASE 14 — lebar lapisan gulir dipantau langsung (tanpa debounce)
+  // supaya padding "ruang napas" muncul/hilang di frame yang sama dengan
+  // perubahan ukurannya. Padding tidak mengubah `clientWidth` lapisan, jadi
+  // pengukuran dan penerapan tidak saling memicu.
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current
+    if (!scroller) return undefined
+    const measure = () => setScrollerClient(scroller.clientWidth)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(scroller)
+    return () => observer.disconnect()
+  }, [])
 
   // Tinggi kolom lembar dibaca dari layout asli (transform scale tidak mengubah
   // kotak layout), lalu kontainer luar diberi tinggi hasil kali skala supaya
@@ -381,11 +414,22 @@ export function PreviewWell({ className }: { className?: string }) {
         (nilai zoom, "Tampilan", "Keluar") ikut keluar layar. Karena itu
         gulir horizontal dipindah ke lapisan dalam: toolbar tetap menempel di
         atas well, kertas yang bergeser.
+
+        Addendum FASE 14 — padding kiri-kanan (`editSidePad`) selama sesi
+        edit: ruang abu-abu yang ikut tergulir di kedua sisi kertas, jadi
+        tepi kertas tidak pernah menempel persis di tepi layar. Nilainya
+        dibaca `alignFocusStart` (via inline style) sebagai batas gulir
+        penjajaran awal.
       */}
       <div
+        ref={scrollerRef}
         data-probe="preview-scroll"
         className="overflow-x-auto"
-        style={{ height: contentHeight * zoom + SCROLLBAR_ROOM }}
+        style={{
+          height: contentHeight * zoom + SCROLLBAR_ROOM,
+          paddingLeft: editSidePad,
+          paddingRight: editSidePad,
+        }}
       >
         <div
           className="relative mx-auto"

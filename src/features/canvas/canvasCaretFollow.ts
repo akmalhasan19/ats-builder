@@ -1,5 +1,6 @@
 import { clamp } from '@/features/preview/previewZoom'
 import { caretViewportRect, disposeCaretMirror } from './canvasCaret'
+import { PAPER_EDGE_MARGIN_PX, sidePadOf } from './canvasEditZoom'
 
 /**
  * FASE 14C — **kamera mengikuti caret** saat mengetik di layar sempit.
@@ -21,7 +22,12 @@ import { caretViewportRect, disposeCaretMirror } from './canvasCaret'
  *     kalau `prefers-reduced-motion: reduce` (K7);
  *  4. saat caret melompat ke baris berikutnya (wrap), caret otomatis mundur ke
  *     kiri — pita X dan pita Y yang mengaturnya, tanpa logika khusus
- *     "baris kedua" (K5).
+ *     "baris kedua" (K5);
+ *  5. dengan padding sisi sesi edit ("ruang napas" kertas,
+ *     `PAPER_EDGE_MARGIN_PX`), ambang kiri pita diangkat ke atas tepi kiri
+ *     kertas + margin — wrap caret menarik kamera sampai ruang abu-abu di
+ *     sebelah kiri kertas benar-benar terlihat, bukan berhenti di kedalaman
+ *     yang memotong kertas rata tepi layar.
  *
  * Gulir manual oleh user (swipe) **menghentikan** follow — keinginan user
  * didahulukan (K6). Follow tidak pernah mengubah zoom: zoom sepenuhnya
@@ -43,13 +49,24 @@ export const FOLLOW_EASE_MS = 120
 /**
  * Besaran geseran kamera supaya caret masuk kembali ke pita.
  *
- * Pita = `[visibleLeft + CARET_LEFT_MARGIN_PX, visibleLeft + visibleWidth *
- * CARET_RIGHT_RATIO]`. Selama caret di dalam pita, kamera tidak bergerak
- * sama sekali; begitu keluar, geserannya persis sebesar kelebihan itu.
- * Nilai positif = geser ke kanan, negatif = mundur ke kiri.
+ * Pita = `[bandLeft, visibleLeft + visibleWidth * CARET_RIGHT_RATIO]`.
+ * Selama caret di dalam pita, kamera tidak bergerak sama sekali; begitu
+ * keluar, geserannya persis sebesar kelebihan itu. Nilai positif = geser ke
+ * kanan, negatif = mundur ke kiri.
+ *
+ * `bandLeft` boleh di-override pemanggil (default margin kiri biasa) —
+ * `tick` memakainya untuk pita kiri adaptif: saat sesi edit memberi padding
+ * sisi ({@link EDIT_SIDE_PAD_PX}), ambang kiri diangkat ke atas tepi kiri
+ * kertas + margin ({@link PAPER_EDGE_MARGIN_PX}), jadi wrap caret ke baris
+ * berikutnya menarik kamera sampai ruang kiri kertas benar-benar terlihat —
+ * bukan berhenti di kedalaman yang memotong kertas rata tepi layar.
  */
-export const panDeltaFor = (caretX: number, visibleLeft: number, visibleWidth: number): number => {
-  const bandLeft = visibleLeft + CARET_LEFT_MARGIN_PX
+export const panDeltaFor = (
+  caretX: number,
+  visibleLeft: number,
+  visibleWidth: number,
+  bandLeft: number = visibleLeft + CARET_LEFT_MARGIN_PX,
+): number => {
   const bandRight = visibleLeft + visibleWidth * CARET_RIGHT_RATIO
   if (caretX > bandRight) return caretX - bandRight
   if (caretX < bandLeft) return caretX - bandLeft
@@ -79,6 +96,8 @@ type VisibleGeometry = {
   top: number
   /** Tepi bawah area terlihat. */
   bottom: number
+  /** Padding kiri well (`p-6`/`p-10`) — ikut menentukan posisi kertas. */
+  wellPaddingLeft: number
 }
 
 /** State satu sesi follow. */
@@ -141,7 +160,28 @@ const visibleGeometry = (active: FollowSession): VisibleGeometry => {
     width: well.clientWidth,
     top: originTop + toolbarHeight,
     bottom: originTop + well.clientHeight,
+    wellPaddingLeft: Number.parseFloat(style.paddingLeft) || 0,
   }
+}
+
+/**
+ * Ambang kiri pita untuk frame ini.
+ *
+ * Tanpa padding sisi (bukan sesi edit, atau kertas muat) pita kiri tetap
+ * `visibleLeft + CARET_LEFT_MARGIN_PX` seperti biasa. Saat padding sisi
+ * terpasang ({@link sidePadOf} ≥ {@link PAPER_EDGE_MARGIN_PX}), ambang kiri
+ * diangkat ke **tepi kiri kertas + margin kertas**: tepi kiri kertas di
+ * layar = tepi konten well + padding well + padding sisi − scroll, jadi
+ * sepanjang scroll masih melebihi kedalaman aman itu, caret yang mundur ke
+ * kiri menarik kamera sampai ruang abu-abu di kiri kertas terlihat penuh
+ * (berhenti sendiri di clamp 0 — seluruh padding kiri tersimpan).
+ */
+const bandLeftFor = (active: FollowSession, geometry: VisibleGeometry): number => {
+  const base = geometry.left + CARET_LEFT_MARGIN_PX
+  const sidePad = sidePadOf(active.scroller)
+  if (sidePad < PAPER_EDGE_MARGIN_PX) return base
+  const paperLeft = geometry.left + geometry.wellPaddingLeft + sidePad - active.scroller.scrollLeft
+  return Math.max(base, paperLeft + PAPER_EDGE_MARGIN_PX)
 }
 
 /**
@@ -202,7 +242,10 @@ const tick = (active: FollowSession, time: number): void => {
   // Horizontal: caret keluar pita → geser sebesar kelebihan itu. Targetnya
   // adalah posisi scroll tempat caret tepat di ambang kanan pita, jadi
   // setiap frame mengulang perhitungan yang sama sampai caret masuk pita.
-  const delta = panDeltaFor(caret.x, geometry.left, geometry.width)
+  // Ambang kiri adaptif (bandLeftFor): dengan padding sisi sesi edit,
+  // caret yang wrap ke kiri menarik kamera sampai margin kiri kertas
+  // terlihat — bukan berhenti saat kertas terpotong rata tepi layar.
+  const delta = panDeltaFor(caret.x, geometry.left, geometry.width, bandLeftFor(active, geometry))
   const maxScroll = Math.max(0, active.scroller.scrollWidth - active.scroller.clientWidth)
   const target = clamp(active.scroller.scrollLeft + delta, 0, maxScroll)
   const current = active.scroller.scrollLeft
@@ -211,6 +254,7 @@ const tick = (active: FollowSession, time: number): void => {
   // ambang pita (bukan menggantung beberapa piksel di thereof).
   const next = Math.abs(target - eased) < 0.5 ? target : eased
   if (Math.abs(next - current) > 0.05) {
+    console.log('[follow] write', next.toFixed(1), 'state', active.state)
     writeScroll(active, active.scroller, 'scrollLeft', next)
     // Lanjut ke frame berikutnya selama belum sampai target.
     schedule(active)
@@ -240,6 +284,7 @@ const tick = (active: FollowSession, time: number): void => {
  */
 export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement): void => {
   stopCaretFollow()
+  console.log('[follow] START')
   const well = document.getElementById('pane-preview')
   const scroller = well?.querySelector<HTMLElement>('[data-probe="preview-scroll"]')
   if (!well || !scroller) return
@@ -293,6 +338,7 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
     // Gulir internal control (browser menjaga caret tetap terlihat) bukan
     // guliran user — jangan ikut menghentikan follow.
     if (target !== active.scroller && target !== active.well) return
+    console.log('[follow] manual-scroll → paused')
     active.state = 'paused'
   }
 
@@ -331,6 +377,7 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
 export const stopCaretFollow = (): void => {
   const active = session
   if (!active) return
+  console.log('[follow] STOP')
   session = null
   if (active.rafId !== null) {
     cancelAnimationFrame(active.rafId)
