@@ -220,6 +220,67 @@ export const sidePadOf = (scroller: HTMLElement): number =>
   Number.parseFloat(scroller.style.paddingLeft) || 0
 
 /**
+ * Rumus pendaratan satu field — dipakai **bersama** oleh penjajaran awal
+ * sesi (`alignFocusStart`) dan kembalinya kamera saat caret berpindah baris
+ * (`canvasCaretFollow`). Satu rumus, satu perilaku: "kembali ke tampilan
+ * seperti awal masuk mode edit" benar-benar sama, bukan hanya mirip.
+ *
+ * Aturan pendaratan, dari prioritas tertinggi:
+ *
+ *  1. **Field tetap terlihat.** Tepi kiri field tidak boleh mendarat lebih
+ *     kanan dari `FIELD_VISIBLE_MIN_PX` sebelum tepi kanan area terlihat —
+ *     field kolom kanan (mis. tanggal entri) tetap harus tampak, walaupun
+ *     itu memotong kertas di sebelah kirinya.
+ *  2. **Tepi kiri kertas tidak terpotong.** Selama kertas punya padding kiri
+ *     di lapisan gulir ({@link EDIT_SIDE_PAD_PX}), penjajaran tidak boleh
+ *     menghabiskannya seluruhnya: tersisa {@link PAPER_EDGE_MARGIN_PX} ruang
+ *     sebelum tepi kiri kertas, di atas padding well `p-6`. Tanpa padding
+ *     (mode ringkasan, atau kertas muat) perilaku lama utuh.
+ *  3. **Target penjajaran lama (FASE 14B).** Tepi kiri field mendarat di
+ *     {@link FOCUS_EDGE_MARGIN_PX} dari tepi kiri konten well — untuk field
+ *     di dekat tepi kiri kertas, aturan (2) yang menang; untuk field yang
+ *     meluber ke kanan, aturan (1).
+ */
+export const landingScrollFor = ({
+  scrollLeft,
+  offsetX,
+  clientWidth,
+  maxScroll,
+  sidePad,
+}: {
+  /** Posisi gulir sekarang (px). */
+  scrollLeft: number
+  /** Jarak tepi kiri field dari tepi kiri konten well (px layar, diukur pada `scrollLeft` sekarang). */
+  offsetX: number
+  /** Lebar area terlihat lapisan gulir (px). */
+  clientWidth: number
+  /** Batas gulir maksimum (px). */
+  maxScroll: number
+  /** Padding kiri lapisan gulir saat ini — "ruang napas" (px). */
+  sidePad: number
+}): number => {
+  // Aturan 3 — target penjajaran lama: tepi kiri field mendarat di margin
+  // kiri konten well.
+  const wanted = scrollLeft + offsetX - FOCUS_EDGE_MARGIN_PX
+
+  // Aturan 2 — batas atas: sisakan PAPER_EDGE_MARGIN_PX dari padding kiri
+  // lapisan gulir, supaya tepi kiri kertas tetap terlihat dengan ruang di
+  // sebelah kirinya.
+  const paperEdgeCap =
+    sidePad >= PAPER_EDGE_MARGIN_PX ? sidePad - PAPER_EDGE_MARGIN_PX : Number.POSITIVE_INFINITY
+
+  // Aturan 1 — batas bawah: jangan sampai field sendiri terdorong keluar
+  // layar.
+  const fieldFloor = Math.max(
+    0,
+    offsetX - (FOCUS_EDGE_MARGIN_PX + clientWidth - FIELD_VISIBLE_MIN_PX),
+  )
+
+  const upper = Math.min(maxScroll, paperEdgeCap)
+  return Math.min(Math.max(wanted, fieldFloor), Math.max(upper, fieldFloor))
+}
+
+/**
  * Geser sumbu pratinjau supaya field yang diedit terlihat di awal sesi —
  * dengan **ruang kiri kertas yang tetap terhidup** (Addendum FASE 14).
  *
@@ -270,22 +331,14 @@ export const alignFocusStart = (point: CanvasFocusPoint | null): void => {
   const targetY = contentRect.top + point.y * scale
 
   const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth)
-  const wanted = scroller.scrollLeft + targetX - (originLeft + FOCUS_EDGE_MARGIN_PX)
 
-  // Batas atas: sisakan PAPER_EDGE_MARGIN_PX dari padding kiri lapisan gulir,
-  // supaya tepi kiri kertas tetap terlihat dengan ruang di sebelah kirinya.
-  const sidePad = sidePadOf(scroller)
-  const paperEdgeCap =
-    sidePad >= PAPER_EDGE_MARGIN_PX ? sidePad - PAPER_EDGE_MARGIN_PX : Number.POSITIVE_INFINITY
-
-  // Batas bawah: jangan sampai field sendiri terdorong keluar layar (aturan 1).
-  const fieldFloor = Math.max(
-    0,
-    targetX - originLeft - (FOCUS_EDGE_MARGIN_PX + scroller.clientWidth - FIELD_VISIBLE_MIN_PX),
-  )
-
-  const upper = Math.min(maxScroll, paperEdgeCap)
-  scroller.scrollLeft = Math.min(Math.max(wanted, fieldFloor), Math.max(upper, fieldFloor))
+  scroller.scrollLeft = landingScrollFor({
+    scrollLeft: scroller.scrollLeft,
+    offsetX: targetX - originLeft,
+    clientWidth: scroller.clientWidth,
+    maxScroll,
+    sidePad: sidePadOf(scroller),
+  })
 
   // Vertikal: pastikan field tetap di dalam area yang terlihat. Toolbar
   // lengket menutupi bagian atas well, jadi area terlihat mulai di bawahnya.

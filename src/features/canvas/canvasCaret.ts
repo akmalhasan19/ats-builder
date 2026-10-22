@@ -218,6 +218,51 @@ export const caretContentRect = (
 }
 
 /**
+ * Posisi caret di **dalam control** dan sekaligus di **layar** (viewport).
+ *
+ * Dua posisi itu menjawab dua pertanyaan berbeda:
+ *
+ *  - `content` — posisi caret di dalam isi control (piksel tata letak).
+ *    Tidak ikut berubah saat kamera atau well bergulir, jadi **tepat** untuk
+ *    mendeteksi perpindahan baris (wrap): caret pindah baris → `y` berubah,
+ *    dan `x`-nya turun ke awal baris baru.
+ *  - `viewport` — posisi caret di layar, satuan yang dipakai pita gerak
+ *    (FASE 14C) untuk menggeser kamera.
+ *
+ * Satu pembacaan mirror untuk keduanya — pengukuran ganda membuat kamera
+ * "kejar-kejaran" saat caret bergerak.
+ */
+export type CaretRects = {
+  /** Posisi caret di dalam control (piksel tata letak). */
+  content: CaretRect
+  /** Posisi caret di layar (viewport). */
+  viewport: CaretRect
+}
+
+/**
+ * Posisi caret **di layar** (viewport) — satuan yang dipakai pita gerak
+ * (FASE 14C).
+ *
+ * Menjumlahkan dua sumber: kotak control (sudah dalam piksel layar) dan
+ * offset caret di dalam control (piksel tata letak → dikali skala pohon
+ * pratinjau), lalu mengurangi gulir internal control.
+ */
+export const caretRects = (control: HTMLInputElement | HTMLTextAreaElement): CaretRects | null => {
+  const content = caretContentRect(control)
+  if (!content) return null
+  const rect = control.getBoundingClientRect()
+  const scale = effectiveScaleOf(control)
+  return {
+    content,
+    viewport: {
+      x: screenXOf(rect.left, content.x * scale, control.scrollLeft * scale),
+      y: screenYOf(rect.top, content.y * scale, control.scrollTop * scale),
+      height: content.height * scale,
+    },
+  }
+}
+
+/**
  * Posisi caret **di layar** (viewport) — satuan yang dipakai pita gerak
  * (FASE 14C).
  *
@@ -227,17 +272,7 @@ export const caretContentRect = (
  */
 export const caretViewportRect = (
   control: HTMLInputElement | HTMLTextAreaElement,
-): CaretRect | null => {
-  const content = caretContentRect(control)
-  if (!content) return null
-  const rect = control.getBoundingClientRect()
-  const scale = effectiveScaleOf(control)
-  return {
-    x: screenXOf(rect.left, content.x * scale, control.scrollLeft * scale),
-    y: screenYOf(rect.top, content.y * scale, control.scrollTop * scale),
-    height: content.height * scale,
-  }
-}
+): CaretRect | null => caretRects(control)?.viewport ?? null
 
 /**
  * Lepas mirror dari DOM — wajib saat sesi edit ditutup, supaya tidak

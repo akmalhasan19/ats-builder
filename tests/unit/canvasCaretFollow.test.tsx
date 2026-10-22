@@ -8,7 +8,8 @@ import {
   startCaretFollow,
   stopCaretFollow,
 } from '@/features/canvas/canvasCaretFollow'
-import { caretViewportRect } from '@/features/canvas/canvasCaret'
+import { caretRects } from '@/features/canvas/canvasCaret'
+import { EDIT_SIDE_PAD_PX, PAPER_EDGE_MARGIN_PX } from '@/features/canvas/canvasEditZoom'
 
 /**
  * FASE 14C — **kamera mengikuti caret** saat mengetik.
@@ -24,18 +25,29 @@ import { caretViewportRect } from '@/features/canvas/canvasCaret'
  *  5. `prefers-reduced-motion: reduce` menulis target langsung;
  *  6. `stopCaretFollow` membatalkan rAF dan melepas mirror.
  *
- * Pengukuran caret dimock (`caretViewportRect`) supaya jsdom tanpa layout
- * cukup — yang diuji adalah mesin follow-nya, bukan teknik mirror (itu punya
- * tesnya sendiri di `canvasCaret.test.tsx`). Mock caret bergerak bersama
- * scroll, seperti kenyataannya: caret di layar = posisi isi − scroll.
+ * Pengukuran caret dimock (`caretRects`) supaya jsdom tanpa layout cukup —
+ * yang diuji adalah mesin follow-nya, bukan teknik mirror (itu punya tesnya
+ * sendiri di `canvasCaret.test.tsx`). Mock caret bergerak bersama scroll,
+ * seperti kenyataannya: caret di layar = posisi isi − scroll.
+ *
+ * Posisi `content` (dalam control) sengaja **tidak** ikut bergeser dengan
+ * scroll — itulah yang membuat deteksi wrap jujur: perpindahan baris
+ * terdeteksi dari `y`/`x` di dalam control, bukan dari posisi layar yang
+ * ikut berubah karena kamera bergerak.
  */
 
 vi.mock('@/features/canvas/canvasCaret', () => ({
-  caretViewportRect: vi.fn(() => null),
+  caretRects: vi.fn(() => null),
   disposeCaretMirror: vi.fn(),
 }))
 
-const mockedCaret = vi.mocked(caretViewportRect)
+const mockedCaret = vi.mocked(caretRects)
+
+/** Bentuk mock: posisi dalam control + posisi di layar. */
+const caretAt = (contentX: number, contentY: number, viewportX: number) => ({
+  content: { x: contentX, y: contentY, height: 18 },
+  viewport: { x: viewportX, y: contentY, height: 18 },
+})
 
 /** Pohon pratinjau tiruan: well → lapisan gulir → konten → control. */
 const buildTree = () => {
@@ -133,7 +145,7 @@ beforeEach(() => {
   frames.length = 0
   clock = 0
   mockedCaret.mockReset()
-  mockedCaret.mockReturnValue({ x: 100, y: 200, height: 18 })
+  mockedCaret.mockReturnValue(caretAt(100, 200, 100))
   stubFrames()
   vi.spyOn(window, 'getComputedStyle').mockReturnValue({
     borderLeftWidth: '0px',
@@ -159,14 +171,6 @@ describe('pita gerak (K4)', () => {
   it('caret mundur di bawah margin kiri → geseran negatif', () => {
     expect(panDeltaFor(CARET_LEFT_MARGIN_PX - 30, 0, 412)).toBe(-30)
   })
-
-  it('ambang kiri bisa di-override pemanggil (pita adaptif)', () => {
-    // Ambang kiri diangkat ke 100: caret 50 di kiri ambang → mundur 50.
-    expect(panDeltaFor(50, 0, 412, 100)).toBe(-50)
-    // Caret di atas ambang kanan tetap digeser, parameter kiri diabaikan.
-    const right = 412 * CARET_RIGHT_RATIO
-    expect(panDeltaFor(right + 60, 0, 412, 100)).toBe(60)
-  })
 })
 
 describe('kamera mengikuti ketikan', () => {
@@ -175,11 +179,7 @@ describe('kamera mengikuti ketikan', () => {
     const written = stubScrollLeft(scroller)
     const right = 412 * CARET_RIGHT_RATIO
     // Caret di isi pada posisi 399; di layar = 399 − scrollLeft.
-    mockedCaret.mockImplementation(() => ({
-      x: right + 90 - scroller.scrollLeft,
-      y: 200,
-      height: 18,
-    }))
+    mockedCaret.mockImplementation(() => caretAt(400, 200, right + 90 - scroller.scrollLeft))
 
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))
@@ -192,11 +192,7 @@ describe('kamera mengikuti ketikan', () => {
     const { scroller, control } = buildTree()
     const written = stubScrollLeft(scroller)
     const right = 412 * CARET_RIGHT_RATIO
-    mockedCaret.mockImplementation(() => ({
-      x: right + 90 - scroller.scrollLeft,
-      y: 200,
-      height: 18,
-    }))
+    mockedCaret.mockImplementation(() => caretAt(400, 200, right + 90 - scroller.scrollLeft))
 
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))
@@ -205,56 +201,48 @@ describe('kamera mengikuti ketikan', () => {
     expect(peak).toBeGreaterThan(0)
 
     // Caret wrap ke baris berikutnya: kembali ke kiri isi.
-    mockedCaret.mockImplementation(() => ({
-      x: 30 - scroller.scrollLeft,
-      y: 240,
-      height: 18,
-    }))
+    mockedCaret.mockImplementation(() => caretAt(0, 240, 30 - scroller.scrollLeft))
     control.dispatchEvent(new Event('input'))
     settle()
 
     expect(written[written.length - 1]).toBeLessThan(peak)
   })
 
-  it('padding sisi sesi: wrap ke kiri menarik kamera sampai margin kertas penuh', () => {
+  it('padding sisi sesi: wrap mengembalikan kamera ke pendaratan awal sesi', () => {
     const { scroller, control } = buildTree()
-    // Padding sisi yang dipasang `PreviewWell` selama sesi edit + padding
-    // well `p-6` yang dibaca `visibleGeometry`.
-    scroller.style.paddingLeft = '96px'
-    scroller.style.paddingRight = '96px'
-    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
-      borderLeftWidth: '0px',
-      borderTopWidth: '0px',
-      paddingLeft: '24px',
-    } as unknown as CSSStyleDeclaration)
+    // Padding sisi yang dipasang `PreviewWell` selama sesi edit.
+    scroller.style.paddingLeft = `${EDIT_SIDE_PAD_PX}px`
+    scroller.style.paddingRight = `${EDIT_SIDE_PAD_PX}px`
+    // Padding ikut tergulir: 595 + 2 × 96 = 787.
+    Object.defineProperty(scroller, 'scrollWidth', { configurable: true, value: 787 })
     const written = stubScrollLeft(scroller)
 
-    // Fase 1 — caret jauh di kanan: kamera mentok di penghujung kertas.
-    mockedCaret.mockImplementation(() => ({ x: 4000 - scroller.scrollLeft, y: 200, height: 18 }))
+    // Fase 1 — caret di ujung baris: kamera mengikuti ke kanan sampai caret
+    // masuk pita (batas kanan pita = 75% lebar area terlihat).
+    mockedCaret.mockImplementation(() => caretAt(400, 200, 400 - scroller.scrollLeft))
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))
     settle()
-    expect(written[written.length - 1]).toBe(231)
+    const peak = written[written.length - 1] ?? 0
+    expect(peak).toBeGreaterThan(0)
 
-    // Fase 2 — caret wrap ke awal baris (x kertas 24 → 18px pada skala 0,75).
-    // Ambang kiri adaptif (tepi kiri kertas + margin kertas) menarik kamera
-    // sampai seluruh padding kiri tersimpan: scroll kembali ke 0, tepi kiri
-    // kertas di 24 + 96 = 120px dari tepi kiri layar (≈ 1,25 inci ruang).
-    mockedCaret.mockImplementation(() => ({
-      x: 24 + 96 + 18 - scroller.scrollLeft,
-      y: 240,
-      height: 18,
-    }))
+    // Fase 2 — caret berpindah baris: posisinya di dalam control berubah
+    // baris, jadi kamera kembali ke pendaratan awal sesi — tepi kiri kertas
+    // tetap punya margin, baris baru mulai di posisi yang familiar. Bukan
+    // cram ke tepi kiri layar, dan bukan juga terlempar ke paling jauh kiri.
+    mockedCaret.mockImplementation(() => caretAt(0, 240, 138 - scroller.scrollLeft))
     control.dispatchEvent(new Event('input'))
     settle()
 
-    expect(written[written.length - 1]).toBe(0)
+    const settled = written[written.length - 1] ?? 0
+    expect(settled).toBeCloseTo(EDIT_SIDE_PAD_PX - PAPER_EDGE_MARGIN_PX, 5)
+    expect(settled).toBeGreaterThan(0)
   })
 
   it('kamera mentok di penghujung kertas', () => {
     const { scroller, control } = buildTree()
     const written = stubScrollLeft(scroller)
-    mockedCaret.mockImplementation(() => ({ x: 4000 - scroller.scrollLeft, y: 200, height: 18 }))
+    mockedCaret.mockImplementation(() => caretAt(4000, 200, 4000 - scroller.scrollLeft))
 
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))
@@ -267,7 +255,7 @@ describe('kamera mengikuti ketikan', () => {
   it('caret melewati tepi bawah → well digulir ke bawah', () => {
     const { well, control } = buildTree()
     const written = stubScrollTop(well)
-    mockedCaret.mockImplementation(() => ({ x: 100, y: 900 - well.scrollTop, height: 18 }))
+    mockedCaret.mockImplementation(() => caretAt(100, 900, 100))
 
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))
@@ -283,11 +271,7 @@ describe('gulir manual (K6)', () => {
     const { scroller, control } = buildTree()
     const written = stubScrollLeft(scroller)
     const right = 412 * CARET_RIGHT_RATIO
-    mockedCaret.mockImplementation(() => ({
-      x: right + 90 - scroller.scrollLeft,
-      y: 200,
-      height: 18,
-    }))
+    mockedCaret.mockImplementation(() => caretAt(400, 200, right + 90 - scroller.scrollLeft))
 
     startCaretFollow(control)
     // Gulir manual user (tanpa flag programmatic).
@@ -309,11 +293,7 @@ describe('gulir manual (K6)', () => {
     const { scroller, control } = buildTree()
     const written = stubScrollLeft(scroller)
     const right = 412 * CARET_RIGHT_RATIO
-    mockedCaret.mockImplementation(() => ({
-      x: right + 90 - scroller.scrollLeft,
-      y: 200,
-      height: 18,
-    }))
+    mockedCaret.mockImplementation(() => caretAt(400, 200, right + 90 - scroller.scrollLeft))
 
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))
@@ -343,11 +323,7 @@ describe('reduced motion (K7)', () => {
     const { scroller, control } = buildTree()
     const written = stubScrollLeft(scroller)
     const right = 412 * CARET_RIGHT_RATIO
-    mockedCaret.mockImplementation(() => ({
-      x: right + 90 - scroller.scrollLeft,
-      y: 200,
-      height: 18,
-    }))
+    mockedCaret.mockImplementation(() => caretAt(400, 200, right + 90 - scroller.scrollLeft))
 
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))
@@ -360,11 +336,7 @@ describe('reduced motion (K7)', () => {
     const { scroller, control } = buildTree()
     const written = stubScrollLeft(scroller)
     const right = 412 * CARET_RIGHT_RATIO
-    mockedCaret.mockImplementation(() => ({
-      x: right + 90 - scroller.scrollLeft,
-      y: 200,
-      height: 18,
-    }))
+    mockedCaret.mockImplementation(() => caretAt(400, 200, right + 90 - scroller.scrollLeft))
 
     startCaretFollow(control)
     control.dispatchEvent(new Event('input'))

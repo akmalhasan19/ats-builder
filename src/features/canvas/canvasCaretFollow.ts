@@ -1,6 +1,6 @@
 import { clamp } from '@/features/preview/previewZoom'
-import { caretViewportRect, disposeCaretMirror } from './canvasCaret'
-import { PAPER_EDGE_MARGIN_PX, sidePadOf } from './canvasEditZoom'
+import { caretRects, disposeCaretMirror } from './canvasCaret'
+import { PAPER_EDGE_MARGIN_PX, landingScrollFor, sidePadOf } from './canvasEditZoom'
 
 /**
  * FASE 14C — **kamera mengikuti caret** saat mengetik di layar sempit.
@@ -23,11 +23,10 @@ import { PAPER_EDGE_MARGIN_PX, sidePadOf } from './canvasEditZoom'
  *  4. saat caret melompat ke baris berikutnya (wrap), caret otomatis mundur ke
  *     kiri — pita X dan pita Y yang mengaturnya, tanpa logika khusus
  *     "baris kedua" (K5);
- *  5. dengan padding sisi sesi edit ("ruang napas" kertas,
- *     `PAPER_EDGE_MARGIN_PX`), ambang kiri pita diangkat ke atas tepi kiri
- *     kertas + margin — wrap caret menarik kamera sampai ruang abu-abu di
- *     sebelah kiri kertas benar-benar terlihat, bukan berhenti di kedalaman
- *     yang memotong kertas rata tepi layar.
+ *  5. saat caret **berpindah baris**, kamera kembali ke pendaratan yang sama
+ *     dengan awal masuk mode edit (rumus `landingScrollFor` yang sama) — jadi
+ *     baris baru mulai dari posisi yang familiar dan margin kiri kertas tetap
+ *     terlihat, bukan caret yang menempel di tepi kiri layar.
  *
  * Gulir manual oleh user (swipe) **menghentikan** follow — keinginan user
  * didahulukan (K6). Follow tidak pernah mengubah zoom: zoom sepenuhnya
@@ -49,24 +48,13 @@ export const FOLLOW_EASE_MS = 120
 /**
  * Besaran geseran kamera supaya caret masuk kembali ke pita.
  *
- * Pita = `[bandLeft, visibleLeft + visibleWidth * CARET_RIGHT_RATIO]`.
- * Selama caret di dalam pita, kamera tidak bergerak sama sekali; begitu
- * keluar, geserannya persis sebesar kelebihan itu. Nilai positif = geser ke
- * kanan, negatif = mundur ke kiri.
- *
- * `bandLeft` boleh di-override pemanggil (default margin kiri biasa) —
- * `tick` memakainya untuk pita kiri adaptif: saat sesi edit memberi padding
- * sisi ({@link EDIT_SIDE_PAD_PX}), ambang kiri diangkat ke atas tepi kiri
- * kertas + margin ({@link PAPER_EDGE_MARGIN_PX}), jadi wrap caret ke baris
- * berikutnya menarik kamera sampai ruang kiri kertas benar-benar terlihat —
- * bukan berhenti di kedalaman yang memotong kertas rata tepi layar.
+ * Pita = `[visibleLeft + CARET_LEFT_MARGIN_PX, visibleLeft + visibleWidth *
+ * CARET_RIGHT_RATIO]`. Selama caret di dalam pita, kamera tidak bergerak
+ * sama sekali; begitu keluar, geserannya persis sebesar kelebihan itu.
+ * Nilai positif = geser ke kanan, negatif = mundur ke kiri.
  */
-export const panDeltaFor = (
-  caretX: number,
-  visibleLeft: number,
-  visibleWidth: number,
-  bandLeft: number = visibleLeft + CARET_LEFT_MARGIN_PX,
-): number => {
+export const panDeltaFor = (caretX: number, visibleLeft: number, visibleWidth: number): number => {
+  const bandLeft = visibleLeft + CARET_LEFT_MARGIN_PX
   const bandRight = visibleLeft + visibleWidth * CARET_RIGHT_RATIO
   if (caretX > bandRight) return caretX - bandRight
   if (caretX < bandLeft) return caretX - bandLeft
@@ -96,8 +84,6 @@ type VisibleGeometry = {
   top: number
   /** Tepi bawah area terlihat. */
   bottom: number
-  /** Padding kiri well (`p-6`/`p-10`) — ikut menentukan posisi kertas. */
-  wellPaddingLeft: number
 }
 
 /** State satu sesi follow. */
@@ -114,6 +100,15 @@ type FollowSession = {
   /** Posisi caret terakhir yang diproses — menggabungkan `input` +
    *  `selectionchange` milik satu ketikan menjadi satu gerakan. */
   lastCaretStart: number | null
+  /** Posisi caret terakhir **di dalam control** — dipakai mendeteksi wrap. */
+  lastCaret: { x: number; y: number } | null
+  /** Posisi caret terkiri sejauh ini — patokan "awal baris". */
+  minCaretX: number | null
+  /**
+   * Posisi gulir jangkar: kalau ada, kamera sedang kembali ke pendaratan
+   * awal sesi (setelah caret berpindah baris) dan pita biasa ditangguhkan.
+   */
+  anchorScroll: number | null
   motionQuery: MediaQueryList | null
   onMotionChange: () => void
   teardown: () => void
@@ -160,28 +155,20 @@ const visibleGeometry = (active: FollowSession): VisibleGeometry => {
     width: well.clientWidth,
     top: originTop + toolbarHeight,
     bottom: originTop + well.clientHeight,
-    wellPaddingLeft: Number.parseFloat(style.paddingLeft) || 0,
   }
 }
 
 /**
- * Ambang kiri pita untuk frame ini.
+ * Batas kiri yang boleh dilewati kamera.
  *
- * Tanpa padding sisi (bukan sesi edit, atau kertas muat) pita kiri tetap
- * `visibleLeft + CARET_LEFT_MARGIN_PX` seperti biasa. Saat padding sisi
- * terpasang ({@link sidePadOf} ≥ {@link PAPER_EDGE_MARGIN_PX}), ambang kiri
- * diangkat ke **tepi kiri kertas + margin kertas**: tepi kiri kertas di
- * layar = tepi konten well + padding well + padding sisi − scroll, jadi
- * sepanjang scroll masih melebihi kedalaman aman itu, caret yang mundur ke
- * kiri menarik kamera sampai ruang abu-abu di kiri kertas terlihat penuh
- * (berhenti sendiri di clamp 0 — seluruh padding kiri tersimpan).
+ * Selama sesi edit memberi padding sisi ("ruang napas" kertas), kamera tidak
+ * pernah turun ke bawah posisi pendaratan awal sesi — di situ tepi kiri
+ * kertas masih punya margin terlihat. Tanpa padding (kertas muat) batasnya 0
+ * dan perilaku lama utuh.
  */
-const bandLeftFor = (active: FollowSession, geometry: VisibleGeometry): number => {
-  const base = geometry.left + CARET_LEFT_MARGIN_PX
-  const sidePad = sidePadOf(active.scroller)
-  if (sidePad < PAPER_EDGE_MARGIN_PX) return base
-  const paperLeft = geometry.left + geometry.wellPaddingLeft + sidePad - active.scroller.scrollLeft
-  return Math.max(base, paperLeft + PAPER_EDGE_MARGIN_PX)
+const anchorFloorFor = (scroller: HTMLElement): number => {
+  const sidePad = sidePadOf(scroller)
+  return sidePad >= PAPER_EDGE_MARGIN_PX ? sidePad - PAPER_EDGE_MARGIN_PX : 0
 }
 
 /**
@@ -231,23 +218,68 @@ const tick = (active: FollowSession, time: number): void => {
     stopCaretFollow()
     return
   }
-  const caret = caretViewportRect(control)
-  if (!caret) return
+  const rects = caretRects(control)
+  if (!rects) return
+  const caret = rects.viewport
+  const content = rects.content
   const geometry = visibleGeometry(active)
   const deltaMs = active.lastFrameAt === 0 ? 16 : time - active.lastFrameAt
   active.lastFrameAt = time
 
   if (active.state !== 'following') return
 
+  const maxScroll = Math.max(0, active.scroller.scrollWidth - active.scroller.clientWidth)
+
+  // **Deteksi perpindahan baris (wrap).**
+  //
+  // Posisi caret di dalam control (`content`) tidak ikut berubah saat kamera
+  // atau well bergulir — jadi ini satu-satunya penanda wrap yang jujur:
+  // `y` berpindah baris dan `x` turun ke awal baris baru. Membandingkan
+  // posisi *layar* akan salah: gulir kamera sendiri menggeser `x`, dan
+  // gulir well menggeser `y`.
+  const previous = active.lastCaret
+  const minCaretX = active.minCaretX === null ? content.x : Math.min(active.minCaretX, content.x)
+  active.minCaretX = minCaretX
+  const lineChanged = previous !== null && Math.abs(content.y - previous.y) > 0.5
+  const movedLeft = previous !== null && content.x < previous.x - 0.5
+  const atLineStart = content.x <= minCaretX + 0.5
+  const wrapped = lineChanged && (movedLeft || atLineStart)
+  active.lastCaret = { x: content.x, y: content.y }
+
+  // **Kembali seperti awal masuk mode edit.**
+  //
+  // Saat caret berpindah baris, caret mendarat di awal baris — jauh di
+  // sebelah kiri layar. Kalau kamera hanya mengikuti pita, caret itu berhenti
+  // menempel di tepi kiri layar dan tepi kiri kertas ikut terpotong. Yang
+  // benar: kamera kembali ke **pendaratan yang sama dengan awal sesi** —
+  // rumus yang sama (`landingScrollFor`), jadi margin kiri kertas tetap
+  // terlihat dan baris baru mulai di tempat yang familiar.
+  if (wrapped) {
+    active.anchorScroll = landingScrollFor({
+      scrollLeft: active.scroller.scrollLeft,
+      offsetX: caret.x - geometry.left,
+      clientWidth: active.scroller.clientWidth,
+      maxScroll,
+      sidePad: sidePadOf(active.scroller),
+    })
+  }
+
   // Horizontal: caret keluar pita → geser sebesar kelebihan itu. Targetnya
   // adalah posisi scroll tempat caret tepat di ambang kanan pita, jadi
   // setiap frame mengulang perhitungan yang sama sampai caret masuk pita.
-  // Ambang kiri adaptif (bandLeftFor): dengan padding sisi sesi edit,
-  // caret yang wrap ke kiri menarik kamera sampai margin kiri kertas
-  // terlihat — bukan berhenti saat kertas terpotong rata tepi layar.
-  const delta = panDeltaFor(caret.x, geometry.left, geometry.width, bandLeftFor(active, geometry))
-  const maxScroll = Math.max(0, active.scroller.scrollWidth - active.scroller.clientWidth)
-  const target = clamp(active.scroller.scrollLeft + delta, 0, maxScroll)
+  // Selama kamera sedang kembali ke jangkar (wrap), pita ditangguhkan —
+  // target dan jangkar tidak boleh saling menarik.
+  const delta = panDeltaFor(caret.x, geometry.left, geometry.width)
+  let target: number
+  if (active.anchorScroll !== null) {
+    target = active.anchorScroll
+    // Sudah sampai → jangkar selesai, pita biasa mengambil alih lagi.
+    if (Math.abs(active.scroller.scrollLeft - target) < 0.5) active.anchorScroll = null
+  } else {
+    // Batas kiri: kamera tidak pernah turun di bawah pendaratan awal sesi —
+    // di situ margin kiri kertas masih terlihat.
+    target = clamp(active.scroller.scrollLeft + delta, anchorFloorFor(active.scroller), maxScroll)
+  }
   const current = active.scroller.scrollLeft
   const eased = reducedMotion(active) ? target : ease(current, target, deltaMs)
   // Dekat target → tulis target persis, supaya kamera berhenti tepat di
@@ -298,6 +330,9 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
     programmatic: false,
     lastFrameAt: 0,
     lastCaretStart: control.selectionStart,
+    lastCaret: null,
+    minCaretX: null,
+    anchorScroll: null,
     motionQuery: null,
     onMotionChange: () => {},
     teardown: () => {},
@@ -340,6 +375,9 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
     if (target !== active.scroller && target !== active.well) return
     console.log('[follow] manual-scroll → paused')
     active.state = 'paused'
+    // Kalau kamera sedang kembali ke jangkar (wrap), guliran manual user
+    // membatalkan jangkar itu — keinginan user didahulukan.
+    active.anchorScroll = null
   }
 
   control.addEventListener('input', handleInput)
