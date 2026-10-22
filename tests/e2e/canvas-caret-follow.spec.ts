@@ -130,6 +130,39 @@ const openField = async (page: Page, field: string) => {
 }
 
 test.describe('kamera mengikuti caret di layar sempit (FASE 14)', () => {
+  test('teks membungkus → kamera kembali, lalu mengetik lagi → kamera ikut ke kanan', async ({
+    page,
+  }) => {
+    await startApp(page)
+    await toCanvasMode(page)
+    const editor = await openField(page, 'summary.text')
+
+    // Baris pertama terisi penuh → caret di kanan, kamera menyusul.
+    await editor.pressSequentially('d'.repeat(70))
+    await page.waitForTimeout(700)
+    const peak = await scrollLeftOf(page)
+    expect(peak).toBeGreaterThan(0)
+
+    // Teks berikutnya membungkus → caret melompat ke kiri, kamera kembali ke
+    // pendaratan awal sesi.
+    await editor.pressSequentially('e'.repeat(70))
+    await page.waitForTimeout(900)
+    const afterWrap = await scrollLeftOf(page)
+    expect(afterWrap).toBeLessThan(peak)
+
+    // **Regresi:** setelah wrap, mengetik lagi harus kembali menggeser kamera
+    // ke kanan. Jangkar "kembali ke awal" tidak boleh menggantung — begitu
+    // kamera sampai (mentok beberapa piksel di atas target karena scroll
+    // browser dibulatkan), jangkar dilepas dan pita gerak aktif lagi.
+    await editor.pressSequentially('f'.repeat(40))
+    await page.waitForTimeout(900)
+    const afterTyping = await scrollLeftOf(page)
+    expect(
+      afterTyping,
+      'kamera harus kembali mengikuti caret ke kanan setelah wrap',
+    ).toBeGreaterThan(afterWrap)
+  })
+
   test('posisi awal: skala 75%, kertas punya ruang kiri, field tetap terlihat', async ({
     page,
   }) => {

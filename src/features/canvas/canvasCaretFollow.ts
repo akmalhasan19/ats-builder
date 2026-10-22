@@ -109,6 +109,12 @@ type FollowSession = {
    * awal sesi (setelah caret berpindah baris) dan pita biasa ditangguhkan.
    */
   anchorScroll: number | null
+  /** Posisi gulir saat jangkar dipasang — penanda "kamera sudah bergerak". */
+  anchorFrom: number | null
+  /** Posisi gulir frame sebelumnya — mendeteksi kamera yang mentok. */
+  lastScroll: number | null
+  /** Posisi gulir terakhir yang kita tulis — mendeteksi gulir manual user. */
+  lastWritten: number | null
   motionQuery: MediaQueryList | null
   onMotionChange: () => void
   teardown: () => void
@@ -156,6 +162,24 @@ const visibleGeometry = (active: FollowSession): VisibleGeometry => {
     top: originTop + toolbarHeight,
     bottom: originTop + well.clientHeight,
   }
+}
+
+/**
+ * Langkah kamera menuju jangkar (posisi awal sesi).
+ *
+ * Berbeda dari pita gerak — yang hanya bergerak saat caret keluar pita —
+ * jangkar adalah perjalanan **balik** ke posisi awal, jadi harus selalu
+ * mendarat persis di target. Pena eksponensial tanpa langkah minimum
+ * tidak pernah sampai: `scrollLeft` browser dibulatkan, jadi kamera mentok
+ * beberapa piksel di atas target dan jangkar tak pernah dilepas — pita
+ * gerak tersuspend selamanya dan kamera berhenti mengikuti caret ke kanan.
+ * Dengan langkah minimum 1px, jangkar selalu mendarat (maksimal ~40 frame)
+ * dan tali pita kembali longgar.
+ */
+const anchorStep = (current: number, target: number): number => {
+  const gap = target - current
+  if (Math.abs(gap) <= 1) return target
+  return current + Math.sign(gap) * Math.max(1, Math.abs(gap) * 0.125)
 }
 
 /**
@@ -262,6 +286,7 @@ const tick = (active: FollowSession, time: number): void => {
       maxScroll,
       sidePad: sidePadOf(active.scroller),
     })
+    active.anchorFrom = active.scroller.scrollLeft
   }
 
   // Horizontal: caret keluar pita → geser sebesar kelebihan itu. Targetnya
@@ -270,24 +295,69 @@ const tick = (active: FollowSession, time: number): void => {
   // Selama kamera sedang kembali ke jangkar (wrap), pita ditangguhkan —
   // target dan jangkar tidak boleh saling menarik.
   const delta = panDeltaFor(caret.x, geometry.left, geometry.width)
+  const current = active.scroller.scrollLeft
+
+  // **Gulir manual user menang atas animasi kamera.** Kalau posisi gulir
+  // berbeda dari yang terakhir kita tulis, ada yang menggeser di luar
+  // follow — jeda dulu (K6), jangan ditimpa kamera.
+  if (
+    active.lastWritten !== null &&
+    Math.abs(current - active.lastWritten) > 1.5 &&
+    active.state === 'following'
+  ) {
+    active.state = 'paused'
+    active.anchorScroll = null
+  }
+
   let target: number
   if (active.anchorScroll !== null) {
     target = active.anchorScroll
-    // Sudah sampai → jangkar selesai, pita biasa mengambil alih lagi.
-    if (Math.abs(active.scroller.scrollLeft - target) < 0.5) active.anchorScroll = null
+    // **Jangkar selesai** bila kamera sudah sampai persis — snaganya,
+    // `scrollLeft` browser dibulatkan, jadi pena eased bisa mentok
+    // beberapa piksel di atas target dan tak pernah menyentuhnya.
+    const settled = Math.abs(current - target) < 0.5
+    // **Jangkar mentok**: kamera sudah bergerak ke arah jangkar tapi tak
+    // pernah sampai (target di luar jangkauan gulir) — jangkar tidak boleh
+    // menggantung, karena selama menggantung pita gerak tersuspend dan
+    // kamera tidak pernah lagi mengikuti caret ke kanan.
+    const stuck =
+      active.lastScroll !== null &&
+      active.anchorFrom !== null &&
+      Math.abs(current - active.lastScroll) < 0.5 &&
+      Math.abs(current - active.anchorFrom) >= 0.5
+    if (settled || stuck) active.anchorScroll = null
   } else {
     // Batas kiri: kamera tidak pernah turun di bawah pendaratan awal sesi —
     // di situ margin kiri kertas masih terlihat.
-    target = clamp(active.scroller.scrollLeft + delta, anchorFloorFor(active.scroller), maxScroll)
+    const floor = anchorFloorFor(active.scroller)
+    const fieldWidth = active.control.clientWidth
+    if (fieldWidth > 0 && content.x > fieldWidth) {
+      // **Caret sudah melewati tepi kanan field.** Browser mengambil alih
+      // (menggulir isi control supaya caret tetap terlihat), jadi posisi caret
+      // di *layar* berhenti bergerak — kamera yang ikut berhenti di sana
+      // membuat tepi kanan kertas beserta ruang napasnya tak pernah terlihat.
+      // Kamera lalu berjalan ke batas gulir.
+      target = maxScroll
+    } else {
+      target = clamp(active.scroller.scrollLeft + delta, floor, maxScroll)
+    }
   }
-  const current = active.scroller.scrollLeft
+  active.lastScroll = current
   const eased = reducedMotion(active) ? target : ease(current, target, deltaMs)
   // Dekat target → tulis target persis, supaya kamera berhenti tepat di
   // ambang pita (bukan menggantung beberapa piksel di thereof).
-  const next = Math.abs(target - eased) < 0.5 ? target : eased
+  // Jangkar: langkahnya sendiri yang selalu mendarat persis (lihat
+  // `anchorStep`) — pena eased akan mentok di atas target.
+  const next =
+    active.anchorScroll !== null
+      ? anchorStep(current, target)
+      : Math.abs(target - eased) < 0.5
+        ? target
+        : eased
   if (Math.abs(next - current) > 0.05) {
     console.log('[follow] write', next.toFixed(1), 'state', active.state)
     writeScroll(active, active.scroller, 'scrollLeft', next)
+    active.lastWritten = next
     // Lanjut ke frame berikutnya selama belum sampai target.
     schedule(active)
   }
@@ -333,6 +403,9 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
     lastCaret: null,
     minCaretX: null,
     anchorScroll: null,
+    anchorFrom: null,
+    lastScroll: null,
+    lastWritten: null,
     motionQuery: null,
     onMotionChange: () => {},
     teardown: () => {},

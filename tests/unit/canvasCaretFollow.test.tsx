@@ -96,6 +96,26 @@ const stubScrollLeft = (element: HTMLElement) => {
   return written
 }
 
+/**
+ * `scrollLeft` versi browser: nilainya **dibulatkan** ke piksel penuh.
+ *
+ * Ini yang membuat kamera mentok sedikit di atas target — pena `eased`
+ * menulis 58,3px, browser menyimpan 58px, dan selisihnya tak pernah nol.
+ * Test yang memakai stub ini memastikan jangkar tetap dilepas walau tak
+ * pernah "sampai" persis.
+ */
+const stubRoundedScrollLeft = (element: HTMLElement) => {
+  const written: number[] = []
+  Object.defineProperty(element, 'scrollLeft', {
+    configurable: true,
+    get: () => written[written.length - 1] ?? 0,
+    set: (value: number) => {
+      written.push(Math.round(value))
+    },
+  })
+  return written
+}
+
 /** `scrollTop` well — sama seperti `scrollLeft`, rekam nilainya. */
 const stubScrollTop = (element: HTMLElement) => {
   const written: number[] = []
@@ -235,8 +255,49 @@ describe('kamera mengikuti ketikan', () => {
     settle()
 
     const settled = written[written.length - 1] ?? 0
-    expect(settled).toBeCloseTo(EDIT_SIDE_PAD_PX - PAPER_EDGE_MARGIN_PX, 5)
+    // Mendarat di pendaratan awal sesi (selisih < 0,5px — snap terakhir
+    // kamera dibulatkan browser).
+    expect(settled).toBeCloseTo(EDIT_SIDE_PAD_PX - PAPER_EDGE_MARGIN_PX, 0)
     expect(settled).toBeGreaterThan(0)
+  })
+
+  it('regresi: jangkar yang mentok (scroll dibulatkan) tidak boleh menggantung', () => {
+    const { scroller, control } = buildTree()
+    scroller.style.paddingLeft = `${EDIT_SIDE_PAD_PX}px`
+    scroller.style.paddingRight = `${EDIT_SIDE_PAD_PX}px`
+    Object.defineProperty(scroller, 'scrollWidth', { configurable: true, value: 787 })
+    // Browser membulatkan `scrollLeft` — pena eased pun mentok beberapa
+    // piksel di atas target. Jangkar yang tak pernah "sampai" harus tetap
+    // dilepas; kalau tidak, pita gerak tersuspend dan kamera berhenti
+    // mengikuti caret ke kanan.
+    const written = stubRoundedScrollLeft(scroller)
+
+    let contentX = 400
+    let contentY = 200
+    mockedCaret.mockImplementation(() =>
+      caretAt(contentX, contentY, 120 - scroller.scrollLeft + contentX),
+    )
+    startCaretFollow(control)
+    control.dispatchEvent(new Event('input'))
+    settle()
+    const deep = written[written.length - 1] ?? 0
+    expect(deep).toBeGreaterThan(100)
+
+    // WRAP: caret pindah ke awal baris baru → kamera kembali ke jangkar
+    // pendaratan awal sesi.
+    contentX = 0
+    contentY = 240
+    control.dispatchEvent(new Event('input'))
+    settle()
+    const afterWrap = written[written.length - 1] ?? 0
+    expect(afterWrap).toBeLessThan(deep)
+
+    // Lanjut mengetik: caret melewati ambang kanan pita → kamera harus ikut
+    // ke kanan lagi (jangkar sudah dilepas, pita aktif kembali).
+    contentX = 300
+    control.dispatchEvent(new Event('input'))
+    settle()
+    expect(written[written.length - 1] ?? 0).toBeGreaterThan(afterWrap)
   })
 
   it('kamera mentok di penghujung kertas', () => {
