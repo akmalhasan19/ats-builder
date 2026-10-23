@@ -88,6 +88,12 @@ const innerScrollOf = (page: Page) =>
     () => document.querySelector<HTMLInputElement>('#pane-preview .canvas-editor')?.scrollLeft ?? 0,
   )
 
+/** Posisi vertikal caret di dalam isi control (dari mirror follow). */
+const caretTopOf = (page: Page) =>
+  page.evaluate(
+    () => document.querySelector<HTMLElement>('[data-probe="caret-marker"]')?.offsetTop ?? -1,
+  )
+
 /** Kotak editor di layar — untuk memastikan editor masih terlihat. */
 const editorBox = (page: Page) =>
   page.evaluate(() => {
@@ -161,6 +167,44 @@ test.describe('kamera mengikuti caret di layar sempit (FASE 14)', () => {
       afterTyping,
       'kamera harus kembali mengikuti caret ke kanan setelah wrap',
     ).toBeGreaterThan(afterWrap)
+  })
+
+  test('baris lanjutan mulai dari pendaratan yang sama dengan baris pertama', async ({ page }) => {
+    await startApp(page)
+    await toCanvasMode(page)
+    const editor = await openField(page, 'summary.text')
+
+    // Pendaratan awal sesi — titik mulai "baris pertama".
+    const landed = await scrollLeftOf(page)
+    expect(landed).toBeGreaterThan(0)
+
+    // Ketik satu per satu sampai caret benar-benar berpindah baris. Wrap
+    // dibaca dari `offsetTop` marker mirror (posisi di dalam control), bukan
+    // dari posisi layar yang ikut bergeser bersama kamera.
+    let previousTop = await caretTopOf(page)
+    let peak = landed
+    let wrapped = false
+    for (let index = 0; index < 160 && !wrapped; index += 1) {
+      await editor.pressSequentially('m')
+      await page.waitForTimeout(40)
+      const top = await caretTopOf(page)
+      if (top > previousTop + 2) wrapped = true
+      previousTop = top
+      peak = Math.max(peak, await scrollLeftOf(page))
+    }
+    expect(wrapped, 'teks harus membungkus ke baris berikutnya').toBe(true)
+    expect(peak, 'kamera sempat mengikuti caret ke kanan di baris pertama').toBeGreaterThan(
+      landed + 10,
+    )
+
+    // Regresi: dulu kamera berhenti di posisi gulir terakhir (kadang setelah
+    // di-pause oleh guliran browser) sehingga baris baru mulai terpotong di
+    // kiri. Sekarang baris baru mendarat persis di tempat baris pertama.
+    await expect.poll(() => scrollLeftOf(page)).toBeCloseTo(landed, 0)
+
+    // Baris lanjutan mengikuti ketikan lagi, sama seperti baris pertama.
+    await editor.pressSequentially('n'.repeat(60))
+    await expect.poll(() => scrollLeftOf(page)).toBeGreaterThan(landed + 10)
   })
 
   test('posisi awal: skala 75%, kertas punya ruang kiri, field tetap terlihat', async ({

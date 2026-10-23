@@ -9,7 +9,11 @@ import {
   stopCaretFollow,
 } from '@/features/canvas/canvasCaretFollow'
 import { caretRects } from '@/features/canvas/canvasCaret'
-import { EDIT_SIDE_PAD_PX, PAPER_EDGE_MARGIN_PX } from '@/features/canvas/canvasEditZoom'
+import {
+  EDIT_SIDE_PAD_PX,
+  FOCUS_EDGE_MARGIN_PX,
+  PAPER_EDGE_MARGIN_PX,
+} from '@/features/canvas/canvasEditZoom'
 
 /**
  * FASE 14C — **kamera mengikuti caret** saat mengetik.
@@ -300,6 +304,42 @@ describe('kamera mengikuti ketikan', () => {
     expect(written[written.length - 1] ?? 0).toBeGreaterThan(afterWrap)
   })
 
+  it('jangkar wrap memakai tepi kiri field, bukan posisi caret', () => {
+    const { scroller, control } = buildTree()
+    const written = stubScrollLeft(scroller)
+    // Field menjorok 100px dari tepi kiri konten saat scroll = 0 — posisi
+    // tepi kiri field yang menjadi patokan pendaratan, sama seperti baris
+    // pertama.
+    control.getBoundingClientRect = () => ({
+      left: 100 - scroller.scrollLeft,
+      top: 0,
+      width: 495,
+      height: 20,
+      right: 595 - scroller.scrollLeft,
+      bottom: 20,
+      x: 100 - scroller.scrollLeft,
+      y: 0,
+      toJSON: () => ({}),
+    })
+
+    mockedCaret.mockImplementation(() => caretAt(400, 200, 400 - scroller.scrollLeft))
+    startCaretFollow(control)
+    control.dispatchEvent(new Event('input'))
+    settle()
+    const peak = written[written.length - 1] ?? 0
+    expect(peak).toBeCloseTo(400 - 412 * CARET_RIGHT_RATIO, 5)
+
+    // Wrap: caret di awal baris baru duduk 25px di kanan tepi kiri field.
+    mockedCaret.mockImplementation(() => caretAt(0, 240, 125 - scroller.scrollLeft))
+    control.dispatchEvent(new Event('input'))
+    settle()
+
+    // Tepi kiri field mendarat di FOCUS_EDGE_MARGIN_PX dari tepi kiri konten:
+    // 100 − 24 = 76. Kalau jangkar memakai caret, hasilnya 101 (25px terlalu
+    // kanan) — baris lanjutan tidak lagi sama dengan baris pertama.
+    expect(written[written.length - 1] ?? 0).toBeCloseTo(100 - FOCUS_EDGE_MARGIN_PX, 0)
+  })
+
   it('kamera mentok di penghujung kertas', () => {
     const { scroller, control } = buildTree()
     const written = stubScrollLeft(scroller)
@@ -337,6 +377,66 @@ describe('gulir manual (K6)', () => {
     startCaretFollow(control)
     // Gulir manual user (tanpa flag programmatic).
     scroller.dispatchEvent(new Event('scroll'))
+    const before = written.length
+
+    // Ketikan pertama: follow baru dinyalakan, gerakannya belum ikut.
+    control.dispatchEvent(new Event('input'))
+    settle()
+    expect(written.length).toBe(before)
+
+    // Ketikan kedua: kamera mengikuti lagi.
+    control.dispatchEvent(new Event('input'))
+    settle()
+    expect(written[written.length - 1]).toBeCloseTo(90, 5)
+  })
+
+  it('regresi: gulir browser tepat setelah ketikan tidak menjeda follow & membatalkan jangkar wrap', () => {
+    const { scroller, control } = buildTree()
+    scroller.style.paddingLeft = `${EDIT_SIDE_PAD_PX}px`
+    scroller.style.paddingRight = `${EDIT_SIDE_PAD_PX}px`
+    Object.defineProperty(scroller, 'scrollWidth', { configurable: true, value: 787 })
+    const written = stubScrollLeft(scroller)
+
+    // Baris pertama: kamera mengikuti caret ke kanan.
+    mockedCaret.mockImplementation(() => caretAt(400, 200, 400 - scroller.scrollLeft))
+    startCaretFollow(control)
+    control.dispatchEvent(new Event('input'))
+    settle()
+    const peak = written[written.length - 1] ?? 0
+    expect(peak).toBeGreaterThan(0)
+
+    // Browser menjaga caret tetap terlihat: menggeser kamera sendiri tepat
+    // setelah ketikan, lalu mengirim event `scroll` biasa (bukan tulisan
+    // follow). Ini rutin terjadi saat mengetik — bukan gulir user.
+    scroller.scrollLeft = peak + 40
+    scroller.dispatchEvent(new Event('scroll'))
+
+    // Wrap: caret pindah ke awal baris baru. Jangkar harus tetap hidup walau
+    // posisi gulir sekarang bukan tulisan follow; kamera kembali ke
+    // pendaratan awal sesi.
+    mockedCaret.mockImplementation(() => caretAt(0, 240, 30 - scroller.scrollLeft))
+    control.dispatchEvent(new Event('input'))
+    settle()
+    const afterWrap = written[written.length - 1] ?? 0
+    expect(afterWrap).toBeCloseTo(EDIT_SIDE_PAD_PX - PAPER_EDGE_MARGIN_PX, 0)
+
+    // Baris berikutnya mengikuti ketikan lagi — bukan kamera yang diam
+    // sampai karakter melewati layar.
+    mockedCaret.mockImplementation(() => caretAt(400, 240, 400 - scroller.scrollLeft))
+    control.dispatchEvent(new Event('input'))
+    settle()
+    expect(written[written.length - 1] ?? 0).toBeGreaterThan(afterWrap)
+  })
+
+  it('gestur gulir user (wheel) langsung menghentikan follow', () => {
+    const { scroller, control } = buildTree()
+    const written = stubScrollLeft(scroller)
+    const right = 412 * CARET_RIGHT_RATIO
+    mockedCaret.mockImplementation(() => caretAt(400, 200, right + 90 - scroller.scrollLeft))
+
+    startCaretFollow(control)
+    // Gestur user yang tegas — tanpa menunggu klasifikasi event `scroll`.
+    scroller.dispatchEvent(new Event('wheel'))
     const before = written.length
 
     // Ketikan pertama: follow baru dinyalakan, gerakannya belum ikut.

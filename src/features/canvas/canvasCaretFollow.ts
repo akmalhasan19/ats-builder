@@ -26,11 +26,24 @@ import { PAPER_EDGE_MARGIN_PX, landingScrollFor, sidePadOf } from './canvasEditZ
  *  5. saat caret **berpindah baris**, kamera kembali ke pendaratan yang sama
  *     dengan awal masuk mode edit (rumus `landingScrollFor` yang sama) — jadi
  *     baris baru mulai dari posisi yang familiar dan margin kiri kertas tetap
- *     terlihat, bukan caret yang menempel di tepi kiri layar.
+ *     terlihat, bukan caret yang menempel di tepi kiri layar. Jangkar diukur
+ *     dari **tepi kiri field**, bukan dari caret: baris pertama selalu mulai
+ *     di tepi kiri field, jadi baris berikutnya harus mendarat di titik yang
+ *     sama.
  *
  * Gulir manual oleh user (swipe) **menghentikan** follow — keinginan user
- * didahulukan (K6). Follow tidak pernah mengubah zoom: zoom sepenuhnya
- * urusan `applyEditZoom`/`restorePreviewZoom` (K9).
+ * didahulukan (K6). Tapi tidak semua gulir yang bukan tulisan follow kami
+ * adalah gulir user: **browser sendiri** menggulir lapisan kertas untuk
+ * menjaga caret tetap terlihat (paling terasa tepat setelah wrap, saat caret
+ * melompat jauh ke kiri). Gulir browser itu tidak boleh menjeda follow —
+ * kalau dianggap manual, setiap ketikan mem-pause follow dan jangkar wrap
+ * dibatalkan, sehingga kamera berhenti mengikuti ketikan di baris
+ * selanjutnya. Karena itu gulir yang berdekatan dengan perubahan caret
+ * ({@link CARET_SCROLL_GRACE_MS}) dianggap milik browser, sedangkan niat
+ * user dideteksi dari gestur gulir itu sendiri (`wheel` / `touchmove`).
+ *
+ * Follow tidak pernah mengubah zoom: zoom sepenuhnya urusan
+ * `applyEditZoom`/`restorePreviewZoom` (K9).
  */
 
 /** Ambang kanan pita: caret boleh keluar setelah 75% dari lebar terlihat. */
@@ -44,6 +57,24 @@ export const CARET_BOTTOM_MARGIN_PX = 32
 
 /** Konstanta waktu lerp (ms) — gerakan kamera dihaluskan (K7). */
 export const FOLLOW_EASE_MS = 120
+
+/**
+ * Jendela waktu (ms) setelah caret bergerak di mana gulir lapisan kertas
+ * dianggap **milik browser**, bukan user.
+ *
+ * Chrome menggulir scrollport terdekat supaya caret tetap terlihat setiap
+ * kali caret keluar pandangan — rutin terjadi saat mengetik, dan paling
+ * terasa setelah wrap: caret melompat dari ujung kanan ke awal baris baru
+ * yang jauh di kiri layar, lalu browser langsung "menyeret" kamera ke sana.
+ * Guliran itu bukan keinginan user. Kalau dianggap manual, setiap ketikan
+ * setelah wrap mem-pause follow dan membatalkan jangkar — kamera berhenti
+ * mengikuti ketikan di baris lanjutan.
+ *
+ * 250ms cukup lebar untuk menangkap guliran susulan browser (satu-dua frame
+ * setelah `input`), tetapi cukup sempit supaya swipe user yang tenang
+ * (biasanya jeda > 250ms setelah ketikan terakhir) tetap dihormati.
+ */
+export const CARET_SCROLL_GRACE_MS = 250
 
 /**
  * Besaran geseran kamera supaya caret masuk kembali ke pita.
@@ -115,6 +146,8 @@ type FollowSession = {
   lastScroll: number | null
   /** Posisi gulir terakhir yang kita tulis — mendeteksi gulir manual user. */
   lastWritten: number | null
+  /** Waktu (ms) caret terakhir bergerak — memisahkan gulir browser dari user. */
+  lastCaretAt: number
   motionQuery: MediaQueryList | null
   onMotionChange: () => void
   teardown: () => void
@@ -278,10 +311,19 @@ const tick = (active: FollowSession, time: number): void => {
   // benar: kamera kembali ke **pendaratan yang sama dengan awal sesi** —
   // rumus yang sama (`landingScrollFor`), jadi margin kiri kertas tetap
   // terlihat dan baris baru mulai di tempat yang familiar.
+  //
+  // Patokannya **tepi kiri field**, bukan caret. Baris pertama selalu mulai
+  // di tepi kiri field; memakai caret (yang di awal baris baru sudah bergeser
+  // selebar padding teks) membuat baris lanjutan mendarat beberapa piksel
+  // lebih kiri daripada baris pertama. Tepi kiri field juga **tidak berubah**
+  // walaupun browser sudah menggulir kamera untuk menjaga caret terlihat:
+  // `scrollLeft + (controlLeft − geometry.left)` invarian terhadap guliran
+  // itu, jadi jangkar tidak "mengejar" posisi yang sudah digeser browser.
   if (wrapped) {
+    const controlLeft = active.control.getBoundingClientRect().left
     active.anchorScroll = landingScrollFor({
       scrollLeft: active.scroller.scrollLeft,
-      offsetX: caret.x - geometry.left,
+      offsetX: controlLeft - geometry.left,
       clientWidth: active.scroller.clientWidth,
       maxScroll,
       sidePad: sidePadOf(active.scroller),
@@ -299,11 +341,14 @@ const tick = (active: FollowSession, time: number): void => {
 
   // **Gulir manual user menang atas animasi kamera.** Kalau posisi gulir
   // berbeda dari yang terakhir kita tulis, ada yang menggeser di luar
-  // follow — jeda dulu (K6), jangan ditimpa kamera.
+  // follow — jeda dulu (K6), jangan ditimpa kamera. Posisi yang berbeda
+  // tepat setelah caret bergerak bukan gulir user: itu browser menjaga caret
+  // tetap terlihat (lihat `CARET_SCROLL_GRACE_MS`), jadi jangan menjeda.
   if (
     active.lastWritten !== null &&
     Math.abs(current - active.lastWritten) > 1.5 &&
-    active.state === 'following'
+    active.state === 'following' &&
+    performance.now() - active.lastCaretAt >= CARET_SCROLL_GRACE_MS
   ) {
     active.state = 'paused'
     active.anchorScroll = null
@@ -373,6 +418,18 @@ const tick = (active: FollowSession, time: number): void => {
 }
 
 /**
+ * Hentikan kamera karena user menggulir sendiri (K6).
+ *
+ * Jangkar wrap ikut dibatalkan: keinginan user yang lebih baru didahulukan,
+ * kamera tidak boleh menarik kembali pandangan yang baru saja digeser.
+ */
+const pauseFollow = (active: FollowSession): void => {
+  if (active.state === 'paused') return
+  active.state = 'paused'
+  active.anchorScroll = null
+}
+
+/**
  * Nyalakan follow untuk sebuah control (hanya di layar sempit — pemanggil
  * yang memutuskan, `CanvasFieldEditor`).
  *
@@ -382,7 +439,10 @@ const tick = (active: FollowSession, time: number): void => {
  *    seret / tombol panah. Event ini menyala untuk seluruh form di halaman,
  *    jadi hanya diproses bila `document.activeElement` control yang dilacak;
  *  - `scroll` (capture, passive) pada scroller & well — gulir manual user
- *    menghentikan follow (K6).
+ *    menghentikan follow (K6), kecuali guliran browser yang berdekatan dengan
+ *    perubahan caret (lihat `CARET_SCROLL_GRACE_MS`);
+ *  - `wheel` / `touchmove` pada scroller & well — gestur gulir user yang
+ *    tegas, langsung menghentikan follow tanpa menunggu klasifikasi `scroll`.
  */
 export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement): void => {
   stopCaretFollow()
@@ -406,6 +466,9 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
     anchorFrom: null,
     lastScroll: null,
     lastWritten: null,
+    // Belum ada caret yang bergerak — gulir apa pun sebelum ketikan pertama
+    // tetap dianggap manual (perilaku K6 yang sudah ada).
+    lastCaretAt: Number.NEGATIVE_INFINITY,
     motionQuery: null,
     onMotionChange: () => {},
     teardown: () => {},
@@ -414,6 +477,7 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
 
   const onCaretChange = () => {
     if (session !== active) return
+    active.lastCaretAt = performance.now()
     if (active.state === 'paused') {
       // Jeda dilepas, tapi gerakan ini belum menggerakkan kamera.
       active.state = 'arming'
@@ -446,17 +510,35 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
     // Gulir internal control (browser menjaga caret tetap terlihat) bukan
     // guliran user — jangan ikut menghentikan follow.
     if (target !== active.scroller && target !== active.well) return
-    console.log('[follow] manual-scroll → paused')
-    active.state = 'paused'
-    // Kalau kamera sedang kembali ke jangkar (wrap), guliran manual user
-    // membatalkan jangkar itu — keinginan user didahulukan.
-    active.anchorScroll = null
+    // **Gulir browser, bukan gulir user.** Tepat setelah caret bergerak
+    // (terutama saat wrap), browser menggulir scrollport supaya caret tetap
+    // terlihat. Itu bukan keinginan user — jangan menjeda follow dan jangan
+    // membatalkan jangkar. `lastWritten` diselaraskan supaya pemeriksaan di
+    // tick tidak membaca guliran ini sebagai gulir manual yang tertinggal.
+    if (performance.now() - active.lastCaretAt < CARET_SCROLL_GRACE_MS) {
+      active.lastWritten = active.scroller.scrollLeft
+      return
+    }
+    pauseFollow(active)
+  }
+
+  // **Niat user** dideteksi dari gestur gulirnya sendiri: roda mouse /
+  // trackpad dan seret jari. Ini kebal terhadap guliran browser (yang tidak
+  // punya gestur) dan tetap menghormati K6 — user yang menggulir sendiri
+  // menghentikan kamera, kapan pun itu terjadi.
+  const handleUserScrollIntent = () => {
+    if (session !== active) return
+    pauseFollow(active)
   }
 
   control.addEventListener('input', handleInput)
   document.addEventListener('selectionchange', handleSelectionChange)
   active.scroller.addEventListener('scroll', handleScroll, { capture: true, passive: true })
   active.well.addEventListener('scroll', handleScroll, { capture: true, passive: true })
+  for (const element of [active.scroller, active.well]) {
+    element.addEventListener('wheel', handleUserScrollIntent, { passive: true })
+    element.addEventListener('touchmove', handleUserScrollIntent, { passive: true })
+  }
 
   const motionQuery =
     typeof window.matchMedia === 'function'
@@ -473,6 +555,10 @@ export const startCaretFollow = (control: HTMLInputElement | HTMLTextAreaElement
     document.removeEventListener('selectionchange', handleSelectionChange)
     active.scroller.removeEventListener('scroll', handleScroll, { capture: true })
     active.well.removeEventListener('scroll', handleScroll, { capture: true })
+    for (const element of [active.scroller, active.well]) {
+      element.removeEventListener('wheel', handleUserScrollIntent)
+      element.removeEventListener('touchmove', handleUserScrollIntent)
+    }
     motionQuery?.removeEventListener?.('change', active.onMotionChange)
   }
 
